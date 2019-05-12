@@ -32,6 +32,12 @@ int main(int argc, char** argv){
 //    float forearm = db.unpackFloatLE(data.begin()+24);
 //    float end =     db.unpackFloatLE(data.begin()+28);
 
+   // For want of something better to add, "please use ROS Logger for all logging"
+   // // http://wiki.ros.org/roscpp/Overview/Logging
+   // #include <ros/console.h>
+   // ROS_DEBUG("Hello %s", "World");
+   // ROS_DEBUG_STREAM("Hello " << "World");
+    
     /*
     std::cout << "x: " << x
               << " y: " << y
