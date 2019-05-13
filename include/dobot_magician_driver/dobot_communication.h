@@ -16,8 +16,6 @@ class DobotCommunication{
 public:
     DobotCommunication(std::string port);
 
-
-
     /// Device information
 //    setDeviceSN
 //    getDeviceSN

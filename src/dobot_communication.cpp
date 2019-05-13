@@ -49,7 +49,10 @@ bool DobotCommunication::getResponse(std::vector<u_int8_t> &returnedData)
             timeout = true;
         }
     }
-
+    if(data.size() == 0)
+    {
+        return false;
+    }
     checksum = data.back();
     data.pop_back();
 //    printf("checksum %x - data %x\n", checksum, checksumCalc(data));
