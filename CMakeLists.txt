@@ -61,6 +61,7 @@ pkg_check_modules(SERIAL libserial)
  add_service_files(
    FILES
    SetSuctionCup.srv
+   SetTargetPoints.srv
 #   Service1.srv
 #   Service2.srv
  )

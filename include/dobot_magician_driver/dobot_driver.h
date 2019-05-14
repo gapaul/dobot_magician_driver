@@ -15,9 +15,10 @@ public:
 
     DobotDriver(std::string port);
 
-    void getJointAngles(std::vector<double> &joint_angles);
-    void getCartesianPos(std::vector<double> &cart_pos);
-
+    bool getJointAngles(std::vector<double> &joint_angles);
+    bool getCartesianPos(std::vector<double> &cart_pos);
+    bool setJointAngles(std::vector<float> &joint_angles);
+    bool setCartesianPos(std::vector<float> &cart_pos);
 
 };
 

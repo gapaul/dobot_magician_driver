@@ -2,9 +2,11 @@
 #define DOBOT_COMMUNICATION_H_
 
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <vector>
 #include <cstring>
+
 
 #include <SerialPort.h>
 #include <SerialStream.h>
@@ -15,6 +17,7 @@ class DobotCommunication{
 
 public:
     DobotCommunication(std::string port);
+    ~DobotCommunication();
 
     /// Device information
 //    setDeviceSN
@@ -34,7 +37,7 @@ public:
     /// Home
 //    setHOMEParams
 //    getHOMEParams
-//    setHOMECmd
+    bool setHOMECmd(bool isQueued = 0);
 
     /// Handheld teaching
 //    setHHrigMode
@@ -52,9 +55,9 @@ public:
 //    getEndEffectorParams
 //    setEndEffectorLaser
 //    getEndEffectorLaser
-    bool setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked);
+    bool setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool isQueued = 0);
     bool setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, std::vector<u_int8_t> &returned_data);
-//    getEndEffectorSuctionCup
+    bool getEndEffectorSuctionCup(std::vector<u_int8_t> &returned_data, bool isQueued = 0);
 //    setEndEffectorGripper
 //    getEndEffectorGripper
 
@@ -76,7 +79,7 @@ public:
 //    getPTPJumpParams
 //    setPTPCommonParams
 //    getPTPCommonParams
-//    setPTPCmd
+    bool setPTPCmd(int ptpMode, std::vector<float> &target_points, bool isQueued = 0);
 
     ///CP
 //    setCPParams
@@ -130,9 +133,12 @@ public:
 
 
     float unpackFloatLE(std::vector<u_int8_t>::iterator it);
+    void packFromFloat(std::vector<float> &value_to_pack, std::vector<u_int8_t> &packed_floats);
 
 private:
+
     std::string _port;
+
     SerialPort::BaudRate _baud;
     SerialPort::Parity _parity;
     SerialPort::StopBits _stop_bit;
@@ -140,11 +146,12 @@ private:
 
     SerialPort* _serial_port;
 
-    void sendCommand(std::vector<u_int8_t> &ctrl_cmd);
+    std::mutex _communication_mt;
 
     u_int8_t checksumCalc(std::vector<uint8_t> &ctrl_cmd);
-    bool getResponse(std::vector<u_int8_t> &returnedData);
-
+    void sendCommand(std::vector<u_int8_t> &ctrl_cmd);
+    bool getResponse(std::vector<u_int8_t> &returned_data);
+    void floatToByte(float float_variable, u_int8_t temp_bytes[]);
 
 
 

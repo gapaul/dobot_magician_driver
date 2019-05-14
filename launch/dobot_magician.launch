@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="dobot_magician_driver" type="dobot_magician_driver" name="dobot_magician_node" output="screen">
+    <param name="port" value="/dev/ttyUSB0"/>
+  </node>
+
+
+</launch>

@@ -1,0 +1,5 @@
+#request
+float64[] target_points
+---
+#response
+bool success

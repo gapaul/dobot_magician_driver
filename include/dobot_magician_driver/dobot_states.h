@@ -25,9 +25,8 @@ public:
     };
 
     DobotStates();
-    void unpackPose(std::vector<u_int8_t> &data);
-    void getPose(std::vector<u_int8_t> &data, std::vector<double> &pose);
-//    DobotStates::Pose unpackPose(std::vector<u_int8_t> &data);
+//    void unpackPose(std::vector<u_int8_t> &data);
+    void unpackPose(std::vector<u_int8_t> &data, std::vector<double> &pose);
 
 
 private:
