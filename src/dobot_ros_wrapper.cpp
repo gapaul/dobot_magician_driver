@@ -7,23 +7,23 @@ bool DobotRosWrapper::setSuctionCup(dobot_magician_driver::SetSuctionCupRequest 
         req.pumpOn = false;
     }
 
-    res.success =_driver->dobot_serial->setEndEffectorSuctionCup(1,req.pumpOn);
+    _driver->dobot_serial->setEndEffectorSuctionCup(1,req.pumpOn);
+    res.success = true;
 
-    return res.success;
+    return true;
 
 }
 
 bool DobotRosWrapper::setJointAngles(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res)
 {
-    std::cout << req.target_points.size() << std::endl;
     if(req.target_points.size() != 4){
         ROS_INFO("DobotRosWrapper: specify correct number of target points");
         res.success = false;
         return false;
     }
     std::vector<float> test = std::vector<float>(req.target_points.begin(), req.target_points.end());
-    res.success =_driver->setJointAngles(test);
-
+    _driver->setJointAngles(test);
+    res.success = true;
     return res.success;
 
 }
@@ -36,8 +36,8 @@ bool DobotRosWrapper::setCartesianPos(dobot_magician_driver::SetTargetPointsRequ
         return false;
     }
     std::vector<float> test = std::vector<float>(req.target_points.begin(), req.target_points.end());
-    res.success =_driver->setCartesianPos(test);
-
+    _driver->setCartesianPos(test);
+    res.success = true;
     return res.success;
 
 
@@ -50,6 +50,7 @@ void DobotRosWrapper::update_state_loop()
     sensor_msgs::JointState joint_ang_msg;
     geometry_msgs::Pose cart_pos_msg;
 
+    ROS_INFO("DobotRosWrapper: data from Dobot available");
     ROS_DEBUG("DobotRosWrapper: update_state_thread started");
 
     while(ros::ok()){
@@ -80,6 +81,11 @@ void DobotRosWrapper::update_state_loop()
 
 }
 
+bool DobotRosWrapper::setJointAngles(std::vector<float> temp)
+{
+    _driver->setJointAngles(temp);
+}
+
 
 DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port)
     : _nh(nh)
@@ -93,7 +99,9 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     _set_cartesian_pos_srv = _nh.advertiseService("/PTP/set_cartesian_pos", &DobotRosWrapper::setCartesianPos, this);
     _set_joint_angles_srv = _nh.advertiseService("/PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ROS_INFO("DobotRosWrapper: this thread will sleep for homing cmd");
+    std::this_thread::sleep_for(std::chrono::seconds(20));
+    ROS_INFO("DobotRosWrapper: this thread will now wake up");
 
     update_state_thread = new std::thread(&DobotRosWrapper::update_state_loop, this);
 
@@ -140,9 +148,19 @@ int main(int argc, char** argv){
     ROS_DEBUG("DobotRosWrapper: spinner.start()");
     spinner.start();
     ros::Rate rate(10);
+    std::vector<float> vect;
+    vect.push_back(50);
+    vect.push_back(35);
+    vect.push_back(40);
+    vect.push_back(10);
+    std::string temp;
     while(ros::ok()){
-        //        ros::spinOnce(); //async
+//           std::cout<< "waiting for keypress" << std::endl;
+
+//        std::cin >> temp;
+//        db_ros.setJointAngles(vect);
         rate.sleep();
+        //        ros::spinOnce(); //async
     }
 //    while(!ros::shutdown());
     spinner.stop();

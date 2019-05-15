@@ -1,4 +1,4 @@
-#include <dobot_magician_driver/dobot_states.h>
+#include <dobot_magician_driver/dobot_state.h>
 
 DobotStates::DobotStates()
 {

@@ -6,6 +6,8 @@ DobotDriver::DobotDriver(std::string port)
     dobot_serial = new DobotCommunication(port);
     dobot_states = new DobotStates();
 
+    dobot_serial->setHOMECmd(1); //create setter for this to access from ros wrapper
+
 }
 
 bool DobotDriver::getJointAngles(std::vector<double> &joint_angles)
@@ -49,11 +51,6 @@ bool DobotDriver::setJointAngles(std::vector<float> &joint_angles)
 
 bool DobotDriver::setCartesianPos(std::vector<float> &cart_pos)
 {
-
-//    for(int i = 0; i < cart_pos.size(); ++i){
-//        cart_pos[i] *= 1000;
-//    }
-
     if(dobot_serial->setPTPCmd(2,cart_pos)){
 
         return true;

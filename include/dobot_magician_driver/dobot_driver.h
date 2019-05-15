@@ -2,7 +2,7 @@
 #define DOBOT_DRIVER_H_
 
 #include "dobot_communication.h"
-#include "dobot_states.h"
+#include "dobot_state.h"
 
 
 class DobotDriver{
@@ -19,6 +19,7 @@ public:
     bool getCartesianPos(std::vector<double> &cart_pos);
     bool setJointAngles(std::vector<float> &joint_angles);
     bool setCartesianPos(std::vector<float> &cart_pos);
+//    bool setHomeCalibrate()
 
 };
 

@@ -39,6 +39,7 @@ private:
     void update_state_loop();
 
 public:
+    bool setJointAngles(std::vector<float> temp);
     DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port);
     ~DobotRosWrapper();
 };

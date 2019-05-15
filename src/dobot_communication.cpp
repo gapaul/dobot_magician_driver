@@ -48,11 +48,12 @@ bool DobotCommunication::getResponse(std::vector<u_int8_t> &returned_data)
         while(!timeout){
             try
             {
-                next_char = _serial_port->ReadByte(25);
+                next_char = _serial_port->ReadByte(500);
                 data.push_back(next_char);
             }
             catch(SerialPort::ReadTimeout &e)
             {
+//                std::cout << "TIMEDOUT "<< std::endl;
                 timeout = true;
             }
         }
@@ -90,7 +91,6 @@ void DobotCommunication::packFromFloat(std::vector<float> &value_to_pack, std::v
         for(int j = 0; j < 4; ++j){
             packed_floats.push_back(bytes_temp[j]);
 //            std::cout << "byte " << j << ": " << std::hex << (int)(bytes_temp[j]) << std::endl;
-
         }
 
     }
@@ -110,7 +110,7 @@ void DobotCommunication::floatToByte(float float_variable, u_int8_t temp_bytes[]
 bool DobotCommunication::setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool isQueued)
 {
     u_int8_t ctrl = (isQueued << 4) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3e,ctrl, is_ctrl_enabled, is_sucked};
+    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3e, ctrl, is_ctrl_enabled, is_sucked};
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
     std::vector<u_int8_t> data;

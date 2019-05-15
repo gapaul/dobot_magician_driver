@@ -37,7 +37,7 @@ public:
     /// Home
 //    setHOMEParams
 //    getHOMEParams
-    bool setHOMECmd(bool isQueued = 0);
+    bool setHOMECmd(bool isQueued = 1);
 
     /// Handheld teaching
 //    setHHrigMode
@@ -79,7 +79,7 @@ public:
 //    getPTPJumpParams
 //    setPTPCommonParams
 //    getPTPCommonParams
-    bool setPTPCmd(int ptpMode, std::vector<float> &target_points, bool isQueued = 0);
+    bool setPTPCmd(int ptpMode, std::vector<float> &target_points, bool isQueued = 1);
 
     ///CP
 //    setCPParams
@@ -130,10 +130,16 @@ public:
 //    getWIFIConnectStatus
 
     /// Queued execution control commands
+//    SetQueuedCmdStartExec
+//    SetQueuedCmdStopExec
+//    SetQueuedCmdForceStopExec
+//    SetQueuedCmdStartDownload
+//    SetQueuedCmdStopDownload
+//    SetQueuedCmdClear
+//    GetQueuedCmdCurrentIndex
 
 
     float unpackFloatLE(std::vector<u_int8_t>::iterator it);
-    void packFromFloat(std::vector<float> &value_to_pack, std::vector<u_int8_t> &packed_floats);
 
 private:
 
@@ -151,6 +157,7 @@ private:
     u_int8_t checksumCalc(std::vector<uint8_t> &ctrl_cmd);
     void sendCommand(std::vector<u_int8_t> &ctrl_cmd);
     bool getResponse(std::vector<u_int8_t> &returned_data);
+    void packFromFloat(std::vector<float> &value_to_pack, std::vector<u_int8_t> &packed_floats);
     void floatToByte(float float_variable, u_int8_t temp_bytes[]);
 
 
