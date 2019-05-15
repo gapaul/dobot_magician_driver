@@ -107,72 +107,95 @@ void DobotCommunication::floatToByte(float float_variable, u_int8_t temp_bytes[]
     std::memcpy(temp_bytes, link.bytes, 4);
 }
 
-bool DobotCommunication::setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool isQueued)
+uint64_t DobotCommunication::getQueuedCmdIndex(std::vector<u_int8_t> data)
 {
-    u_int8_t ctrl = (isQueued << 4) | 0x01;
+    uint64_t queuedCmdIndex;
+    uint8_t *packedQueueCmdIndex = &data[0];
+    std::memcpy(&queuedCmdIndex, packedQueueCmdIndex, sizeof queuedCmdIndex);
+    return queuedCmdIndex;
+}
+
+uint64_t DobotCommunication::setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool isQueued)
+{
+    u_int8_t ctrl = (isQueued << 1) | 0x01;
     std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3e, ctrl, is_ctrl_enabled, is_sucked};
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
     std::vector<u_int8_t> data;
-    if(!getResponse(data)){return false;}
-    return true;
+    if(!getResponse(data)){return -2;}
+    if(isQueued){
+        return getQueuedCmdIndex(data);
+    }else{
+        return -1;
+    }
+
 }
 
-bool DobotCommunication::setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, std::vector<u_int8_t> &returned_data)
+uint64_t DobotCommunication::getEndEffectorSuctionCup(std::vector<u_int8_t> &returned_data, bool isQueued)
 {
-    setEndEffectorSuctionCup(is_ctrl_enabled, is_sucked);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return false;}
-    returned_data = data;
-    return true;
-}
-
-bool DobotCommunication::getEndEffectorSuctionCup(std::vector<u_int8_t> &returned_data, bool isQueued)
-{
-    u_int8_t ctrl = (isQueued << 4) | 0x00;
+    u_int8_t ctrl = (isQueued << 1) | 0x01;
     std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3e,ctrl,0x00,0x00};
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
     std::vector<u_int8_t> data;
-    if(!getResponse(data)){return false;}
+    if(!getResponse(data)){return -2;}
     returned_data = data;
-    return true;
+    if(isQueued){
+        return getQueuedCmdIndex(data);
+
+    }else{
+        return -1;
+    }
 }
 
-bool DobotCommunication::setPTPCmd(int ptpMode, std::vector<float> &target_points, bool isQueued)
+uint64_t DobotCommunication::setPTPCmd(int ptpMode, std::vector<float> &target_points, bool isQueued)
 {
-    u_int8_t ctrl = (isQueued << 4) | 0x01;
+    u_int8_t ctrl = (isQueued << 1) | 0x01;
     std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x13,0x54,ctrl,0x04};
     packFromFloat(target_points,ctrl_cmd);
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
     std::vector<u_int8_t> data;
-    if(!getResponse(data)){return false;}
-    return true;
+    if(!getResponse(data)){return -2;}
+    if(isQueued){
+        return getQueuedCmdIndex(data);
 
+    }else{
+        return -1;
+    }
 }
 
-bool DobotCommunication::getPose(std::vector<u_int8_t> &returned_data)
+uint64_t DobotCommunication::getPose(std::vector<u_int8_t> &returned_data, bool isQueued)
 {
+    u_int8_t ctrl = (isQueued << 1) | 0x01;
     std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x02,0x0A,0x00};
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
     std::vector<u_int8_t> data;
-    if(!getResponse(data)){return false;}
+    if(!getResponse(data)){return -2;}
     returned_data = data;
-    return true;
+    if(isQueued){
+        return getQueuedCmdIndex(data);
 
+    }else{
+        return -1;
+    }
 }
 
-bool DobotCommunication::setHOMECmd(bool isQueued)
+uint64_t DobotCommunication::setHOMECmd(bool isQueued)
 {
-    u_int8_t ctrl = (isQueued << 4) | 0x01;
+    u_int8_t ctrl = (isQueued << 1) | 0x01;
     std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x06,0x1f,ctrl,0x00,0x00, 0x00, 0x00};
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
     std::vector<u_int8_t> data;
-    if(!getResponse(data)){return false;}
-    return true;
+    if(!getResponse(data)){return -2;}
+    if(isQueued){
+        return getQueuedCmdIndex(data);
+
+    }else{
+        return -1;
+    }
 }
 
 void DobotCommunication::sendCommand(std::vector<u_int8_t> &ctrl_cmd)

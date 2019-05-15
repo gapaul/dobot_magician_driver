@@ -27,7 +27,7 @@ public:
 //    getDeviceVersion
 
     /// Pose
-    bool getPose(std::vector<u_int8_t> &returned_data);
+    uint64_t getPose(std::vector<u_int8_t> &returned_data, bool isQueued = 0);
 //    bool resetPose();
 
     /// Alarm
@@ -37,7 +37,7 @@ public:
     /// Home
 //    setHOMEParams
 //    getHOMEParams
-    bool setHOMECmd(bool isQueued = 1);
+    uint64_t setHOMECmd(bool isQueued = 1);
 
     /// Handheld teaching
 //    setHHrigMode
@@ -55,9 +55,8 @@ public:
 //    getEndEffectorParams
 //    setEndEffectorLaser
 //    getEndEffectorLaser
-    bool setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool isQueued = 0);
-    bool setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, std::vector<u_int8_t> &returned_data);
-    bool getEndEffectorSuctionCup(std::vector<u_int8_t> &returned_data, bool isQueued = 0);
+    uint64_t setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool isQueued = 0);
+    uint64_t getEndEffectorSuctionCup(std::vector<u_int8_t> &returned_data, bool isQueued = 0);
 //    setEndEffectorGripper
 //    getEndEffectorGripper
 
@@ -79,7 +78,7 @@ public:
 //    getPTPJumpParams
 //    setPTPCommonParams
 //    getPTPCommonParams
-    bool setPTPCmd(int ptpMode, std::vector<float> &target_points, bool isQueued = 1);
+    uint64_t setPTPCmd(int ptpMode, std::vector<float> &target_points, bool isQueued = 1);
 
     ///CP
 //    setCPParams
@@ -159,6 +158,7 @@ private:
     bool getResponse(std::vector<u_int8_t> &returned_data);
     void packFromFloat(std::vector<float> &value_to_pack, std::vector<u_int8_t> &packed_floats);
     void floatToByte(float float_variable, u_int8_t temp_bytes[]);
+    uint64_t getQueuedCmdIndex(std::vector<u_int8_t> data);
 
 
 
