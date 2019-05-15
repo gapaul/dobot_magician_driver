@@ -1,4 +1,5 @@
 #include "dobot_magician_driver/dobot_communication.h"
+#include <sstream>
 
 DobotCommunication::DobotCommunication(std::string port) :
     _baud(SerialPort::BAUD_115200),
@@ -36,6 +37,22 @@ u_int8_t DobotCommunication::checksumCalc(std::vector<uint8_t> &ctrl_cmd)
 
     return checksum;
 }
+
+void print_hex(std::vector<u_int8_t> input){  //used to print the serial command in hex and int for debugging
+
+
+    for(int k=0;k<input.size();k++){
+       std::cout<< int(input[k]) << " ";
+    }
+
+    std::cout<< std::endl;
+    for(int k=0;k<input.size();k++){
+       std::cout<< std::hex << int(input[k]) << " ";
+    }
+    std::cout<< std::endl;
+
+}
+
 
 bool DobotCommunication::getResponse(std::vector<u_int8_t> &returned_data)
 {
@@ -148,11 +165,14 @@ uint64_t DobotCommunication::getEndEffectorSuctionCup(std::vector<u_int8_t> &ret
     }
 }
 
+
+
 uint64_t DobotCommunication::setPTPCmd(int ptpMode, std::vector<float> &target_points, bool isQueued)
 {
     u_int8_t ctrl = (isQueued << 1) | 0x01;
     std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x13,0x54,ctrl,0x04};
     packFromFloat(target_points,ctrl_cmd);
+
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
     std::vector<u_int8_t> data;
@@ -164,6 +184,30 @@ uint64_t DobotCommunication::setPTPCmd(int ptpMode, std::vector<float> &target_p
         return -1;
     }
 }
+
+
+
+uint64_t DobotCommunication::setEMotor(int index,int insEnabled,float speed,bool isQueued)//index 0-stepper1 1-stepper2, insEnabled 0-0ff 1-on, speed pulses/sec (+ values clockwise, - values counterclockwise)
+{
+
+    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x08,0x87,u_int8_t(isQueued),u_int8_t(index),u_int8_t(insEnabled)};
+    u_int32_t speed_32_bit = u_int32_t(speed);//convert float to 32 bit hex
+    std::vector<std::uint8_t> speed_8_bit( (std::uint8_t*)&speed_32_bit, (std::uint8_t*)&(speed_32_bit) + sizeof(std::uint32_t)); //split 32bit hex to 4 8bit hex
+    ctrl_cmd.insert( ctrl_cmd.end(), speed_8_bit.begin(), speed_8_bit.end() ); //place the speed into ctrl_cmd
+    ctrl_cmd.push_back (checksumCalc(ctrl_cmd)); //add the checksum
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<u_int8_t> data;
+    if(!getResponse(data)){return -2;}
+    if(isQueued){
+        return getQueuedCmdIndex(data);
+
+    }else{
+        return -1;
+    }
+
+}
+
 
 uint64_t DobotCommunication::getPose(std::vector<u_int8_t> &returned_data, bool isQueued)
 {

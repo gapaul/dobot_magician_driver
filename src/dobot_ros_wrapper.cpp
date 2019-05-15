@@ -110,9 +110,12 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     _set_cartesian_pos_srv = _nh.advertiseService("/PTP/set_cartesian_pos", &DobotRosWrapper::setCartesianPos, this);
     _set_joint_angles_srv = _nh.advertiseService("/PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);
 
-    ROS_INFO("DobotRosWrapper: this thread will sleep for homing cmd");
-    std::this_thread::sleep_for(std::chrono::seconds(30));
-    ROS_INFO("DobotRosWrapper: this thread will now wake up");
+//    ROS_INFO("DobotRosWrapper: this thread will sleep for homing cmd");
+//    std::this_thread::sleep_for(std::chrono::seconds(30));
+//    ROS_INFO("DobotRosWrapper: this thread will now wake up");
+    _driver->dobot_serial->setEMotor(1,0,5000,true);
+
+
 
     update_state_thread = new std::thread(&DobotRosWrapper::update_state_loop, this);
 

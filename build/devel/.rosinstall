@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/tim/catkin_ws/src/new dobot/dobot_magician_driver/build/devel/setup.sh

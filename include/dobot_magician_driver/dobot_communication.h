@@ -105,7 +105,7 @@ public:
 //    getIOPWM
 //    getIODI
 //    getIOADC
-//    setEMotor
+    uint64_t setEMotor(int index,int insEnabled,float speed,bool isQueued);
 
     /// Calibration
 //    setAngleSensorStaticError
