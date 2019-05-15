@@ -48,13 +48,14 @@ void DobotRosWrapper::update_state_loop()
     std::vector<double> latest_joint_angles;
     std::vector<double> latest_cartesian_pos;
     sensor_msgs::JointState joint_ang_msg;
-    geometry_msgs::Pose cart_pos_msg;
+    geometry_msgs::PoseStamped cart_pos_msg;
 
     ROS_INFO("DobotRosWrapper: data from Dobot available");
     ROS_DEBUG("DobotRosWrapper: update_state_thread started");
 
+    ros::Time ros_time;
     while(ros::ok()){
-
+        ros_time = ros::Time::now();
         _driver->getJointAngles(latest_joint_angles);
         _driver->getCartesianPos(latest_cartesian_pos);
 
@@ -63,15 +64,25 @@ void DobotRosWrapper::update_state_loop()
         {
             joint_ang_msg.position.clear();
             for(int i = 0; i < latest_joint_angles.size(); ++i){
-
                 joint_ang_msg.position.push_back(latest_joint_angles[i]);
             }
 
-            cart_pos_msg.position.x = latest_cartesian_pos[0];
-            cart_pos_msg.position.y = latest_cartesian_pos[1];
-            cart_pos_msg.position.z = latest_cartesian_pos[2];
-//            cart_pos_msg.orientation.
+            cart_pos_msg.pose.position.x = latest_cartesian_pos[0];
+            cart_pos_msg.pose.position.y = latest_cartesian_pos[1];
+            cart_pos_msg.pose.position.z = latest_cartesian_pos[2];
 
+            if(latest_cartesian_pos[3] < 0.0){
+                latest_cartesian_pos[3] = latest_cartesian_pos[3]+360.0;
+            }
+
+            cart_pos_msg.pose.orientation.w = (cos(latest_cartesian_pos[3]*0.5*M_PI/180.0));
+            cart_pos_msg.pose.orientation.x = 0;
+            cart_pos_msg.pose.orientation.y = 0;
+            cart_pos_msg.pose.orientation.z = sqrt(1-pow(cart_pos_msg.pose.orientation.w,2));
+
+
+            cart_pos_msg.header.stamp = ros_time;
+            joint_ang_msg.header.stamp = ros_time;
             _joint_state_pub.publish(joint_ang_msg);
             _end_effector_state_pub.publish(cart_pos_msg);
         }
@@ -93,14 +104,14 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     , _rate(100)
 {
     _driver = new DobotDriver(port);
-    _joint_state_pub = _pn.advertise<sensor_msgs::JointState>("/joint_states", 1);
-    _end_effector_state_pub = _pn.advertise<geometry_msgs::Pose>("/end_effector_state", 1);
+    _joint_state_pub = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
+    _end_effector_state_pub = _nh.advertise<geometry_msgs::PoseStamped>("/end_effector_state", 1);
     _set_suction_cup_srv = _nh.advertiseService("/end_effector/set_suction_cup", &DobotRosWrapper::setSuctionCup, this);
     _set_cartesian_pos_srv = _nh.advertiseService("/PTP/set_cartesian_pos", &DobotRosWrapper::setCartesianPos, this);
     _set_joint_angles_srv = _nh.advertiseService("/PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);
 
     ROS_INFO("DobotRosWrapper: this thread will sleep for homing cmd");
-    std::this_thread::sleep_for(std::chrono::seconds(20));
+    std::this_thread::sleep_for(std::chrono::seconds(30));
     ROS_INFO("DobotRosWrapper: this thread will now wake up");
 
     update_state_thread = new std::thread(&DobotRosWrapper::update_state_loop, this);
@@ -119,8 +130,6 @@ int main(int argc, char** argv){
 
 
     ros::init(argc, argv, "dobot_magician_node");
-
-
     std::string port;
     ros::AsyncSpinner spinner(4);
     if (!(ros::param::get("~port", port))) {
@@ -132,7 +141,7 @@ int main(int argc, char** argv){
 
     std::string name = "dobot_magician"+port;
 
-    std::cout << name << std::endl;
+//    std::cout << name << std::endl;
 
     ros::NodeHandle nh(name); // remove "/dev", seems too long
     ros::NodeHandle pn("~");
@@ -148,12 +157,6 @@ int main(int argc, char** argv){
     ROS_DEBUG("DobotRosWrapper: spinner.start()");
     spinner.start();
     ros::Rate rate(10);
-    std::vector<float> vect;
-    vect.push_back(50);
-    vect.push_back(35);
-    vect.push_back(40);
-    vect.push_back(10);
-    std::string temp;
     while(ros::ok()){
 //           std::cout<< "waiting for keypress" << std::endl;
 

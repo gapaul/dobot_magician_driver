@@ -1,6 +1,7 @@
 #ifndef DOBOT_ROS_WRAPPER_H_
 #define DOBOT_ROS_WRAPPER_H_
 
+#include <cmath>
 #include <thread>
 
 #include "ros/ros.h"
