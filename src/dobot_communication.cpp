@@ -14,7 +14,7 @@ DobotCommunication::DobotCommunication(std::string port) :
     _serial_port->SetParity(_parity);
     _serial_port->SetCharSize(_character_size);
 
-    std::cout << "Port " << port << " is " << (_serial_port->IsOpen() ? "Connected" : "Disconnected") << std::endl;
+//    std::cout << "Port " << port << " is " << (_serial_port->IsOpen() ? "Connected" : "Disconnected") << std::endl;
 }
 
 DobotCommunication::~DobotCommunication()
@@ -160,6 +160,21 @@ uint64_t DobotCommunication::getEndEffectorSuctionCup(std::vector<u_int8_t> &ret
     if(isQueued){
         return getQueuedCmdIndex(data);
 
+    }else{
+        return -1;
+    }
+}
+
+uint64_t DobotCommunication::setEndEffectorGripper(bool is_ctrl_enabled, bool is_gripped, bool isQueued)
+{
+    u_int8_t ctrl = (isQueued << 1) | 0x01;
+    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3f, ctrl, is_ctrl_enabled, is_gripped};
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<u_int8_t> data;
+    if(!getResponse(data)){return -2;}
+    if(isQueued){
+        return getQueuedCmdIndex(data);
     }else{
         return -1;
     }

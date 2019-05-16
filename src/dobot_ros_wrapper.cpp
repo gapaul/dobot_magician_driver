@@ -1,13 +1,30 @@
 #include "dobot_magician_driver/dobot_ros_wrapper.h"
 
 
-bool DobotRosWrapper::setSuctionCup(dobot_magician_driver::SetSuctionCupRequest &req, dobot_magician_driver::SetSuctionCupResponse &res)
+bool DobotRosWrapper::setGripper(dobot_magician_driver::SetEndEffectorRequest &req, dobot_magician_driver::SetEndEffectorResponse &res)
 {
-    if(!req.pumpOn){
-        req.pumpOn = false;
+    if((req.isEndEffectorEnabled != 0 && req.isEndEffectorEnabled != 1)
+            || (req.endEffectorState != 0 && req.endEffectorState != 1)){
+        ROS_WARN("DobotRosWrapper: ensure booleans are specified for both request parameters");
+        return false;
     }
 
-    _driver->dobot_serial->setEndEffectorSuctionCup(1,req.pumpOn);
+
+    _driver->dobot_serial->setEndEffectorGripper(req.isEndEffectorEnabled,req.endEffectorState);
+    res.success = true;
+
+    return true;
+}
+
+bool DobotRosWrapper::setSuctionCup(dobot_magician_driver::SetEndEffectorRequest &req, dobot_magician_driver::SetEndEffectorResponse &res)
+{
+    if((req.isEndEffectorEnabled != 0 && req.isEndEffectorEnabled != 1)
+            || (req.endEffectorState != 0 && req.endEffectorState != 1)){
+        ROS_WARN("DobotRosWrapper: ensure booleans are specified for both request parameters");
+        return false;
+    }
+
+    _driver->dobot_serial->setEndEffectorSuctionCup(req.isEndEffectorEnabled,req.endEffectorState);
     res.success = true;
 
     return true;
@@ -17,13 +34,14 @@ bool DobotRosWrapper::setSuctionCup(dobot_magician_driver::SetSuctionCupRequest 
 bool DobotRosWrapper::setJointAngles(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res)
 {
     if(req.target_points.size() != 4){
-        ROS_INFO("DobotRosWrapper: specify correct number of target points");
+        ROS_WARN("DobotRosWrapper: specify correct number of target points");
         res.success = false;
         return false;
     }
-    std::vector<float> test = std::vector<float>(req.target_points.begin(), req.target_points.end());
-    _driver->setJointAngles(test);
+    std::vector<float> target_points = std::vector<float>(req.target_points.begin(), req.target_points.end());
+    _driver->setJointAngles(target_points);
     res.success = true;
+
     return res.success;
 
 }
@@ -32,11 +50,11 @@ bool DobotRosWrapper::setCartesianPos(dobot_magician_driver::SetTargetPointsRequ
 {
 
     if(req.target_points.size() != 4){
-        ROS_INFO("DobotRosWrapper: specify correct number of target points");
+        ROS_WARN("DobotRosWrapper: specify correct number of target points");
         return false;
     }
-    std::vector<float> test = std::vector<float>(req.target_points.begin(), req.target_points.end());
-    _driver->setCartesianPos(test);
+    std::vector<float> target_points = std::vector<float>(req.target_points.begin(), req.target_points.end());
+    _driver->setCartesianPos(target_points);
     res.success = true;
     return res.success;
 
@@ -50,7 +68,7 @@ void DobotRosWrapper::update_state_loop()
     sensor_msgs::JointState joint_ang_msg;
     geometry_msgs::PoseStamped cart_pos_msg;
 
-    ROS_INFO("DobotRosWrapper: data from Dobot available");
+    ROS_INFO("DobotRosWrapper: data from Dobot is now being published");
     ROS_DEBUG("DobotRosWrapper: update_state_thread started");
 
     ros::Time ros_time;
@@ -59,7 +77,6 @@ void DobotRosWrapper::update_state_loop()
         _driver->getJointAngles(latest_joint_angles);
         _driver->getCartesianPos(latest_cartesian_pos);
 
-        // needs fixing, it was hacked together
         if(latest_joint_angles.size() == 4 && latest_cartesian_pos.size() == 4)
         {
             joint_ang_msg.position.clear();
@@ -75,7 +92,7 @@ void DobotRosWrapper::update_state_loop()
                 latest_cartesian_pos[3] = latest_cartesian_pos[3]+360.0;
             }
 
-            cart_pos_msg.pose.orientation.w = (cos(latest_cartesian_pos[3]*0.5*M_PI/180.0));
+            cart_pos_msg.pose.orientation.w = (cos(latest_cartesian_pos[3]*0.5*M_PI/180.0)); //assumes only changes in yaw
             cart_pos_msg.pose.orientation.x = 0;
             cart_pos_msg.pose.orientation.y = 0;
             cart_pos_msg.pose.orientation.z = sqrt(1-pow(cart_pos_msg.pose.orientation.w,2));
@@ -92,29 +109,23 @@ void DobotRosWrapper::update_state_loop()
 
 }
 
-bool DobotRosWrapper::setJointAngles(std::vector<float> temp)
-{
-    _driver->setJointAngles(temp);
-}
-
-
 DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port)
     : _nh(nh)
     , _pn(pn)
     , _rate(100)
 {
     _driver = new DobotDriver(port);
+    _driver->initialiseDobot();
     _joint_state_pub = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
     _end_effector_state_pub = _nh.advertise<geometry_msgs::PoseStamped>("/end_effector_state", 1);
+    _set_gripper_srv = _nh.advertiseService("/end_effector/set_gripper", &DobotRosWrapper::setGripper, this);
     _set_suction_cup_srv = _nh.advertiseService("/end_effector/set_suction_cup", &DobotRosWrapper::setSuctionCup, this);
     _set_cartesian_pos_srv = _nh.advertiseService("/PTP/set_cartesian_pos", &DobotRosWrapper::setCartesianPos, this);
     _set_joint_angles_srv = _nh.advertiseService("/PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);
 
-//    ROS_INFO("DobotRosWrapper: this thread will sleep for homing cmd");
-//    std::this_thread::sleep_for(std::chrono::seconds(30));
-//    ROS_INFO("DobotRosWrapper: this thread will now wake up");
-    _driver->dobot_serial->setEMotor(1,0,5000,true);
-
+    ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
+    std::this_thread::sleep_for(std::chrono::seconds(30));
+    ROS_INFO("DobotRosWrapper: this thread will now wake up");
 
 
     update_state_thread = new std::thread(&DobotRosWrapper::update_state_loop, this);
@@ -134,7 +145,7 @@ int main(int argc, char** argv){
 
     ros::init(argc, argv, "dobot_magician_node");
     std::string port;
-    ros::AsyncSpinner spinner(4);
+    ros::AsyncSpinner spinner(3);
     if (!(ros::param::get("~port", port))) {
 
         ROS_ERROR("DobotRosWrapper: port not specified");

@@ -11,7 +11,7 @@
 
 #include "dobot_driver.h"
 #include "dobot_magician_driver/dobot_communication.h"
-#include "dobot_magician_driver/SetSuctionCup.h"
+#include "dobot_magician_driver/SetEndEffector.h"
 #include "dobot_magician_driver/SetTargetPoints.h"
 
 
@@ -28,11 +28,14 @@ private:
     ros::Publisher _end_effector_state_pub; //is this the best name?
     ros::Publisher _tool_vel_pub; //not sure if exists
 
+
+    ros::ServiceServer _set_gripper_srv;
     ros::ServiceServer _set_suction_cup_srv;
     ros::ServiceServer _set_cartesian_pos_srv;
     ros::ServiceServer _set_joint_angles_srv;
 
-    bool setSuctionCup(dobot_magician_driver::SetSuctionCupRequest &req, dobot_magician_driver::SetSuctionCupResponse &res);
+    bool setGripper(dobot_magician_driver::SetEndEffectorRequest &req, dobot_magician_driver::SetEndEffectorResponse &res);
+    bool setSuctionCup(dobot_magician_driver::SetEndEffectorRequest &req, dobot_magician_driver::SetEndEffectorResponse &res);
     bool setJointAngles(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res);
     bool setCartesianPos(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res);
 
@@ -40,7 +43,6 @@ private:
     void update_state_loop();
 
 public:
-    bool setJointAngles(std::vector<float> temp);
     DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port);
     ~DobotRosWrapper();
 };

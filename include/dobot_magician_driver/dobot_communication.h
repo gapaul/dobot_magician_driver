@@ -57,7 +57,7 @@ public:
 //    getEndEffectorLaser
     uint64_t setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool isQueued = 0);
     uint64_t getEndEffectorSuctionCup(std::vector<u_int8_t> &returned_data, bool isQueued = 0);
-//    setEndEffectorGripper
+    uint64_t setEndEffectorGripper(bool is_ctrl_enabled, bool is_gripped, bool isQueued = 0);
 //    getEndEffectorGripper
 
     /// JOG

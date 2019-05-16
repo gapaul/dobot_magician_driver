@@ -1,5 +1,0 @@
-#request
-bool pumpOn
----
-#response
-bool success

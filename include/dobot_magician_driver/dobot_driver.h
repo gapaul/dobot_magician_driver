@@ -19,6 +19,7 @@ public:
     bool getCartesianPos(std::vector<double> &cart_pos);
     bool setJointAngles(std::vector<float> &joint_angles);
     bool setCartesianPos(std::vector<float> &cart_pos);
+    void initialiseDobot(void);
 //    bool setHomeCalibrate()
 
 };

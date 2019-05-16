@@ -5,9 +5,6 @@ DobotDriver::DobotDriver(std::string port)
 {
     dobot_serial = new DobotCommunication(port);
     dobot_states = new DobotStates();
-    dobot_serial->setHOMECmd(1); //create setter for this to access from ros wrapper
-    dobot_serial->setEMotor(0,0,5000,true);//turn off stepper 1
-    dobot_serial->setEMotor(1,0,5000,true);//turn off stepper 2
 
 }
 
@@ -58,5 +55,12 @@ bool DobotDriver::setCartesianPos(std::vector<float> &cart_pos)
 
     }
     return false;
+}
+
+void DobotDriver::initialiseDobot()
+{
+    dobot_serial->setHOMECmd(1); //create setter for this to access from ros wrapper
+    //    dobot_serial->setEMotor(0,0,5000,true);//turn off stepper 1
+    //    dobot_serial->setEMotor(1,0,5000,true);//turn off stepper 2
 }
 
