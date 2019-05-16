@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: dobot_magician_driver
-Description: Description of dobot_magician_driver
-Version: 0.0.0
-Cflags: -I/usr/local/include
-Libs: -L/usr/local/lib 
-Requires: 
