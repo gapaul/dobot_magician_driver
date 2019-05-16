@@ -10,7 +10,7 @@ bool DobotRosWrapper::setGripper(dobot_magician_driver::SetEndEffectorRequest &r
     }
 
 
-    _driver->dobot_serial->setEndEffectorGripper(req.isEndEffectorEnabled,req.endEffectorState);
+    _driver->setGripper(req.isEndEffectorEnabled,req.endEffectorState);
     res.success = true;
 
     return true;
@@ -24,7 +24,7 @@ bool DobotRosWrapper::setSuctionCup(dobot_magician_driver::SetEndEffectorRequest
         return false;
     }
 
-    _driver->dobot_serial->setEndEffectorSuctionCup(req.isEndEffectorEnabled,req.endEffectorState);
+    _driver->setSuctionCup(req.isEndEffectorEnabled,req.endEffectorState);
     res.success = true;
 
     return true;

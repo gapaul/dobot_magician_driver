@@ -34,12 +34,39 @@ private:
     ros::ServiceServer _set_cartesian_pos_srv;
     ros::ServiceServer _set_joint_angles_srv;
 
+    /**
+     * @brief ROS Service to set the status of the gripper
+     * @param req: contains the desired parameters to be set
+     * @param res: contains whether the command was received by the Dobot
+     * @param bool indicates whether invalid parameters were set
+     */
     bool setGripper(dobot_magician_driver::SetEndEffectorRequest &req, dobot_magician_driver::SetEndEffectorResponse &res);
+    /**
+     * @brief ROS Service to set the status of the suction cup
+     * @param req: contains the desired parameters to be set
+     * @param res: contains whether the command was received by the Dobot
+     * @param bool indicates whether invalid parameters were set
+     */
     bool setSuctionCup(dobot_magician_driver::SetEndEffectorRequest &req, dobot_magician_driver::SetEndEffectorResponse &res);
+    /**
+     * @brief ROS Service to command the joint angles to a desired position
+     * @param req: contains the desired joint angles to be set in degrees
+     * @param res: contains whether the command was received by the Dobot
+     * @param bool indicates whether invalid parameters were set
+     */
     bool setJointAngles(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res);
+    /**
+     * @brief ROS Service to command the end effector to a desired pose
+     * @param req: contains the desired pose specified in millimetres
+     * @param res: contains whether the command was received by the Dobot
+     * @param bool indicates whether invalid parameters were set
+     */
     bool setCartesianPos(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res);
 
     std::thread *update_state_thread;
+    /**
+     * @brief Publishes "state" of the Dobot
+     */
     void update_state_loop();
 
 public:
