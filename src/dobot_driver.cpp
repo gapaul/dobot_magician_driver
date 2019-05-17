@@ -1,6 +1,6 @@
 #include "dobot_magician_driver/dobot_driver.h"
 
-
+// DobotDriver
 DobotDriver::DobotDriver(std::string port)
 {
     _dobot_serial = new DobotCommunication(port);
