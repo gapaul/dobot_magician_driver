@@ -38,7 +38,12 @@ bool DobotRosWrapper::setJointAngles(dobot_magician_driver::SetTargetPointsReque
         res.success = false;
         return false;
     }
-    std::vector<float> target_points = std::vector<float>(req.target_points.begin(), req.target_points.end());
+
+    std::vector<float> target_points;
+    for(int i = 0; i < req.target_points.size(); ++i){
+        target_points.push_back(req.target_points[i]*180/M_PI);
+
+    }
     _driver->setJointAngles(target_points);
     res.success = true;
 
@@ -53,7 +58,12 @@ bool DobotRosWrapper::setCartesianPos(dobot_magician_driver::SetTargetPointsRequ
         ROS_WARN("DobotRosWrapper: specify correct number of target points");
         return false;
     }
-    std::vector<float> target_points = std::vector<float>(req.target_points.begin(), req.target_points.end());
+
+    std::vector<float> target_points;
+    for(int i = 0; i < req.target_points.size(); ++i){
+        target_points.push_back(req.target_points[i]*1000);
+
+    }
     _driver->setCartesianPos(target_points);
     res.success = true;
     return res.success;
@@ -81,12 +91,12 @@ void DobotRosWrapper::update_state_loop()
         {
             joint_ang_msg.position.clear();
             for(int i = 0; i < latest_joint_angles.size(); ++i){
-                joint_ang_msg.position.push_back(latest_joint_angles[i]);
+                joint_ang_msg.position.push_back(latest_joint_angles[i]*M_PI/180);
             }
 
-            cart_pos_msg.pose.position.x = latest_cartesian_pos[0];
-            cart_pos_msg.pose.position.y = latest_cartesian_pos[1];
-            cart_pos_msg.pose.position.z = latest_cartesian_pos[2];
+            cart_pos_msg.pose.position.x = latest_cartesian_pos[0]/1000;
+            cart_pos_msg.pose.position.y = latest_cartesian_pos[1]/1000;
+            cart_pos_msg.pose.position.z = latest_cartesian_pos[2]/1000;
 
             if(latest_cartesian_pos[3] < 0.0){
                 latest_cartesian_pos[3] = latest_cartesian_pos[3]+360.0;
