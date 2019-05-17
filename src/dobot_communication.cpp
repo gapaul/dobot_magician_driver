@@ -38,20 +38,20 @@ u_int8_t DobotCommunication::checksumCalc(std::vector<uint8_t> &ctrl_cmd)
     return checksum;
 }
 
-void print_hex(std::vector<u_int8_t> input){  //used to print the serial command in hex and int for debugging
+//void print_hex(std::vector<u_int8_t> input){  //used to print the serial command in hex and int for debugging
 
 
-    for(int k=0;k<input.size();k++){
-       std::cout<< int(input[k]) << " ";
-    }
+//    for(int k=0;k<input.size();k++){
+//       std::cout<< int(input[k]) << " ";
+//    }
 
-    std::cout<< std::endl;
-    for(int k=0;k<input.size();k++){
-       std::cout<< std::hex << int(input[k]) << " ";
-    }
-    std::cout<< std::endl;
+//    std::cout<< std::endl;
+//    for(int k=0;k<input.size();k++){
+//       std::cout<< std::hex << int(input[k]) << " ";
+//    }
+//    std::cout<< std::endl;
 
-}
+//}
 
 
 bool DobotCommunication::getResponse(std::vector<u_int8_t> &returned_data)

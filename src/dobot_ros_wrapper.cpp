@@ -116,12 +116,12 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
 {
     _driver = new DobotDriver(port);
     _driver->initialiseDobot();
-    _joint_state_pub = _nh.advertise<sensor_msgs::JointState>("/joint_states", 1);
-    _end_effector_state_pub = _nh.advertise<geometry_msgs::PoseStamped>("/end_effector_state", 1);
-    _set_gripper_srv = _nh.advertiseService("/end_effector/set_gripper", &DobotRosWrapper::setGripper, this);
-    _set_suction_cup_srv = _nh.advertiseService("/end_effector/set_suction_cup", &DobotRosWrapper::setSuctionCup, this);
-    _set_cartesian_pos_srv = _nh.advertiseService("/PTP/set_cartesian_pos", &DobotRosWrapper::setCartesianPos, this);
-    _set_joint_angles_srv = _nh.advertiseService("/PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);
+    _joint_state_pub = _nh.advertise<sensor_msgs::JointState>("joint_states", 1);
+    _end_effector_state_pub = _nh.advertise<geometry_msgs::PoseStamped>("end_effector_state", 1);
+    _set_gripper_srv = _nh.advertiseService("end_effector/set_gripper", &DobotRosWrapper::setGripper, this);
+    _set_suction_cup_srv = _nh.advertiseService("end_effector/set_suction_cup", &DobotRosWrapper::setSuctionCup, this);
+    _set_cartesian_pos_srv = _nh.advertiseService("PTP/set_cartesian_pos", &DobotRosWrapper::setCartesianPos, this);
+    _set_joint_angles_srv = _nh.advertiseService("PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);
 
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
     std::this_thread::sleep_for(std::chrono::seconds(30));
@@ -153,11 +153,11 @@ int main(int argc, char** argv){
 
     }
 
-    std::string name = "dobot_magician"+port;
+//    std::string name = "dobot_magician"+port;
 
 //    std::cout << name << std::endl;
 
-    ros::NodeHandle nh(name); // remove "/dev", seems too long
+    ros::NodeHandle nh;
     ros::NodeHandle pn("~");
     DobotRosWrapper db_ros(nh,pn,port);
 

@@ -15,9 +15,10 @@ bool DobotDriver::getJointAngles(std::vector<double> &joint_angles)
 
     if(_dobot_serial->getPose(data))
     {
-        _dobot_states->unpackPose(data, pose_data);
-        joint_angles = std::vector<double>(pose_data.begin()+4, pose_data.end());
-        return true;
+        if(_dobot_states->unpackPose(data, pose_data)){
+            joint_angles = std::vector<double>(pose_data.begin()+4, pose_data.end());
+            return true;
+        }
     }
 
     return false;
@@ -30,9 +31,10 @@ bool DobotDriver::getCartesianPos(std::vector<double> &cart_pos)
 
     if(_dobot_serial->getPose(data))
     {
-        _dobot_states->unpackPose(data, pose_data);
-        cart_pos = std::vector<double>(pose_data.begin(), pose_data.begin()+4);
-        return true;
+        if(_dobot_states->unpackPose(data, pose_data)){
+            cart_pos = std::vector<double>(pose_data.begin(), pose_data.begin()+4);
+            return true;
+        }
     }
 
     return false;
