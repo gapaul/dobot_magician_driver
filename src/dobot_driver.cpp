@@ -1,6 +1,6 @@
 #include "dobot_magician_driver/dobot_driver.h"
 
-
+// DobotDriver
 DobotDriver::DobotDriver(std::string port)
 {
     _dobot_serial = new DobotCommunication(port);
@@ -10,7 +10,7 @@ DobotDriver::DobotDriver(std::string port)
 
 bool DobotDriver::getJointAngles(std::vector<double> &joint_angles)
 {
-    std::vector<u_int8_t> data; // think of a better name
+    std::vector<u_int8_t> data;
     std::vector<double> pose_data;
 
     if(_dobot_serial->getPose(data))
