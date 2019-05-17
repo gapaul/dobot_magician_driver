@@ -122,10 +122,38 @@ public:
     uint64_t setPTPCmd(int ptp_mode, std::vector<float> &target_points, bool is_queued = 1);
 
     ///CP
-//    setCPParams
-//    getCPParams
-//    setPTPCmd
-
+	/**
+	* @CP: Continuos Path
+	* @CP parameters:
+	*	*planAcc: Maximum planned acceleration
+	*	*junctionVel: Maximum junction acceleration
+	*	*acc: Maximum actual acceleration,used in non-real-time mode only
+	*	*period: Interpolation cycle, used in real-time mode only
+	*	*realtimeTrack: 0: Non-real time mode; 1: Real time mode
+	*/
+	uint64_t setCPParams(std::vector<float> &CPParams, int realtimeTrack = 1, bool is_queued = 1);
+	/**
+	 * @brief Function sends a command to the Dobot to set Parameters for the CP mode
+	 * @param CPParams: Parameters for CP mode 
+	 * @param realtimeTrack: parameter to indicate CP mode (0: non-real time mode, 1: real time mode)
+	 * @param is_queued: indicates whether the instruction should be a queue command
+	 * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+	 */
+	uint64_t getCPParams(std::vector<u_int8_t> &returned_data, bool is_queued = 1);
+	/**
+	 * @brief Function sends a command to the Dobot to get the CP Parameters
+	 * @param returned_data: Parameters for CP mode 
+	 * @param is_queued: indicates whether the instruction should be a queue command
+	 * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+	 */
+	uint64_t setCPCmd(std::vector<float> &CPCmd, int cpMode = 1, bool is_queued = 1);
+	/**
+	 * @brief Function sends a command to the Dobot to execute teh specific CP Command
+	 * @param CPCmd: CP parameters (x, y, z, velocity)
+	 * @param cpMode: CP mode (0: Relative - Cartesian Increment, 1: Absolute - Cartesian Coordinate)
+	 * @param is_queued: indicates whether the instruction should be a queue command
+	 * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+	 */
     /// ARC
 //    setARCParams
 //    getARCParams
