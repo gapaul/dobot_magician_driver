@@ -138,14 +138,29 @@ public:
 //    setTRIGCmd
 
     /// EIO
-//    setIOMultiplexing
+
+    /**
+     * @brief Function sends a command to the Dobot to set the multiplexing of its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param multiplex: the multiplexing
+          IOFunctionDummy;  // Invalid
+          IOFunctionDO;     // I/O output
+          IOFunctionPWM;    // PWM output
+          IOFunctionDI;     // I/O input
+          IOFunctionADC;    // A/D input
+          IOFunctionDIPU;   // Pull-up input
+          IOFunctionDIPD    // Pull-down input
+     * @param is_queued: indicates whether the instruction should be a queue command
+     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+     */
+    uint64_t setIOMultiplexing(uint8_t address, uint8_t multiplex, bool is_queued = 1);
 //    getIOMultiplexing
 //    setIODO
 //    getIODO
 //    setIOPWM
 //    getIOPWM
 //    getIODI
-//    getIOADC
+//    getIOADCvalue_to_pack
     uint64_t setEMotor(int index,int insEnabled,float speed,bool is_queued);
 
     /// Calibration

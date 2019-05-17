@@ -82,10 +82,21 @@ bool DobotDriver::setSuctionCup(bool is_ctrl_enabled, bool is_sucked)
     return false;
 }
 
+/*
+ *  I/O COMMANDS
+ */
+
+bool DobotDriver::setIOMUX(uint8_t address, uint8_t multiplex)
+{
+    if(_dobot_serial->setIOMultiplexing(address,multiplex) >= -1){
+      return true;
+    }
+    return false;
+}
+
 void DobotDriver::initialiseDobot()
 {
     _dobot_serial->setHOMECmd(1); //create setter for this to access from ros wrapper
     //    dobot_serial->setEMotor(0,0,5000,true);//turn off stepper 1
     //    dobot_serial->setEMotor(1,0,5000,true);//turn off stepper 2
 }
-

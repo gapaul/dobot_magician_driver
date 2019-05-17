@@ -15,6 +15,7 @@ public:
 
 
     DobotDriver(std::string port);
+
     /**
      * @brief Specifies the correct instructions for the command packet to obtain the
      * current joint angles, and interprets the returned data from the Dobot
@@ -22,6 +23,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool getJointAngles(std::vector<double> &joint_angles);
+
     /**
      * @brief Specifies the correct instructions for the command packet to obtain the
      * current end effector pose, and interprets the returned data from the Dobot
@@ -29,6 +31,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool getCartesianPos(std::vector<double> &cart_pos);
+
     /**
      * @brief Specifies the correct instructions for the command packet, to set the
      * joint angles of the Dobot, and interprets the returned data from the Dobot
@@ -36,6 +39,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool setJointAngles(std::vector<float> &joint_angles);
+
     /**
      * @brief Specifies the correct instructions for the command packet, to set the
      * end effector pose, and interprets the returned data from the Dobot
@@ -43,6 +47,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool setCartesianPos(std::vector<float> &cart_pos);
+
     /**
      * @brief Specifies the correct instructions for the command packet to set the desired gripper
      * state, and interprets the returned data from the Dobot
@@ -51,6 +56,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool setGripper(bool is_ctrl_enabled, bool is_gripped);
+
     /**
      * @brief Specifies the correct instructions for the command packet to set the desired suction cup
      * state, and interprets the returned data from the Dobot
@@ -59,11 +65,32 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool setSuctionCup(bool is_ctrl_enabled, bool is_sucked);
+
     /**
      * @brief Runs the initialisation sequence for the Dobot
      */
     void initialiseDobot(void);
+
 //    bool setHomeCalibrate()
+
+
+    /*
+     *  I/O COMMANDS
+     */
+
+    /*
+     * @brief Function sends a command to the Dobot to set the multiplexing of its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param multiplex: the multiplexing
+          IOFunctionDummy;  // Invalid
+          IOFunctionDO;     // I/O output
+          IOFunctionPWM;    // PWM output
+          IOFunctionDI;     // I/O input
+          IOFunctionADC;    // A/D input
+          IOFunctionDIPU;   // Pull-up input
+          IOFunctionDIPD    // Pull-down input
+     */
+    bool setIOMUX(uint8_t address, uint8_t multiplex);
 
 };
 
