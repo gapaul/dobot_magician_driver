@@ -1,6 +1,7 @@
 <launch>
+<!-- before using this launch file, ensure there is a copy of the .rules file (/dobot_magician_driver/supporting/43-dobot_magician.rules) in the /etc/udev/rules.d directory -->
 
-  <arg name="port_name" default="ttyUSB0"/>
+  <arg name="port_name" default="dobot_magician"/>
   <node pkg="dobot_magician_driver" type="dobot_magician_driver" ns="$(arg port_name)" name="dobot_magician_node" output="screen">
     <param name="port" value="/dev/$(arg port_name)"/>
   </node>
