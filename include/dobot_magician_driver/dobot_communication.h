@@ -202,8 +202,26 @@ public:
      */
     uint64_t setIODO(int address, bool level, bool is_queued = 1);
 
-//    getIODO
-//    setIOPWM
+    /**
+     * @brief Function sends a command to the Dobot to get the digital output on its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param returned_data: container that holds the "params" component of the payload from the returned
+     * command packet
+     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+     * Here it will always return -1 because the command is not queued by default
+     */
+    uint64_t getIODO(int address, std::vector<u_int8_t> &returned_data);
+
+    /**
+     * @brief Function sends a command to the Dobot to send a PWM signal at an IO pin address
+     * @param address: the address of the IO pin (from 1-20)
+     * @param frequency: the PWM frequency (10Hz - 1MHz)
+     * @param duty_cycle: the PWM duty ratio (0 - 100)
+     * @param is_queued: indicates whether the instruction should be a queue command
+     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+     */
+    uint64_t setIOPWM(int address, float frequency, float duty_cycle, bool is_queued = 1);
+
 //    getIOPWM
 //    getIODI
 //    getIOADCvalue_to_pack

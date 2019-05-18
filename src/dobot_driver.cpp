@@ -113,7 +113,7 @@ bool DobotDriver::setCPCmd(std::vector<float> &CPCmd, int cpMode, bool is_queued
  *  I/O COMMANDS
  */
 
-bool DobotDriver::setIOMUX(int address, int multiplex)
+bool DobotDriver::setIOMultiplexing(int address, int multiplex)
 {
     if(_dobot_serial->setIOMultiplexing(address,multiplex) >= -1){
       return true;
@@ -121,13 +121,13 @@ bool DobotDriver::setIOMUX(int address, int multiplex)
     return false;
 }
 
-bool DobotDriver::getIOMUX(int address, int &multiplex)
+bool DobotDriver::getIOMultiplexing(int address, int &multiplex)
 {
     std::vector<u_int8_t> data;
 
     if(_dobot_serial->getIOMultiplexing(address,data))
     {
-        multiplex = data.at(1);
+        multiplex = (int) data.at(1);
         return true;
     }
 
@@ -137,6 +137,27 @@ bool DobotDriver::getIOMUX(int address, int &multiplex)
 bool DobotDriver::setIODigitalOutput(int address, bool level)
 {
     if(_dobot_serial->setIODO(address,level) >= -1){
+      return true;
+    }
+    return false;
+}
+
+bool DobotDriver::getIODigitalOutput(int address, bool &level)
+{
+    std::vector<u_int8_t> data;
+
+    if(_dobot_serial->getIODO(address,data))
+    {
+        level = (bool) data.at(1);
+        return true;
+    }
+
+    return false;
+}
+
+bool DobotDriver::setIOPWM(int address, float frequency, float duty_cycle)
+{
+    if(_dobot_serial->setIOPWM(address,frequency,duty_cycle) >= -1){
       return true;
     }
     return false;

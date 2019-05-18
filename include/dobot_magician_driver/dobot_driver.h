@@ -107,7 +107,7 @@ public:
          5 - IOFunctionDIPU;   // Pull-up input
          6 - IOFunctionDIPD    // Pull-down input
      */
-    bool setIOMUX(int address, int multiplex);
+    bool setIOMultiplexing(int address, int multiplex);
 
     /*
      * @brief Function sends a command to the Dobot to get the multiplexing of its IO pins
@@ -121,14 +121,29 @@ public:
          5 - IOFunctionDIPU;   // Pull-up input
          6 - IOFunctionDIPD    // Pull-down input
      */
-    bool getIOMUX(int address, int &multiplex);
+    bool getIOMultiplexing(int address, int &multiplex);
 
     /**
-     * @brief Function sends a command to the Dobot to send a digital output on its IO pins
+     * @brief Function sends a command to the Dobot to send a digital output to its IO pins
      * @param address: the address of the IO pin (from 1-20)
-     * @param level: the level output (0-LOW, 1-HIGH
+     * @param level: the level output (0-LOW, 1-HIGH)
      */
     bool setIODigitalOutput(int address, bool level);
+
+    /**
+     * @brief Function sends a command to the Dobot to get the digital output of its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param level: the level output we are trying to get (0-LOW, 1-HIGH)
+     */
+    bool getIODigitalOutput(int address, bool &level);
+
+    /**
+     * @brief Function sends a command to the Dobot to send a PWM signal at an IO pin address
+     * @param address: the address of the IO pin (from 1-20)
+     * @param frequency: the PWM frequency (10Hz - 1MHz)
+     * @param duty_cycle: the PWM duty ratio (0 - 100)
+     */
+    bool setIOPWM(int address, float frequency, float duty_cycle);
 };
 
 #endif /* DOBOT_DRIVER_H_ */
