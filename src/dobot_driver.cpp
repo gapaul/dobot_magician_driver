@@ -163,6 +163,19 @@ bool DobotDriver::setIOPWM(int address, float frequency, float duty_cycle)
     return false;
 }
 
+bool DobotDriver::getIODigitalInput(int address, bool &level)
+{
+    std::vector<u_int8_t> data;
+
+    if(_dobot_serial->getIODI(address,data))
+    {
+        level = (bool) data.at(1);
+        return true;
+    }
+
+    return false;
+}
+
 void DobotDriver::initialiseDobot()
 {
     _dobot_serial->setHOMECmd(1); //create setter for this to access from ros wrapper

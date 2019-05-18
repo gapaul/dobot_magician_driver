@@ -144,6 +144,13 @@ public:
      * @param duty_cycle: the PWM duty ratio (0 - 100)
      */
     bool setIOPWM(int address, float frequency, float duty_cycle);
+
+    /**
+     * @brief Function sends a command to the Dobot to get the digital input of its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param level: the level input we are trying to get (0-LOW, 1-HIGH)
+     */
+    bool getIODigitalInput(int address, bool &level);
 };
 
 #endif /* DOBOT_DRIVER_H_ */
