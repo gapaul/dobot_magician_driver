@@ -137,7 +137,6 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     std::this_thread::sleep_for(std::chrono::seconds(30));
     ROS_INFO("DobotRosWrapper: this thread will now wake up");
 
-
     update_state_thread = new std::thread(&DobotRosWrapper::update_state_loop, this);
 
 }
@@ -181,6 +180,7 @@ int main(int argc, char** argv){
     ROS_DEBUG("DobotRosWrapper: spinner.start()");
     spinner.start();
     ros::Rate rate(10);
+
     while(ros::ok()){
 //           std::cout<< "waiting for keypress" << std::endl;
 

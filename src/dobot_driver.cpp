@@ -113,9 +113,30 @@ bool DobotDriver::setCPCmd(std::vector<float> &CPCmd, int cpMode, bool is_queued
  *  I/O COMMANDS
  */
 
-bool DobotDriver::setIOMUX(uint8_t address, uint8_t multiplex)
+bool DobotDriver::setIOMUX(int address, int multiplex)
 {
     if(_dobot_serial->setIOMultiplexing(address,multiplex) >= -1){
+      return true;
+    }
+    return false;
+}
+
+bool DobotDriver::getIOMUX(int address, int &multiplex)
+{
+    std::vector<u_int8_t> data;
+
+    if(_dobot_serial->getIOMultiplexing(address,data))
+    {
+        multiplex = data.at(1);
+        return true;
+    }
+
+    return false;
+}
+
+bool DobotDriver::setIODigitalOutput(int address, bool level)
+{
+    if(_dobot_serial->setIODO(address,level) >= -1){
       return true;
     }
     return false;

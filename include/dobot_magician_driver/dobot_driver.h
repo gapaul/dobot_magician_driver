@@ -99,16 +99,36 @@ public:
      * @brief Function sends a command to the Dobot to set the multiplexing of its IO pins
      * @param address: the address of the IO pin (from 1-20)
      * @param multiplex: the multiplexing
-          IOFunctionDummy;  // Invalid
-          IOFunctionDO;     // I/O output
-          IOFunctionPWM;    // PWM output
-          IOFunctionDI;     // I/O input
-          IOFunctionADC;    // A/D input
-          IOFunctionDIPU;   // Pull-up input
-          IOFunctionDIPD    // Pull-down input
+         0 - IOFunctionDummy;  // Invalid
+         1 - IOFunctionDO;     // I/O output
+         2 - IOFunctionPWM;    // PWM output
+         3 - IOFunctionDI;     // I/O input
+         4 - IOFunctionADC;    // A/D input
+         5 - IOFunctionDIPU;   // Pull-up input
+         6 - IOFunctionDIPD    // Pull-down input
      */
-    bool setIOMUX(uint8_t address, uint8_t multiplex);
+    bool setIOMUX(int address, int multiplex);
 
+    /*
+     * @brief Function sends a command to the Dobot to get the multiplexing of its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param multiplex: the multiplexing we are trying to get
+         0 - IOFunctionDummy;  // Invalid
+         1 - IOFunctionDO;     // I/O output
+         2 - IOFunctionPWM;    // PWM output
+         3 - IOFunctionDI;     // I/O input
+         4 - IOFunctionADC;    // A/D input
+         5 - IOFunctionDIPU;   // Pull-up input
+         6 - IOFunctionDIPD    // Pull-down input
+     */
+    bool getIOMUX(int address, int &multiplex);
+
+    /**
+     * @brief Function sends a command to the Dobot to send a digital output on its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param level: the level output (0-LOW, 1-HIGH
+     */
+    bool setIODigitalOutput(int address, bool level);
 };
 
 #endif /* DOBOT_DRIVER_H_ */
