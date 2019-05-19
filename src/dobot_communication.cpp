@@ -297,6 +297,19 @@ uint64_t DobotCommunication::getIODI(int address, std::vector<u_int8_t> &returne
     return -1;
 }
 
+uint64_t DobotCommunication::getIOADC(int address, std::vector<u_int8_t> &returned_data)
+{
+    u_int8_t ctrl = 0x00;
+    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x05,0x86,ctrl,(uint8_t)address,0x00,0x00};
+
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<u_int8_t> data;
+    if(!getResponse(data)){return -2;}
+    returned_data = data;
+    return -1;
+}
+
 uint64_t DobotCommunication::setEMotor(int index,int insEnabled,float speed,bool is_queued)//index 0-stepper1 1-stepper2, insEnabled 0-0ff 1-on, speed pulses/sec (+ values clockwise, - values counterclockwise)
 {
 

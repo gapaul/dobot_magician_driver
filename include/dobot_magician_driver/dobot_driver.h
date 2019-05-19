@@ -151,6 +151,13 @@ public:
      * @param level: the level input we are trying to get (0-LOW, 1-HIGH)
      */
     bool getIODigitalInput(int address, bool &level);
+
+    /**
+     * @brief Function sends a command to the Dobot to get the the 10-bit ADC value on its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param value: the 12-bit ADC value that we are reading (0-4095)
+     */
+    bool getIOAnalogInput(int address, int &value);
 };
 
 #endif /* DOBOT_DRIVER_H_ */

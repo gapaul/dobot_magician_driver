@@ -234,7 +234,16 @@ public:
      */
     uint64_t getIODI(int address, std::vector<u_int8_t> &returned_data);
 
-//    getIOADCvalue_to_pack
+    /**
+     * @brief Function sends a command to the Dobot to get the the 10-bit ADC value on its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param returned_data: container that holds the "params" component of the payload from the returned
+     * command packet
+     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+     * Here it will always return -1 because the command is not queued by default
+     */
+    uint64_t getIOADC(int address, std::vector<u_int8_t> &returned_data);
+
     uint64_t setEMotor(int index,int insEnabled,float speed,bool is_queued);
 
     /// Calibration

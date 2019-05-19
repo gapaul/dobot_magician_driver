@@ -176,6 +176,19 @@ bool DobotDriver::getIODigitalInput(int address, bool &level)
     return false;
 }
 
+bool DobotDriver::getIOAnalogInput(int address, int &value)
+{
+    std::vector<u_int8_t> data;
+
+    if(_dobot_serial->getIOADC(address,data))
+    {
+        value = (data.at(2)<<8) | data.at(1);
+        return true;
+    }
+
+    return false;
+}
+
 void DobotDriver::initialiseDobot()
 {
     _dobot_serial->setHOMECmd(1); //create setter for this to access from ros wrapper
