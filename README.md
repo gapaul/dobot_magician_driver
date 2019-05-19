@@ -9,8 +9,7 @@ sudo apt install libserial-dev
 ```
 
 ## Installation
-Installing dobot_magician_driver
-
+To build from source
 ```
 mkdir -p ~/catkin_ws/src 
 cd ~/catkin_ws/src
@@ -24,4 +23,8 @@ Configuring udev rules
 ```
 sudo cp -i  ~/catkin_ws/src/dobot_magician_driver/supporting/43-dobot_magician.rules /etc/udev/rules.d
 ```
-
+## Usage
+Run the following command
+```
+roslaunch dobot_magician_driver dobot_magician.launch
+```
