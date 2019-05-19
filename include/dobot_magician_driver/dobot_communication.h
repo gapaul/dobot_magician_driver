@@ -244,7 +244,7 @@ public:
      */
     uint64_t getIOADC(int address, std::vector<u_int8_t> &returned_data);
 
-    uint64_t setEMotor(int index,int insEnabled,float speed,bool is_queued);
+    uint64_t setEMotor(int index,bool insEnabled,float speed,bool is_queued);
 
     /// Calibration
 //    setAngleSensorStaticError

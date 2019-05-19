@@ -192,6 +192,8 @@ bool DobotDriver::getIOAnalogInput(int address, int &value)
 void DobotDriver::initialiseDobot()
 {
     _dobot_serial->setHOMECmd(1); //create setter for this to access from ros wrapper
-    //    dobot_serial->setEMotor(0,0,5000,true);//turn off stepper 1
-    //    dobot_serial->setEMotor(1,0,5000,true);//turn off stepper 2
+//    _dobot_serial->setEMotor(0,false,5000,true);//turn off stepper 1
+//    _dobot_serial->setEMotor(1,false,5000,true);//turn off stepper 2
+
+
 }
