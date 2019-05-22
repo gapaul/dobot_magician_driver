@@ -15,6 +15,12 @@
 #include "dobot_magician_driver/SetTargetPoints.h"
 #include "dobot_magician_driver/SetEMotor.h"
 
+#include "dobot_magician_driver/SetIOMultiplexing.h"
+#include "dobot_magician_driver/SetIODigitalOutput.h"
+#include "dobot_magician_driver/SetIOPWMOutput.h"
+#include "dobot_magician_driver/GetIODigitalInput.h"
+#include "dobot_magician_driver/GetIOAnalogInput.h"
+
 class DobotRosWrapper {
 
 private:
@@ -34,6 +40,12 @@ private:
     ros::ServiceServer _set_cartesian_pos_srv;
     ros::ServiceServer _set_joint_angles_srv;
     ros::ServiceServer _set_eMotor_srv;
+
+    ros::ServiceServer _set_io_multiplex_srv;
+    ros::ServiceServer _set_io_digital_output_srv;
+    ros::ServiceServer _set_io_pwm_output_srv;
+    ros::ServiceServer _get_io_digital_input_srv;
+    ros::ServiceServer _get_io_analog_input_srv;
 
     /**
      * @brief ROS Service to set the status of the gripper
@@ -63,6 +75,57 @@ private:
      * @param bool indicates whether invalid parameters were set
      */
     bool setCartesianPos(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res);
+
+    /*
+     *  I/O
+     */
+
+    /**
+     * @brief ROS Service to set the multiplexing of IO pins
+     * @param req: contains the address of a pin (1-20), and the multiplexing value (0-6)
+         0 - IOFunctionDummy;  // Invalid
+         1 - IOFunctionDO;     // I/O output
+         2 - IOFunctionPWM;    // PWM output
+         3 - IOFunctionDI;     // I/O input
+         4 - IOFunctionADC;    // A/D input
+         5 - IOFunctionDIPU;   // Pull-up input
+         6 - IOFunctionDIPD    // Pull-down input
+     * @param res: contains whether the command was received by the Dobot
+     * @return bool indicates whether invalid parameters were set
+     */
+    bool setIOMultiplexing(dobot_magician_driver::SetIOMultiplexingRequest &req, dobot_magician_driver::SetIOMultiplexingResponse &res);
+
+    /**
+     * @brief ROS Service to set the digital output level of IO pins
+     * @param req: contains the address of a pin (1-20), and the output level (0: LOW and 1: HIGH)
+     * @param res: contains whether the command was received by the Dobot
+     * @return bool indicates whether invalid parameters were set
+     */
+    bool setIODigitalOutput(dobot_magician_driver::SetIODigitalOutputRequest &req, dobot_magician_driver::SetIODigitalOutputResponse &res);
+
+    /**
+     * @brief ROS Service to set the Pulse Width Modulation (PWM) output of IO pins
+     * @param req: contains the address of a pin (1-20), the PWM frequency (10Hz - 1MHz) and its duty cycle (0-100)
+     * @param res: contains whether the command was received by the Dobot
+     * @return bool indicates whether invalid parameters were set
+     */
+    bool setIOPWMOutput(dobot_magician_driver::SetIOPWMOutputRequest &req, dobot_magician_driver::SetIOPWMOutputResponse &res);
+
+    /**
+     * @brief ROS Service to get the digital input level of IO pins
+     * @param req: contains the address of a pin (1-20)
+     * @param res: contains the level we are reading and whether the command was received by the Dobot
+     * @return bool indicates whether invalid parameters were set
+     */
+    bool getIODigitalInput(dobot_magician_driver::GetIODigitalInputRequest &req, dobot_magician_driver::GetIODigitalInputResponse &res);
+
+    /**
+     * @brief ROS Service to get the analog input value (ADC value) of IO pins
+     * @param req: contains the address of a pin (1-20)
+     * @param res: contains the ADC value we are reading and whether the command was received by the Dobot
+     * @return bool indicates whether invalid parameters were set
+     */
+    bool getIOAnalogInput(dobot_magician_driver::GetIOAnalogInputRequest &req, dobot_magician_driver::GetIOAnalogInputResponse &res);
 
     bool setEMotor(dobot_magician_driver::SetEMotorRequest &req, dobot_magician_driver::SetEMotorResponse &res);
 

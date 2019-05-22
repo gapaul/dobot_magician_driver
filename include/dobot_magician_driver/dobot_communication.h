@@ -181,7 +181,7 @@ public:
      * @param is_queued: indicates whether the instruction should be a queue command
      * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
      */
-    uint64_t setIOMultiplexing(int address, int multiplex, bool is_queued = 1);
+    uint64_t setIOMultiplexing(int address, int multiplex, bool is_queued = 0);
 
     /**
      * @brief Function sends a command to the Dobot to get the multiplexing of IO pins
@@ -200,7 +200,7 @@ public:
      * @param is_queued: indicates whether the instruction should be a queue command
      * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
      */
-    uint64_t setIODO(int address, bool level, bool is_queued = 1);
+    uint64_t setIODO(int address, bool level, bool is_queued = 0);
 
     /**
      * @brief Function sends a command to the Dobot to get the digital output on its IO pins
@@ -220,7 +220,7 @@ public:
      * @param is_queued: indicates whether the instruction should be a queue command
      * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
      */
-    uint64_t setIOPWM(int address, float frequency, float duty_cycle, bool is_queued = 1);
+    uint64_t setIOPWM(int address, float frequency, float duty_cycle, bool is_queued = 0);
 
 //    getIOPWM
 
@@ -244,7 +244,7 @@ public:
      */
     uint64_t getIOADC(int address, std::vector<u_int8_t> &returned_data);
 
-    uint64_t setEMotor(int index,bool is_enabled,float speed,bool is_queued = 1);
+    uint64_t setEMotor(int index,bool is_enabled,float speed,bool is_queued = 0);
     /**
      * @brief Function controls stepper motor for conveyor belt, linear rail or extruder motor
      * @param address: the address of the IO pin (from 1-20)
