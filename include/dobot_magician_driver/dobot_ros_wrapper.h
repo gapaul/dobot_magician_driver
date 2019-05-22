@@ -13,7 +13,7 @@
 #include "dobot_magician_driver/dobot_communication.h"
 #include "dobot_magician_driver/SetEndEffector.h"
 #include "dobot_magician_driver/SetTargetPoints.h"
-
+#include "dobot_magician_driver/SetEMotor.h"
 
 class DobotRosWrapper {
 
@@ -33,6 +33,7 @@ private:
     ros::ServiceServer _set_suction_cup_srv;
     ros::ServiceServer _set_cartesian_pos_srv;
     ros::ServiceServer _set_joint_angles_srv;
+    ros::ServiceServer _set_eMotor_srv;
 
     /**
      * @brief ROS Service to set the status of the gripper
@@ -62,6 +63,8 @@ private:
      * @param bool indicates whether invalid parameters were set
      */
     bool setCartesianPos(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res);
+
+    bool setEMotor(dobot_magician_driver::SetEMotorRequest &req, dobot_magician_driver::SetEMotorResponse &res);
 
     std::thread *update_state_thread;
     /**

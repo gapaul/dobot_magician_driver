@@ -310,7 +310,7 @@ uint64_t DobotCommunication::getIOADC(int address, std::vector<u_int8_t> &return
     return -1;
 }
 
-uint64_t DobotCommunication::setEMotor(int index,bool is_enabled,float speed,bool is_queued)//index 0-stepper1 1-stepper2, insEnabled 0-0ff 1-on, speed pulses/sec (+ values clockwise, - values counterclockwise)
+uint64_t DobotCommunication::setEMotor(int index,bool is_enabled,float speed,bool is_queued)
 {
     u_int8_t ctrl = (is_queued << 1) | 0x01;
     std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x08,0x87,ctrl,u_int8_t(index),is_enabled};

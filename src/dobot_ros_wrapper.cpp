@@ -71,6 +71,16 @@ bool DobotRosWrapper::setCartesianPos(dobot_magician_driver::SetTargetPointsRequ
 
 }
 
+
+bool DobotRosWrapper::setEMotor(dobot_magician_driver::SetEMotorRequest &req, dobot_magician_driver::SetEMotorResponse &res)
+{
+
+    _driver->setEMotor(req.index,req.is_enabled,req.speed);
+
+    res.success = true;
+    return res.success;
+}
+
 void DobotRosWrapper::update_state_loop()
 {
     std::vector<double> latest_joint_angles;
@@ -131,8 +141,10 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     _set_gripper_srv = _nh.advertiseService("end_effector/set_gripper", &DobotRosWrapper::setGripper, this);
     _set_suction_cup_srv = _nh.advertiseService("end_effector/set_suction_cup", &DobotRosWrapper::setSuctionCup, this);
     _set_cartesian_pos_srv = _nh.advertiseService("PTP/set_cartesian_pos", &DobotRosWrapper::setCartesianPos, this);
-    _set_joint_angles_srv = _nh.advertiseService("PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);
-
+    _set_joint_angles_srv = _nh.advertiseService("PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);    
+    _set_eMotor_srv = _nh.advertiseService("EIO/set_eMotor", &DobotRosWrapper::setEMotor, this);
+    
+    
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
     std::this_thread::sleep_for(std::chrono::seconds(30));
     ROS_INFO("DobotRosWrapper: this thread will now wake up");

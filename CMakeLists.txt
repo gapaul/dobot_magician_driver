@@ -62,6 +62,8 @@ pkg_check_modules(SERIAL libserial)
    FILES
    SetEndEffector.srv
    SetTargetPoints.srv
+   SetEMotor.srv
+
 #   Service1.srv
 #   Service2.srv
  )

@@ -244,7 +244,16 @@ public:
      */
     uint64_t getIOADC(int address, std::vector<u_int8_t> &returned_data);
 
-    uint64_t setEMotor(int index,bool insEnabled,float speed,bool is_queued);
+    uint64_t setEMotor(int index,bool is_enabled,float speed,bool is_queued = 1);
+    /**
+     * @brief Function controls stepper motor for conveyor belt, linear rail or extruder motor
+     * @param address: the address of the IO pin (from 1-20)
+     * @param index: selects between stepper 1 or stepper 2 port
+     * @param is_enabled:turns on/off the stepper motor for selected port
+     * @param speed:changes the velocity (pulses/sec) and direction of stepper motor (+ values clockwise, - values counterclockwise)
+     * @param is_queued: indicates whether the instruction should be a queue command
+     * Here it will always return -1 because the command is not queued by default
+     */
 
     /// Calibration
 //    setAngleSensorStaticError
