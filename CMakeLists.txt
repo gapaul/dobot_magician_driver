@@ -62,6 +62,13 @@ pkg_check_modules(SERIAL libserial)
    FILES
    SetEndEffector.srv
    SetTargetPoints.srv
+   SetEMotor.srv
+   SetIOMultiplexing.srv
+   SetIODigitalOutput.srv
+   GetIODigitalInput.srv
+   SetIOPWMOutput.srv
+   GetIOAnalogInput.srv
+
 #   Service1.srv
 #   Service2.srv
  )

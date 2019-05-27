@@ -1,0 +1,6 @@
+#request
+int32 address
+---
+#response
+bool level
+bool success

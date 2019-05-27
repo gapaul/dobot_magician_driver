@@ -71,6 +71,131 @@ bool DobotRosWrapper::setCartesianPos(dobot_magician_driver::SetTargetPointsRequ
 
 }
 
+bool DobotRosWrapper::setIOMultiplexing(dobot_magician_driver::SetIOMultiplexingRequest &req, dobot_magician_driver::SetIOMultiplexingResponse &res)
+{
+    if(req.address < 1 || req.address > 20){
+        ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
+        return false;
+    }
+
+    if(req.multiplex < 1 || req.multiplex > 6){
+        ROS_WARN("DobotRosWrapper: please specify the correct multiplex value (1 to 6)");
+        return false;
+    }
+
+    _driver->setIOMultiplexing(req.address, req.multiplex);
+    res.success = true;
+    return res.success;
+}
+
+bool DobotRosWrapper::setIODigitalOutput(dobot_magician_driver::SetIODigitalOutputRequest &req, dobot_magician_driver::SetIODigitalOutputResponse &res)
+{
+    int multiplex;
+    _driver->getIOMultiplexing(req.address, multiplex);
+    if(multiplex != 1) {
+        ROS_WARN("DobotRosWrapper: the pin is not being mutiplexed for digital output");
+        return false;
+    }
+
+    if(req.address < 1 || req.address > 20){
+        ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
+        return false;
+    }
+
+    if(req.level != 0 && req.level != 1){
+        ROS_WARN("DobotRosWrapper: ensure to use boolean for the level output (0 or 1)");
+        return false;
+    }
+
+    _driver->setIODigitalOutput(req.address, req.level);
+
+    res.success = true;
+    return res.success;
+}
+
+bool DobotRosWrapper::setIOPWMOutput(dobot_magician_driver::SetIOPWMOutputRequest &req, dobot_magician_driver::SetIOPWMOutputResponse &res)
+{
+    int multiplex;
+    _driver->getIOMultiplexing(req.address, multiplex);
+    if(multiplex != 2) {
+        ROS_WARN("DobotRosWrapper: the pin is not being mutiplexed for PWM input");
+        return false;
+    }
+
+    if(req.address < 1 || req.address > 20){
+        ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
+        return false;
+    }
+
+    if(req.frequency < 10 || req.address > 1000000){
+        ROS_WARN("DobotRosWrapper: please specify the correct frequency (10Hz to 1MHz)");
+        return false;
+    }
+
+    if(req.duty_cycle < 0 || req.duty_cycle > 100){
+        ROS_WARN("DobotRosWrapper: please specify the correct duty cycle (0 to 100)");
+        return false;
+    }
+
+    _driver->setIOPWM(req.address, req.frequency, req.duty_cycle);
+
+    res.success = true;
+    return res.success;
+}
+
+bool DobotRosWrapper::getIODigitalInput(dobot_magician_driver::GetIODigitalInputRequest &req, dobot_magician_driver::GetIODigitalInputResponse &res)
+{
+    int multiplex;
+    _driver->getIOMultiplexing(req.address, multiplex);
+    if(multiplex != 3 && multiplex != 5 && multiplex != 6) {
+        ROS_WARN("DobotRosWrapper: the pin is not being mutiplexed for digital input");
+        return false;
+    }
+
+    if(req.address < 1 || req.address > 20){
+        ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
+        return false;
+    }
+
+    bool level;
+    _driver->getIODigitalInput(req.address, level);
+
+    res.level = level;
+    res.success = true;
+    return res.success;
+}
+
+bool DobotRosWrapper::getIOAnalogInput(dobot_magician_driver::GetIOAnalogInputRequest &req, dobot_magician_driver::GetIOAnalogInputResponse &res)
+{
+    int multiplex;
+    _driver->getIOMultiplexing(req.address, multiplex);
+    if(multiplex != 4) {
+        ROS_WARN("DobotRosWrapper: the pin is not being mutiplexed for analog input");
+        return false;
+    }
+
+    if(req.address < 1 || req.address > 20){
+        ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
+        return false;
+    }
+
+    int value;
+    _driver->getIOAnalogInput(req.address, value);
+
+    res.value = value;
+    res.success = true;
+    return res.success;
+}
+
+bool DobotRosWrapper::setEMotor(dobot_magician_driver::SetEMotorRequest &req, dobot_magician_driver::SetEMotorResponse &res)
+{
+
+    _driver->setEMotor(req.index,req.is_enabled,req.speed);
+
+    res.success = true;
+    return res.success;
+}
+
 void DobotRosWrapper::update_state_loop()
 {
     std::vector<double> latest_joint_angles;
@@ -131,12 +256,18 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     _set_gripper_srv = _nh.advertiseService("end_effector/set_gripper", &DobotRosWrapper::setGripper, this);
     _set_suction_cup_srv = _nh.advertiseService("end_effector/set_suction_cup", &DobotRosWrapper::setSuctionCup, this);
     _set_cartesian_pos_srv = _nh.advertiseService("PTP/set_cartesian_pos", &DobotRosWrapper::setCartesianPos, this);
-    _set_joint_angles_srv = _nh.advertiseService("PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);
-
+    _set_joint_angles_srv = _nh.advertiseService("PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);    
+    _set_eMotor_srv = _nh.advertiseService("EIO/set_eMotor", &DobotRosWrapper::setEMotor, this);
+    
+    _set_io_multiplex_srv = _nh.advertiseService("IO/set_multiplexing", &DobotRosWrapper::setIOMultiplexing, this);
+    _set_io_digital_output_srv = _nh.advertiseService("IO/set_digital_output", &DobotRosWrapper::setIODigitalOutput, this);
+    _set_io_pwm_output_srv = _nh.advertiseService("IO/set_pwm_output", &DobotRosWrapper::setIOPWMOutput, this);
+    _get_io_digital_input_srv = _nh.advertiseService("IO/get_digital_input", &DobotRosWrapper::getIODigitalInput, this);
+    _get_io_analog_input_srv = _nh.advertiseService("IO/get_analog_input", &DobotRosWrapper::getIOAnalogInput, this);
+    
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
     std::this_thread::sleep_for(std::chrono::seconds(30));
     ROS_INFO("DobotRosWrapper: this thread will now wake up");
-
 
     update_state_thread = new std::thread(&DobotRosWrapper::update_state_loop, this);
 
@@ -181,6 +312,7 @@ int main(int argc, char** argv){
     ROS_DEBUG("DobotRosWrapper: spinner.start()");
     spinner.start();
     ros::Rate rate(10);
+
     while(ros::ok()){
 //           std::cout<< "waiting for keypress" << std::endl;
 

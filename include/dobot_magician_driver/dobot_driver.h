@@ -15,6 +15,7 @@ public:
 
 
     DobotDriver(std::string port);
+
     /**
      * @brief Specifies the correct instructions for the command packet to obtain the
      * current joint angles, and interprets the returned data from the Dobot
@@ -22,6 +23,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool getJointAngles(std::vector<double> &joint_angles);
+
     /**
      * @brief Specifies the correct instructions for the command packet to obtain the
      * current end effector pose, and interprets the returned data from the Dobot
@@ -29,6 +31,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool getCartesianPos(std::vector<double> &cart_pos);
+
     /**
      * @brief Specifies the correct instructions for the command packet, to set the
      * joint angles of the Dobot, and interprets the returned data from the Dobot
@@ -36,6 +39,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool setJointAngles(std::vector<float> &joint_angles);
+
     /**
      * @brief Specifies the correct instructions for the command packet, to set the
      * end effector pose, and interprets the returned data from the Dobot
@@ -43,6 +47,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool setCartesianPos(std::vector<float> &cart_pos);
+
     /**
      * @brief Specifies the correct instructions for the command packet to set the desired gripper
      * state, and interprets the returned data from the Dobot
@@ -51,6 +56,7 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool setGripper(bool is_ctrl_enabled, bool is_gripped);
+
     /**
      * @brief Specifies the correct instructions for the command packet to set the desired suction cup
      * state, and interprets the returned data from the Dobot
@@ -59,11 +65,110 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool setSuctionCup(bool is_ctrl_enabled, bool is_sucked);
+
     /**
      * @brief Runs the initialisation sequence for the Dobot
      */
+
+	bool setCPParams(std::vector<float> &CPParams, int realtimeTrack, bool is_queued);
+	/**
+	* @brief Specifies the correct instructions for the command packet to set CP mode parameters
+	* @param is_ctrl_enabled: indicates whether the air pump controlling the suction cup should be enabled
+	* @param is_sucked: indicates whether the suction cup is enabled
+	* @param bool indicates that the command was received by the Dobot
+	*/
+
+	bool setCPCmd(std::vector<float> &CPCmd, int cpMode, bool is_queued);
+	/**
+	* @brief Specifies the correct instructions for the command packet execute the CP command
+	* @param CPCmd: contains the desired parameters for the CP (x,y,z,velocity)
+	* @param cpMode: indicates the CP mode (Relative or Absolute)
+	* @param bool indicates that the command was received by the Dobot
+	*/
+
     void initialiseDobot(void);
+
 //    bool setHomeCalibrate()
+
+
+    /*
+     *  I/O COMMANDS
+     */
+
+    /*
+     * @brief Function sends a command to the Dobot to set the multiplexing of its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param multiplex: the multiplexing
+         0 - IOFunctionDummy;  // Invalid
+         1 - IOFunctionDO;     // I/O output
+         2 - IOFunctionPWM;    // PWM output
+         3 - IOFunctionDI;     // I/O input
+         4 - IOFunctionADC;    // A/D input
+         5 - IOFunctionDIPU;   // Pull-up input
+         6 - IOFunctionDIPD    // Pull-down input
+     */
+    bool setIOMultiplexing(int address, int multiplex);
+
+    /*
+     * @brief Function sends a command to the Dobot to get the multiplexing of its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param multiplex: the multiplexing we are trying to get
+         0 - IOFunctionDummy;  // Invalid
+         1 - IOFunctionDO;     // I/O output
+         2 - IOFunctionPWM;    // PWM output
+         3 - IOFunctionDI;     // I/O input
+         4 - IOFunctionADC;    // A/D input
+         5 - IOFunctionDIPU;   // Pull-up input
+         6 - IOFunctionDIPD    // Pull-down input
+     */
+    bool getIOMultiplexing(int address, int &multiplex);
+
+    /**
+     * @brief Function sends a command to the Dobot to send a digital output to its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param level: the level output (0-LOW, 1-HIGH)
+     */
+    bool setIODigitalOutput(int address, bool level);
+
+    /**
+     * @brief Function sends a command to the Dobot to get the digital output of its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param level: the level output we are trying to get (0-LOW, 1-HIGH)
+     */
+    bool getIODigitalOutput(int address, bool &level);
+
+    /**
+     * @brief Function sends a command to the Dobot to send a PWM signal at an IO pin address
+     * @param address: the address of the IO pin (from 1-20)
+     * @param frequency: the PWM frequency (10Hz - 1MHz)
+     * @param duty_cycle: the PWM duty ratio (0 - 100)
+     */
+    bool setIOPWM(int address, float frequency, float duty_cycle);
+
+    /**
+     * @brief Function sends a command to the Dobot to get the digital input of its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param level: the level input we are trying to get (0-LOW, 1-HIGH)
+     */
+    bool getIODigitalInput(int address, bool &level);
+
+    /**
+     * @brief Function sends a command to the Dobot to get the the 10-bit ADC value on its IO pins
+     * @param address: the address of the IO pin (from 1-20)
+     * @param value: the 12-bit ADC value that we are reading (0-4095)
+     */
+    bool getIOAnalogInput(int address, int &value);
+
+    bool setEMotor(int index,bool is_enabled,float speed);
+
+    /**
+     * @brief Function turns the stepper motor on either the conveyor belt, linear rail or the   extruder stepper motor
+     * @param index: sets which stepper port to control (0-stepper1 1-stepper2)
+     * @param is_enabled: sets whether to turn on or turn off the stepper motor (0-0ff 1-on) 
+     * @param speed: sets the speed of the motor  (+ values clockwise, - values counterclockwise)
+     */
+
+
 
 };
 
