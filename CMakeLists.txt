@@ -67,7 +67,9 @@ pkg_check_modules(SERIAL libserial)
    SetIODigitalOutput.srv
    GetIODigitalInput.srv
    SetIOPWMOutput.srv
-   GetIOAnalogInput.srv
+   GetIOAnalogInput.srv 
+   SetCPParams.srv
+   SetCPCmd.srv
 
 #   Service1.srv
 #   Service2.srv

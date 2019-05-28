@@ -21,6 +21,10 @@
 #include "dobot_magician_driver/GetIODigitalInput.h"
 #include "dobot_magician_driver/GetIOAnalogInput.h"
 
+#include "dobot_magician_driver/SetCPParams.h"
+#include "dobot_magician_driver/SetCPCmd.h"
+
+
 class DobotRosWrapper {
 
 private:
@@ -46,6 +50,9 @@ private:
     ros::ServiceServer _set_io_pwm_output_srv;
     ros::ServiceServer _get_io_digital_input_srv;
     ros::ServiceServer _get_io_analog_input_srv;
+
+    ros::ServiceServer _set_cp_params_srv;
+    ros::ServiceServer _set_cp_cmd_srv;
 
     /**
      * @brief ROS Service to set the status of the gripper
@@ -128,6 +135,16 @@ private:
     bool getIOAnalogInput(dobot_magician_driver::GetIOAnalogInputRequest &req, dobot_magician_driver::GetIOAnalogInputResponse &res);
 
     bool setEMotor(dobot_magician_driver::SetEMotorRequest &req, dobot_magician_driver::SetEMotorResponse &res);
+
+    /**
+     * @brief ROS Service to set the Continuos Path Parameters
+     * @param req: contains the CP parameters
+     * @param res: contains whether the command was received by the Dobot
+     * @return bool indicates whether invalid parameters were set
+     */
+    bool setCPParams(dobot_magician_driver::SetCPParamsRequest &req, dobot_magician_driver::SetCPParamsResponse &res);
+
+    bool setCPCmd(dobot_magician_driver::SetCPCmdRequest &req, dobot_magician_driver::SetCPCmdResponse &res);
 
     std::thread *update_state_thread;
     /**

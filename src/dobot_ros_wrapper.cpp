@@ -196,6 +196,54 @@ bool DobotRosWrapper::setEMotor(dobot_magician_driver::SetEMotorRequest &req, do
     return res.success;
 }
 
+bool DobotRosWrapper::setCPParams(dobot_magician_driver::SetCPParamsRequest &req, dobot_magician_driver::SetCPParamsResponse &res)
+{
+    bool is_queued = true;
+    if(req.CPParams.size() != 3){
+        ROS_WARN("DobotRosWrapper: specify correct number of CP parameters");
+        res.success = false;
+        return false;
+    }
+    if(req.realtimeTrack != 0 && req.realtimeTrack != 1){
+        ROS_WARN("DobotRosWrapper: ensure to use boolean value only (0 or 1)");
+        res.success = false;
+        return false;
+    }
+
+    std::vector<float> CPParams;
+    for(int i = 0; i < req.CPParams.size(); ++i){
+        CPParams.push_back(req.CPParams[i]);
+    }
+    _driver->setCPParams(CPParams,req.realtimeTrack);
+    res.success = true;
+
+    return res.success;
+
+}
+
+bool DobotRosWrapper::setCPCmd(dobot_magician_driver::SetCPCmdRequest &req, dobot_magician_driver::SetCPCmdResponse &res)
+{
+    bool is_queued = true;
+    if(req.CPCmd.size() != 4){
+        ROS_WARN("DobotRosWrapper: specify correct number of CP points");
+        res.success = false;
+        return false;
+    }
+    if(req.cpMode != 0 && req.cpMode != 1){
+        ROS_WARN("DobotRosWrapper: ensure to use boolean value only (0 or 1)");
+        res.success = false;
+        return false;
+    }
+    std::vector<float> CPCmd;
+    for(int i = 0; i < req.CPCmd.size(); ++i){
+        CPCmd.push_back(req.CPCmd[i]);
+    }
+    _driver->setCPCmd(CPCmd,req.cpMode);
+    res.success = true;
+
+    return res.success;
+}
+
 void DobotRosWrapper::update_state_loop()
 {
     std::vector<double> latest_joint_angles;
@@ -256,15 +304,18 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     _set_gripper_srv = _nh.advertiseService("end_effector/set_gripper", &DobotRosWrapper::setGripper, this);
     _set_suction_cup_srv = _nh.advertiseService("end_effector/set_suction_cup", &DobotRosWrapper::setSuctionCup, this);
     _set_cartesian_pos_srv = _nh.advertiseService("PTP/set_cartesian_pos", &DobotRosWrapper::setCartesianPos, this);
-    _set_joint_angles_srv = _nh.advertiseService("PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);    
+    _set_joint_angles_srv = _nh.advertiseService("PTP/set_joint_angles", &DobotRosWrapper::setJointAngles, this);
     _set_eMotor_srv = _nh.advertiseService("EIO/set_eMotor", &DobotRosWrapper::setEMotor, this);
-    
+
     _set_io_multiplex_srv = _nh.advertiseService("IO/set_multiplexing", &DobotRosWrapper::setIOMultiplexing, this);
     _set_io_digital_output_srv = _nh.advertiseService("IO/set_digital_output", &DobotRosWrapper::setIODigitalOutput, this);
     _set_io_pwm_output_srv = _nh.advertiseService("IO/set_pwm_output", &DobotRosWrapper::setIOPWMOutput, this);
     _get_io_digital_input_srv = _nh.advertiseService("IO/get_digital_input", &DobotRosWrapper::getIODigitalInput, this);
     _get_io_analog_input_srv = _nh.advertiseService("IO/get_analog_input", &DobotRosWrapper::getIOAnalogInput, this);
-    
+
+    _set_cp_params_srv = _nh.advertiseService("CP/set_cp_params",&DobotRosWrapper::setCPParams,this);
+    _set_cp_cmd_srv = _nh.advertiseService("CP/set_cp_cmd",&DobotRosWrapper::setCPCmd,this);
+
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
     std::this_thread::sleep_for(std::chrono::seconds(30));
     ROS_INFO("DobotRosWrapper: this thread will now wake up");

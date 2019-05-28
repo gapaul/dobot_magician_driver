@@ -70,7 +70,7 @@ public:
      * @brief Runs the initialisation sequence for the Dobot
      */
 
-	bool setCPParams(std::vector<float> &CPParams, int realtimeTrack, bool is_queued);
+	bool setCPParams(std::vector<float> &CPParams, int realtimeTrack);
 	/**
 	* @brief Specifies the correct instructions for the command packet to set CP mode parameters
 	* @param is_ctrl_enabled: indicates whether the air pump controlling the suction cup should be enabled
@@ -78,7 +78,7 @@ public:
 	* @param bool indicates that the command was received by the Dobot
 	*/
 
-	bool setCPCmd(std::vector<float> &CPCmd, int cpMode, bool is_queued);
+	bool setCPCmd(std::vector<float> &CPCmd, int cpMode);
 	/**
 	* @brief Specifies the correct instructions for the command packet execute the CP command
 	* @param CPCmd: contains the desired parameters for the CP (x,y,z,velocity)
@@ -162,7 +162,7 @@ public:
     /**
      * @brief Function turns the stepper motor on either the conveyor belt, linear rail or the   extruder stepper motor
      * @param index: sets which stepper port to control (0-stepper1 1-stepper2)
-     * @param is_enabled: sets whether to turn on or turn off the stepper motor (0-0ff 1-on) 
+     * @param is_enabled: sets whether to turn on or turn off the stepper motor (0-0ff 1-on)
      * @param speed: sets the speed of the motor  (+ values clockwise, - values counterclockwise)
      */
     bool setEMotor(int index,bool is_enabled,float speed);

@@ -1,0 +1,6 @@
+#request
+float64[] CPCmd
+int8 cpMode
+---
+#response
+bool success
