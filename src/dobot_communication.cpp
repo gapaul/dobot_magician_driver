@@ -22,16 +22,15 @@ DobotCommunication::~DobotCommunication()
     _serial_port->Close();
 }
 
-u_int8_t DobotCommunication::checksumCalc(std::vector<uint8_t> &ctrl_cmd)
+uint8_t DobotCommunication::checksumCalc(std::vector<uint8_t> &ctrl_cmd)
 {
-    u_int8_t checksum = 0;
+    uint8_t checksum = 0;
 
     for(int i = 3; i < ctrl_cmd.size(); ++i){   //Add the values of the 'payload' only
         checksum += ctrl_cmd.at(i);
     }
 
     checksum = 256 - checksum;                  //two's complement
-    while(checksum < 0){checksum -= 256;}
 
 //    printf("DOBOT COMMNICATION: CHECKSUM : %x \n",checksum);
 
@@ -54,10 +53,10 @@ u_int8_t DobotCommunication::checksumCalc(std::vector<uint8_t> &ctrl_cmd)
 //}
 
 
-bool DobotCommunication::getResponse(std::vector<u_int8_t> &returned_data)
+bool DobotCommunication::getResponse(std::vector<uint8_t> &returned_data)
 {
-    u_int8_t next_char, checksum;
-    std::vector<u_int8_t> data;
+    uint8_t next_char, checksum;
+    std::vector<uint8_t> data;
     bool timeout = false;
 
     {
@@ -95,15 +94,15 @@ bool DobotCommunication::getResponse(std::vector<u_int8_t> &returned_data)
 //        data.erase(data.begin());
 //    }
 
-    returned_data = std::vector<u_int8_t>(data.begin()+5, data.end()/*-1 use this if no pop back*/);
+    returned_data = std::vector<uint8_t>(data.begin()+5, data.end()/*-1 use this if no pop back*/);
     return true;
 }
 
-void DobotCommunication::packFromFloat(std::vector<float> &value_to_pack, std::vector<u_int8_t> &packed_floats)
+void DobotCommunication::packFromFloat(std::vector<float> &value_to_pack, std::vector<uint8_t> &packed_floats)
 {
 
     for(int i = 0; i < value_to_pack.size(); ++i){
-        u_int8_t bytes_temp[4];
+        uint8_t bytes_temp[4];
         floatToByte(value_to_pack[i], bytes_temp);
         for(int j = 0; j < 4; ++j){
             packed_floats.push_back(bytes_temp[j]);
@@ -114,17 +113,17 @@ void DobotCommunication::packFromFloat(std::vector<float> &value_to_pack, std::v
 
 }
 
-void DobotCommunication::floatToByte(float float_variable, u_int8_t temp_bytes[])
+void DobotCommunication::floatToByte(float float_variable, uint8_t temp_bytes[])
 {
     union {
         float a;
-        u_int8_t bytes[4];
+        uint8_t bytes[4];
     } link;
     link.a = float_variable;
     std::memcpy(temp_bytes, link.bytes, 4);
 }
 
-uint64_t DobotCommunication::getQueuedCmdIndex(std::vector<u_int8_t> data)
+uint64_t DobotCommunication::getQueuedCmdIndex(std::vector<uint8_t> data)
 {
     uint64_t queuedCmdIndex;
     uint8_t *packedQueueCmdIndex = &data[0];
@@ -134,49 +133,52 @@ uint64_t DobotCommunication::getQueuedCmdIndex(std::vector<u_int8_t> data)
 
 uint64_t DobotCommunication::setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool is_queued)
 {
-    u_int8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3e, ctrl, is_ctrl_enabled, is_sucked};
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3e, ctrl, (uint8_t)is_ctrl_enabled, (uint8_t)is_sucked};
+
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
+    std::vector<uint8_t> data;
+    if(!getResponse(data)){return std::numeric_limits<uint64_t>::quiet_NaN();}
     if(is_queued){
         return getQueuedCmdIndex(data);
     }else{
-        return -1;
+        return std::numeric_limits<uint64_t>::quiet_NaN();
     }
 
 }
 
-uint64_t DobotCommunication::getEndEffectorSuctionCup(std::vector<u_int8_t> &returned_data, bool is_queued)
+uint64_t DobotCommunication::getEndEffectorSuctionCup(std::vector<uint8_t> &returned_data, bool is_queued)
 {
-    u_int8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3e,ctrl,0x00,0x00};
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3e,ctrl,0x00,0x00};
+
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
+    std::vector<uint8_t> data;
+    if(!getResponse(data)){return std::numeric_limits<uint64_t>::quiet_NaN();}
     returned_data = data;
     if(is_queued){
         return getQueuedCmdIndex(data);
 
     }else{
-        return -1;
+        return std::numeric_limits<uint64_t>::quiet_NaN();
     }
 }
 
 uint64_t DobotCommunication::setEndEffectorGripper(bool is_ctrl_enabled, bool is_gripped, bool is_queued)
 {
-    u_int8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3f, ctrl, is_ctrl_enabled, is_gripped};
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3f, ctrl, (uint8_t)is_ctrl_enabled, (uint8_t)is_gripped};
+
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
+    std::vector<uint8_t> data;
+    if(!getResponse(data)){return std::numeric_limits<uint64_t>::quiet_NaN();}
     if(is_queued){
         return getQueuedCmdIndex(data);
     }else{
-        return -1;
+        return std::numeric_limits<uint64_t>::quiet_NaN();
     }
 }
 
@@ -184,19 +186,19 @@ uint64_t DobotCommunication::setEndEffectorGripper(bool is_ctrl_enabled, bool is
 
 uint64_t DobotCommunication::setPTPCmd(int ptp_mode, std::vector<float> &target_points, bool is_queued)
 {
-    u_int8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x13,0x54,ctrl,(uint8_t)ptp_mode};
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x13,0x54,ctrl,(uint8_t)ptp_mode};
     packFromFloat(target_points,ctrl_cmd);
 
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
+    std::vector<uint8_t> data;
+    if(!getResponse(data)){return std::numeric_limits<uint64_t>::quiet_NaN();}
     if(is_queued){
         return getQueuedCmdIndex(data);
 
     }else{
-        return -1;
+        return std::numeric_limits<uint64_t>::quiet_NaN();
     }
 }
 
@@ -313,7 +315,7 @@ uint64_t DobotCommunication::getIOADC(int address, std::vector<u_int8_t> &return
 uint64_t DobotCommunication::setEMotor(int index,bool is_enabled,float speed,bool is_queued)
 {
     u_int8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x08,0x87,ctrl,u_int8_t(index),is_enabled};
+    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x08,0x87,ctrl, (uint8_t)index,(uint8_t)is_enabled};
     u_int32_t speed_32_bit = u_int32_t(speed);//convert float to 32 bit hex
     std::vector<std::uint8_t> speed_8_bit( (std::uint8_t*)&speed_32_bit, (std::uint8_t*)&(speed_32_bit) + sizeof(std::uint32_t)); //split 32bit hex to 4 8bit hex
     ctrl_cmd.insert( ctrl_cmd.end(), speed_8_bit.begin(), speed_8_bit.end() ); //place the speed into ctrl_cmd

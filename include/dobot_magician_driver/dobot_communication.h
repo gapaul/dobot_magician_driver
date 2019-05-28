@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <limits>
+#include <cmath>
 
 
 #include <SerialPort.h>
