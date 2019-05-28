@@ -5,7 +5,7 @@ DobotStates::DobotStates()
 
 }
 
-bool DobotStates::unpackPose(std::vector<u_int8_t> &data, std::vector<double> &pose)
+bool DobotStates::unpackPose(std::vector<uint8_t> &data, std::vector<double> &pose)
 {
 
 //    unpackPose(data);
@@ -21,10 +21,10 @@ bool DobotStates::unpackPose(std::vector<u_int8_t> &data, std::vector<double> &p
 
 }
 
-float DobotStates::unpackFloat(std::vector<u_int8_t>::iterator it)
+float DobotStates::unpackFloat(std::vector<uint8_t>::iterator it)
 {
     float temp;
-    u_int8_t b[] = {*it, *(it+1), *(it+2), *(it+3)};
+    uint8_t b[] = {*it, *(it+1), *(it+2), *(it+3)};
     std::memcpy(&temp, &b, sizeof(temp)); //convert to float from bytes[4]
 //    printf("%f\n", temp);
     return temp;

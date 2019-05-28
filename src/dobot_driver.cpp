@@ -42,44 +42,40 @@ bool DobotDriver::getCartesianPos(std::vector<double> &cart_pos)
 
 bool DobotDriver::setJointAngles(std::vector<float> &joint_angles)
 {
-    if(_dobot_serial->setPTPCmd(4,joint_angles) >= -1){
-        return true;
+    if(std::isnan(_dobot_serial->setPTPCmd(4,joint_angles)))
+    {
+        return false;
 
     }
-    return false;
+    return true;
 }
 
 bool DobotDriver::setCartesianPos(std::vector<float> &cart_pos)
 {
-    if(_dobot_serial->setPTPCmd(2,cart_pos) >= -1){
-
-        return true;
-
+    if(std::isnan(_dobot_serial->setPTPCmd(2,cart_pos)))
+    {
+        return false;
     }
-
-    return false;
+    return true;
 }
 
 bool DobotDriver::setGripper(bool is_ctrl_enabled, bool is_gripped)
 {
-    if(_dobot_serial->setEndEffectorGripper(is_ctrl_enabled, is_gripped) >= -1){
-
-        return true;
-
+    if(std::isnan(_dobot_serial->setEndEffectorGripper(is_ctrl_enabled, is_gripped)))
+    {
+        return false;
     }
-
-    return false;
+    return true;
 }
 
 bool DobotDriver::setSuctionCup(bool is_ctrl_enabled, bool is_sucked)
 {
-    if(_dobot_serial->setEndEffectorSuctionCup(is_ctrl_enabled,is_sucked) >= -1){
-
-        return true;
-
+    if(std::isnan(_dobot_serial->setEndEffectorSuctionCup(is_ctrl_enabled,is_sucked)))
+    {
+        return false;
     }
-
-    return false;
+    
+    return true;
 }
 
 
