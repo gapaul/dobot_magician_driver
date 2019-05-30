@@ -188,9 +188,9 @@ bool DobotDriver::getIOAnalogInput(int address, int &value)
     return false;
 }
 
-bool DobotDriver::setEMotor(int index,bool is_enabled,float speed)
+bool DobotDriver::setEMotor(int index,bool is_enabled,float speed,bool direction)
 {
-    if(_dobot_serial->setEMotor(index,is_enabled,speed) >= -1)
+    if(_dobot_serial->setEMotor(index,is_enabled,speed,direction) >= -1)
 
     {
         return true;

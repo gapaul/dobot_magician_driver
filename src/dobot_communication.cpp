@@ -312,10 +312,18 @@ uint64_t DobotCommunication::getIOADC(int address, std::vector<u_int8_t> &return
     return -1;
 }
 
-uint64_t DobotCommunication::setEMotor(int index,bool is_enabled,float speed,bool is_queued)
+uint64_t DobotCommunication::setEMotor(int index,bool is_enabled,float speed, bool direction, bool is_queued)
 {
+    if (direction ==0){
+        speed=speed *1;
+    }
+
+    else if (direction ==1){
+        speed=speed *-1;
+    }
+
     u_int8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x08,0x87,ctrl, (uint8_t)index,(uint8_t)is_enabled};
+    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x08,0x87,ctrl,u_int8_t(index),is_enabled};
     u_int32_t speed_32_bit = u_int32_t(speed);//convert float to 32 bit hex
     std::vector<std::uint8_t> speed_8_bit( (std::uint8_t*)&speed_32_bit, (std::uint8_t*)&(speed_32_bit) + sizeof(std::uint32_t)); //split 32bit hex to 4 8bit hex
     ctrl_cmd.insert( ctrl_cmd.end(), speed_8_bit.begin(), speed_8_bit.end() ); //place the speed into ctrl_cmd

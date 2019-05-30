@@ -246,7 +246,7 @@ public:
      */
     uint64_t getIOADC(int address, std::vector<u_int8_t> &returned_data);
 
-    uint64_t setEMotor(int index,bool is_enabled,float speed,bool is_queued = 0);
+    uint64_t setEMotor(int index,bool is_enabled,float speed,bool direction,bool is_queued = 0);
     /**
      * @brief Function controls stepper motor for conveyor belt, linear rail or extruder motor
      * @param address: the address of the IO pin (from 1-20)

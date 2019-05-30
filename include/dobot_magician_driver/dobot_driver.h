@@ -165,7 +165,7 @@ public:
      * @param is_enabled: sets whether to turn on or turn off the stepper motor (0-0ff 1-on)
      * @param speed: sets the speed of the motor  (+ values clockwise, - values counterclockwise)
      */
-    bool setEMotor(int index,bool is_enabled,float speed);
+    bool setEMotor(int index,bool is_enabled,float speed,bool direction);
 
 
 

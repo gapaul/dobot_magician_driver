@@ -190,7 +190,7 @@ bool DobotRosWrapper::getIOAnalogInput(dobot_magician_driver::GetIOAnalogInputRe
 bool DobotRosWrapper::setEMotor(dobot_magician_driver::SetEMotorRequest &req, dobot_magician_driver::SetEMotorResponse &res)
 {
 
-    _driver->setEMotor(req.index,req.is_enabled,req.speed);
+    _driver->setEMotor(req.index,req.is_enabled,req.speed,req.direction);
 
     res.success = true;
     return res.success;

@@ -2,6 +2,7 @@
 int8 index
 bool is_enabled
 float32 speed
+bool direction
 ---
 #response
 bool success
