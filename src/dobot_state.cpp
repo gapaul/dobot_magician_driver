@@ -9,13 +9,13 @@ bool DobotStates::unpackPose(std::vector<uint8_t> &data, std::vector<double> &po
 {
 
 //    unpackPose(data);
-    if(data.size() != 32){
+    if(data.size() != 34){
         return false;
     }
 
     pose.clear();
     for(int i = 0; i < 8; ++i){
-        pose.push_back(unpackFloat(data.begin() + i*4));
+        pose.push_back(unpackFloat(data.begin()+2 + i*4));
     }
     return true;
 

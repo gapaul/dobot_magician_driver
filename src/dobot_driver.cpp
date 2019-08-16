@@ -8,6 +8,23 @@ DobotDriver::DobotDriver(std::string port)
 
 }
 
+bool DobotDriver::getCurrentConfiguration(std::vector<double> &cart_pos, std::vector<double> &joint_angles)
+{
+    std::vector<u_int8_t> data;
+    std::vector<double> pose_data;
+
+    if(_dobot_serial->getPose(data))
+    {
+        if(_dobot_states->unpackPose(data, pose_data)){
+            cart_pos = std::vector<double>(pose_data.begin(), pose_data.begin()+4);
+            joint_angles = std::vector<double>(pose_data.begin()+4, pose_data.end());
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool DobotDriver::getJointAngles(std::vector<double> &joint_angles)
 {
     std::vector<u_int8_t> data;
@@ -70,11 +87,15 @@ bool DobotDriver::setGripper(bool is_ctrl_enabled, bool is_gripped)
 
 bool DobotDriver::setSuctionCup(bool is_ctrl_enabled, bool is_sucked)
 {
-    if(std::isnan(_dobot_serial->setEndEffectorSuctionCup(is_ctrl_enabled,is_sucked)))
+    uint64_t test;
+    if(!_dobot_serial->setEndEffectorSuctionCup(is_ctrl_enabled, is_sucked, test,0))
     {
         return false;
     }
-    
+    std::vector<uint8_t> returned_data;
+
+    _dobot_serial->getEndEffectorSuctionCup(returned_data);
+
     return true;
 }
 

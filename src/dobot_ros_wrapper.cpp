@@ -257,8 +257,9 @@ void DobotRosWrapper::update_state_loop()
     ros::Time ros_time;
     while(ros::ok()){
         ros_time = ros::Time::now();
-        _driver->getJointAngles(latest_joint_angles);
-        _driver->getCartesianPos(latest_cartesian_pos);
+        _driver->getCurrentConfiguration(latest_cartesian_pos, latest_joint_angles);
+        // _driver->getJointAngles(latest_joint_angles);
+        // _driver->getCartesianPos(latest_cartesian_pos);
 
         if(latest_joint_angles.size() == 4 && latest_cartesian_pos.size() == 4)
         {

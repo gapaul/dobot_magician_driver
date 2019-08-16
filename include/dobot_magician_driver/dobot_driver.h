@@ -16,6 +16,8 @@ public:
 
     DobotDriver(std::string port);
 
+    bool getCurrentConfiguration(std::vector<double> &cart_pos, std::vector<double> &joint_angles);
+
     /**
      * @brief Specifies the correct instructions for the command packet to obtain the
      * current joint angles, and interprets the returned data from the Dobot

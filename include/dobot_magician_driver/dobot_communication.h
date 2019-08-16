@@ -37,7 +37,7 @@ public:
      * @param is_queued: indicates whether the instruction should be a queue command
      * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
      */
-    uint64_t getPose(std::vector<u_int8_t> &returned_data, bool is_queued = 0);
+    bool getPose(std::vector<u_int8_t> &returned_data);
 //    bool resetPose();
 
     /// Alarm
@@ -70,6 +70,7 @@ public:
 //    getEndEffectorParams
 //    setEndEffectorLaser
 //    getEndEffectorLaser
+    bool setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool is_queued = 0);
     /**
      * @brief Function sends a command to the Dobot to set the status of the suction cup
      * @param is_ctrl_enabled: indicates whether the air pump controlling the suction cup should be enabled
@@ -77,15 +78,14 @@ public:
      * @param is_queued: indicates whether the instruction should be a queue command
      * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
      */
-    uint64_t setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool is_queued = 0);
+    bool setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, uint64_t &queue_cmd_index, bool is_queued = 1);
     /**
      * @brief Function sends a command to the Dobot to get the status of the suction cup
      * @param returned_data: container that holds the "params" component of the payload from the returned
      * command packet
-     * @param is_queued: indicates whether the instruction should be a queue command
-     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+     * @return bool indicates whether the command sent was successful
      */
-    uint64_t getEndEffectorSuctionCup(std::vector<u_int8_t> &returned_data, bool is_queued = 0);
+    bool getEndEffectorSuctionCup(std::vector<u_int8_t> &returned_data);
     /**
      * @brief Function sends a command to the Dobot to set the status of the gripper
      * @param is_ctrl_enabled: indicates whether the air pump controlling the gripper should be enabled
@@ -306,6 +306,8 @@ private:
 
     SerialPort* _serial_port;
 
+    double _serial_timeout;
+    int _try_limit;
     std::mutex _communication_mt;
 
     /**
@@ -348,12 +350,13 @@ private:
      * @param u_int64_t corresponding representation of the returned data
      */
     uint64_t getQueuedCmdIndex(std::vector<u_int8_t> data);
-
-
-
-
-
-
+    /**
+     * @brief Function returns boolean indicating whether data was read. If true, the variable next_char
+     * is populated
+     * @param next_char: contains the data read from the serial port
+     * @return bool: indicates whether data was read from the port
+     */
+    bool tryReadByte(uint8_t &next_char);
 };
 
 #endif /* DOBOT_COMMUNICATION_H_ */
