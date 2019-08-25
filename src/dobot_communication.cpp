@@ -407,7 +407,7 @@ bool DobotCommunication::getCPParams(std::vector<u_int8_t> &returned_data)
 	std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x02,0x5A,0x00 };
 	std::lock_guard<std::mutex> send_command_lk(_communication_mt);
 	sendCommand(ctrl_cmd);
-	std::vector<u_int8_t> data;
+	std::vector<uint8_t> data;
     if(!getResponse(data)){return false;}
     returned_data = data;
     return true;
