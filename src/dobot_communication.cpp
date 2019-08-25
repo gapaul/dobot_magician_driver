@@ -376,62 +376,66 @@ uint64_t DobotCommunication::setEMotor(int index,bool is_enabled,float speed, bo
 
 }
 
-uint64_t DobotCommunication::setCPParams(std::vector<float> &CPParams, int realtimeTrack, bool is_queued)
+bool DobotCommunication::setCPParams(std::vector<float> &cp_params, bool real_time_track, bool is_queued)
 {
-	u_int8_t ctrl = (is_queued << 1) | 0x01;
-	std::vector<u_int8_t> ctrl_cmd = { 0xAA,0xAA,0x0F,0x5A,ctrl };
-	packFromFloat(CPParams, ctrl_cmd);
-	ctrl_cmd.push_back((uint8_t)realtimeTrack);
-
-	std::lock_guard<std::mutex> send_command_lk(_communication_mt);
-	sendCommand(ctrl_cmd);
-	std::vector<u_int8_t> data;
-	if (!getResponse(data)) { return -2; }
-	if (is_queued) {
-		return getQueuedCmdIndex(data);
-
-	}
-	else {
-		return -1;
-	}
+    uint64_t queue_cmd_index;
+    return setCPParams(cp_params, real_time_track, queue_cmd_index, is_queued);
 }
 
-uint64_t DobotCommunication::getCPParams(std::vector<u_int8_t> &returned_data, bool is_queued)
+bool DobotCommunication::setCPParams(std::vector<float> &cp_params, bool real_time_track, uint64_t &queue_cmd_index, bool is_queued)
 {
-	u_int8_t ctrl = (is_queued << 1) | 0x00;
-	std::vector<u_int8_t> ctrl_cmd = { 0xAA,0xAA,0x02,0x5A,ctrl };
-
+	uint8_t ctrl = (is_queued << 1) | 0x01;
+	std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x0F,0x5A,ctrl };
+	packFromFloat(cp_params, ctrl_cmd);
+	ctrl_cmd.push_back((uint8_t)real_time_track);
 	std::lock_guard<std::mutex> send_command_lk(_communication_mt);
 	sendCommand(ctrl_cmd);
-	std::vector<u_int8_t> data;
-	if (!getResponse(data)) { return -2; }
-	returned_data = data;
-	if (is_queued) {
-		return getQueuedCmdIndex(data);
-
-	}
-	else {
-		return -1;
-	}
+	std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
 }
 
-uint64_t DobotCommunication::setCPCmd(std::vector<float> &CPCmd, int cpMode, bool is_queued)
+bool DobotCommunication::getCPParams(std::vector<u_int8_t> &returned_data)
 {
-	u_int8_t ctrl = (is_queued << 1) | 0x01;
-	std::vector<u_int8_t> ctrl_cmd = { 0xAA,0xAA,0x13,0x5B,ctrl,(u_int8_t)cpMode };
-	packFromFloat(CPCmd, ctrl_cmd);
-
+	std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x02,0x5A,0x00 };
 	std::lock_guard<std::mutex> send_command_lk(_communication_mt);
 	sendCommand(ctrl_cmd);
 	std::vector<u_int8_t> data;
-	if (!getResponse(data)) { return -2; }
-	if (is_queued) {
-		return getQueuedCmdIndex(data);
+    if(!getResponse(data)){return false;}
+    returned_data = data;
+    return true;
+}
 
-	}
-	else {
-		return -1;
-	}
+bool DobotCommunication::setCPCmd(std::vector<float> &cp_cmd, bool cp_mode, bool is_queued)
+{
+	uint64_t queue_cmd_index;
+    return setCPCmd(cp_cmd, cp_mode, queue_cmd_index, is_queued);
+}
+
+bool DobotCommunication::setCPCmd(std::vector<float> &cp_cmd, bool cp_mode, uint64_t &queue_cmd_index, bool is_queued)
+{
+	uint8_t ctrl = (is_queued << 1) | 0x01;
+	std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x13,0x5B,ctrl,(uint8_t)cp_mode };
+	packFromFloat(cp_cmd, ctrl_cmd);
+	std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+	sendCommand(ctrl_cmd);
+	std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
 }
 
 

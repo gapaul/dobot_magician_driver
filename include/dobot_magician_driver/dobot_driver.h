@@ -72,7 +72,7 @@ public:
      * @brief Runs the initialisation sequence for the Dobot
      */
 
-	bool setCPParams(std::vector<float> &CPParams, int realtimeTrack);
+	bool setCPParams(std::vector<float> &cp_params, bool real_time_track);
 	/**
 	* @brief Specifies the correct instructions for the command packet to set CP mode parameters
 	* @param is_ctrl_enabled: indicates whether the air pump controlling the suction cup should be enabled
@@ -80,7 +80,9 @@ public:
 	* @param bool indicates that the command was received by the Dobot
 	*/
 
-	bool setCPCmd(std::vector<float> &CPCmd, int cpMode);
+    bool getCPParams(std::vector<float> &cp_params, uint8_t &real_time_track);
+
+	bool setCPCmd(std::vector<float> &cp_cmd, bool cp_mode);
 	/**
 	* @brief Specifies the correct instructions for the command packet execute the CP command
 	* @param CPCmd: contains the desired parameters for the CP (x,y,z,velocity)

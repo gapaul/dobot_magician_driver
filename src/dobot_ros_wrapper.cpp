@@ -198,47 +198,71 @@ bool DobotRosWrapper::setEMotor(dobot_magician_driver::SetEMotorRequest &req, do
 
 bool DobotRosWrapper::setCPParams(dobot_magician_driver::SetCPParamsRequest &req, dobot_magician_driver::SetCPParamsResponse &res)
 {
-    bool is_queued = true;
-    if(req.CPParams.size() != 3){
+    if(req.cp_params.size() != 3){
         ROS_WARN("DobotRosWrapper: specify correct number of CP parameters");
         res.success = false;
         return false;
     }
-    if(req.realtimeTrack != 0 && req.realtimeTrack != 1){
+    if(req.real_time_track != 0 && req.real_time_track != 1){
         ROS_WARN("DobotRosWrapper: ensure to use boolean value only (0 or 1)");
         res.success = false;
         return false;
     }
 
-    std::vector<float> CPParams;
-    for(int i = 0; i < req.CPParams.size(); ++i){
-        CPParams.push_back(req.CPParams[i]);
+    std::vector<float> cp_params;
+    for(int i = 0; i < req.cp_params.size(); ++i){
+        cp_params.push_back(req.cp_params[i]);
     }
-    _driver->setCPParams(CPParams,req.realtimeTrack);
+    _driver->setCPParams(cp_params,req.real_time_track);
     res.success = true;
 
     return res.success;
 
 }
 
+bool DobotRosWrapper::getCPParams(dobot_magician_driver::GetCPParamsRequest &req, dobot_magician_driver::GetCPParamsResponse &res)
+{
+    std::vector<float> cp_params;
+    uint8_t real_time_track;
+
+    if(!_driver->getCPParams(cp_params,real_time_track))
+    {
+        ROS_WARN("Unable to get CPParams. Please try again!");
+        res.success = false;
+        return false;
+    }
+
+    res.cp_params = cp_params;
+    res.real_time_track = real_time_track;
+    res.success= true;
+
+    // std::cout << "CP Parameters:" << std::endl;
+    // std::cout << "planAcc: " << cp_params.at(0) << std::endl;
+    // std::cout << "junctionVel: " << cp_params.at(1) << std::endl;
+    // std::cout << "acc - period: " << cp_params.at(2) << std::endl;
+    // std::cout << "realTimeTrack: " << real_time_track << std::endl;
+
+    return res.success;
+}
+
 bool DobotRosWrapper::setCPCmd(dobot_magician_driver::SetCPCmdRequest &req, dobot_magician_driver::SetCPCmdResponse &res)
 {
     bool is_queued = true;
-    if(req.CPCmd.size() != 4){
+    if(req.cp_cmd.size() != 4){
         ROS_WARN("DobotRosWrapper: specify correct number of CP points");
         res.success = false;
         return false;
     }
-    if(req.cpMode != 0 && req.cpMode != 1){
+    if(req.cp_mode != 0 && req.cp_mode != 1){
         ROS_WARN("DobotRosWrapper: ensure to use boolean value only (0 or 1)");
         res.success = false;
         return false;
     }
-    std::vector<float> CPCmd;
-    for(int i = 0; i < req.CPCmd.size(); ++i){
-        CPCmd.push_back(req.CPCmd[i]);
+    std::vector<float> cp_cmd;
+    for(int i = 0; i < req.cp_cmd.size(); ++i){
+        cp_cmd.push_back(req.cp_cmd[i]);
     }
-    _driver->setCPCmd(CPCmd,req.cpMode);
+    _driver->setCPCmd(cp_cmd,req.cp_mode);
     res.success = true;
 
     return res.success;
@@ -315,6 +339,7 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     _get_io_analog_input_srv = _nh.advertiseService("IO/get_analog_input", &DobotRosWrapper::getIOAnalogInput, this);
 
     _set_cp_params_srv = _nh.advertiseService("CP/set_cp_params",&DobotRosWrapper::setCPParams,this);
+    _get_cp_params_srv = _nh.advertiseService("CP/get_cp_params",&DobotRosWrapper::getCPParams,this);
     _set_cp_cmd_srv = _nh.advertiseService("CP/set_cp_cmd",&DobotRosWrapper::setCPCmd,this);
 
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");

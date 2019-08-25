@@ -69,6 +69,7 @@ pkg_check_modules(SERIAL libserial)
    SetIOPWMOutput.srv
    GetIOAnalogInput.srv 
    SetCPParams.srv
+   GetCPParams.srv
    SetCPCmd.srv
 
 #   Service1.srv

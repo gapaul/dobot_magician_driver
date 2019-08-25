@@ -22,6 +22,7 @@
 #include "dobot_magician_driver/GetIOAnalogInput.h"
 
 #include "dobot_magician_driver/SetCPParams.h"
+#include "dobot_magician_driver/GetCPParams.h"
 #include "dobot_magician_driver/SetCPCmd.h"
 
 
@@ -52,6 +53,7 @@ private:
     ros::ServiceServer _get_io_analog_input_srv;
 
     ros::ServiceServer _set_cp_params_srv;
+    ros::ServiceServer _get_cp_params_srv;
     ros::ServiceServer _set_cp_cmd_srv;
 
     /**
@@ -143,6 +145,8 @@ private:
      * @return bool indicates whether invalid parameters were set
      */
     bool setCPParams(dobot_magician_driver::SetCPParamsRequest &req, dobot_magician_driver::SetCPParamsResponse &res);
+
+    bool getCPParams(dobot_magician_driver::GetCPParamsRequest &req, dobot_magician_driver::GetCPParamsResponse &res);
 
     bool setCPCmd(dobot_magician_driver::SetCPCmdRequest &req, dobot_magician_driver::SetCPCmdResponse &res);
 

@@ -133,24 +133,27 @@ public:
 	*	*period: Interpolation cycle, used in real-time mode only
 	*	*realtimeTrack: 0: Non-real time mode; 1: Real time mode
 	*/
-	uint64_t setCPParams(std::vector<float> &CPParams, int realtimeTrack = 1, bool is_queued = 1);
+	bool setCPParams(std::vector<float> &cp_params, bool real_time_track, bool is_queued);
+    bool setCPParams(std::vector<float> &cp_params, bool real_time_track, uint64_t &queue_cmd_index, bool is_queued);
 	/**
 	 * @brief Function sends a command to the Dobot to set Parameters for the CP mode
-	 * @param CPParams: Parameters for CP mode
-	 * @param realtimeTrack: parameter to indicate CP mode (0: non-real time mode, 1: real time mode)
+	 * @param cp_params: Parameters for CP mode
+	 * @param real_time_track: parameter to indicate CP mode (0: non-real time mode, 1: real time mode)
 	 * @param is_queued: indicates whether the instruction should be a queue command
-	 * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+	 * @param queue_cmd_index is the queue command index returned from the dobot if is_queued = 1
+     * @return bool indicates whether the command sent was successful
 	 */
-	uint64_t getCPParams(std::vector<u_int8_t> &returned_data, bool is_queued = 1);
+	bool getCPParams(std::vector<u_int8_t> &returned_data);
 	/**
 	 * @brief Function sends a command to the Dobot to get the CP Parameters
 	 * @param returned_data: Parameters for CP mode
 	 * @param is_queued: indicates whether the instruction should be a queue command
 	 * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
 	 */
-	uint64_t setCPCmd(std::vector<float> &CPCmd, int cpMode = 1, bool is_queued = 1);
+    bool setCPCmd(std::vector<float> &cp_cmd, bool cp_mode, bool is_queued);
+	bool setCPCmd(std::vector<float> &cp_cmd, bool cp_mode, uint64_t &queue_cmd_index, bool is_queued);
 	/**
-	 * @brief Function sends a command to the Dobot to execute teh specific CP Command
+	 * @brief Function sends a command to the Dobot to execute the specific CP Command
 	 * @param CPCmd: CP parameters (x, y, z, velocity)
 	 * @param cpMode: CP mode (0: Relative - Cartesian Increment, 1: Absolute - Cartesian Coordinate)
 	 * @param is_queued: indicates whether the instruction should be a queue command

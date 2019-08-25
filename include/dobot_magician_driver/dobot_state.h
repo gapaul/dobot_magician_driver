@@ -28,6 +28,8 @@ public:
 //    void unpackPose(std::vector<u_int8_t> &data);
     bool unpackPose(std::vector<uint8_t> &data, std::vector<double> &pose);
 
+    bool unpackCPParams(std::vector<uint8_t> &data, std::vector<float> &cp_params, uint8_t &real_time_track);
+
 
 private:
 

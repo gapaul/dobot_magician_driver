@@ -29,3 +29,19 @@ float DobotStates::unpackFloat(std::vector<uint8_t>::iterator it)
 //    printf("%f\n", temp);
     return temp;
 }
+
+bool DobotStates::unpackCPParams(std::vector<uint8_t> &data, std::vector<float> &cp_params, uint8_t &real_time_track)
+{
+    if (data.size() != 15)
+    {
+        return false;
+    }
+    cp_params.clear();
+    for (int i = 0; i < 3; ++i)
+    {
+        cp_params.push_back(unpackFloat(data.begin()+2 + i*4));
+    }
+    
+    real_time_track = (uint8_t)*(data.begin()+14);
+    return true;
+}
