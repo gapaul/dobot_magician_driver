@@ -105,7 +105,7 @@ bool DobotDriver::setSuctionCup(bool is_ctrl_enabled, bool is_sucked)
 
 bool DobotDriver::setCPParams(std::vector<float> &cp_params, bool real_time_track)
 {
-    if (std::isnan(_dobot_serial->setCPParams(cp_params, real_time_track,0)))
+    if (!_dobot_serial->setCPParams(cp_params, real_time_track,0))
 	{
 		return false;
 	}
@@ -114,7 +114,7 @@ bool DobotDriver::setCPParams(std::vector<float> &cp_params, bool real_time_trac
 
 bool DobotDriver::getCPParams(std::vector<float> &cp_params, uint8_t &real_time_track)
 {
-    std::vector<u_int8_t> data;
+    std::vector<uint8_t> data;
 
     if(_dobot_serial->getCPParams(data))
     {
@@ -123,14 +123,13 @@ bool DobotDriver::getCPParams(std::vector<float> &cp_params, uint8_t &real_time_
             return true;
         }
     }
-
     return false;
 }
 
 bool DobotDriver::setCPCmd(std::vector<float> &cp_cmd, bool cp_mode)
 {
 	uint64_t queue_command_index;
-    if (std::isnan(_dobot_serial->setCPCmd(cp_cmd, cp_mode,queue_command_index,1)))
+    if (!_dobot_serial->setCPCmd(cp_cmd, cp_mode,queue_command_index,1))
 	{
 		return false;
 	}
