@@ -25,6 +25,22 @@
 #include "dobot_magician_driver/GetCPParams.h"
 #include "dobot_magician_driver/SetCPCmd.h"
 
+#define IO_PIN_MIN 1
+#define IO_PIN_MAX 20
+#define IO_PWM_HZ_MIN 10        // Hz
+#define IO_PWM_HZ_MAX 1000000   // Hz
+#define IO_PWM_DC_MIN 0     // %
+#define IO_PWM_DC_MAX 100   // %
+
+enum IOMux {
+    IODummy,  // Invalid
+    IODO,     // I/O output
+    IOPWM,    // PWM output
+    IODI,     // I/O input
+    IOADC,    // A/D input
+    IODIPU,   // Pull-up input
+    IODIPD    // Pull-down input
+};
 
 class DobotRosWrapper {
 
@@ -155,6 +171,11 @@ private:
      * @brief Publishes "state" of the Dobot
      */
     void update_state_loop();
+
+    /**
+     * @brief Checks if the pin address is within the IO range
+     */
+    bool inIORange(int address);
 
 public:
     DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port);

@@ -162,7 +162,7 @@ public:
      * @param value: the 12-bit ADC value that we are reading (0-4095)
      */
     bool getIOAnalogInput(int address, int &value);
-    
+
     /**
      * @brief Function turns the stepper motor on either the conveyor belt, linear rail or the   extruder stepper motor
      * @param index: sets which stepper port to control (0-stepper1 1-stepper2)

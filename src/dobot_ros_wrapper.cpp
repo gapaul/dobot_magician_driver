@@ -1,19 +1,22 @@
 #include "dobot_magician_driver/dobot_ros_wrapper.h"
 
-
 bool DobotRosWrapper::setGripper(dobot_magician_driver::SetEndEffectorRequest &req, dobot_magician_driver::SetEndEffectorResponse &res)
 {
     if((req.isEndEffectorEnabled != 0 && req.isEndEffectorEnabled != 1)
             || (req.endEffectorState != 0 && req.endEffectorState != 1)){
         ROS_WARN("DobotRosWrapper: ensure booleans are specified for both request parameters");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
+    if(_driver->setGripper(req.isEndEffectorEnabled,req.endEffectorState))
+    {
+        res.success = true;
+        return res.success;
+    }
 
-    _driver->setGripper(req.isEndEffectorEnabled,req.endEffectorState);
-    res.success = true;
-
-    return true;
+    res.success = false;
+    return res.success;
 }
 
 bool DobotRosWrapper::setSuctionCup(dobot_magician_driver::SetEndEffectorRequest &req, dobot_magician_driver::SetEndEffectorResponse &res)
@@ -21,14 +24,18 @@ bool DobotRosWrapper::setSuctionCup(dobot_magician_driver::SetEndEffectorRequest
     if((req.isEndEffectorEnabled != 0 && req.isEndEffectorEnabled != 1)
             || (req.endEffectorState != 0 && req.endEffectorState != 1)){
         ROS_WARN("DobotRosWrapper: ensure booleans are specified for both request parameters");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    _driver->setSuctionCup(req.isEndEffectorEnabled,req.endEffectorState);
-    res.success = true;
+    if(_driver->setSuctionCup(req.isEndEffectorEnabled,req.endEffectorState))
+    {
+        res.success = true;
+        return res.success;
+    }
 
-    return true;
-
+    res.success = false;
+    return res.success;
 }
 
 bool DobotRosWrapper::setJointAngles(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res)
@@ -36,7 +43,7 @@ bool DobotRosWrapper::setJointAngles(dobot_magician_driver::SetTargetPointsReque
     if(req.target_points.size() != 4){
         ROS_WARN("DobotRosWrapper: specify correct number of target points");
         res.success = false;
-        return false;
+        return res.success;
     }
 
     std::vector<float> target_points;
@@ -44,48 +51,60 @@ bool DobotRosWrapper::setJointAngles(dobot_magician_driver::SetTargetPointsReque
         target_points.push_back(req.target_points[i]*180/M_PI);
 
     }
-    _driver->setJointAngles(target_points);
-    res.success = true;
+    if(_driver->setJointAngles(target_points))
+    {
+        res.success = true;
+        return res.success;
+    }
 
+    res.success = false;
     return res.success;
-
 }
 
 bool DobotRosWrapper::setCartesianPos(dobot_magician_driver::SetTargetPointsRequest &req, dobot_magician_driver::SetTargetPointsResponse &res)
 {
-
     if(req.target_points.size() != 4){
         ROS_WARN("DobotRosWrapper: specify correct number of target points");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
     std::vector<float> target_points;
     for(int i = 0; i < req.target_points.size(); ++i){
         target_points.push_back(req.target_points[i]*1000);
-
     }
-    _driver->setCartesianPos(target_points);
-    res.success = true;
+
+    if(_driver->setCartesianPos(target_points))
+    {
+        res.success = true;
+        return res.success;
+    }
+
+    res.success = false;
     return res.success;
-
-
 }
 
 bool DobotRosWrapper::setIOMultiplexing(dobot_magician_driver::SetIOMultiplexingRequest &req, dobot_magician_driver::SetIOMultiplexingResponse &res)
 {
-    if(req.address < 1 || req.address > 20){
+    if(!inIORange(req.address)){
         ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
     if(req.multiplex < 1 || req.multiplex > 6){
         ROS_WARN("DobotRosWrapper: please specify the correct multiplex value (1 to 6)");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    _driver->setIOMultiplexing(req.address, req.multiplex);
+    if(_driver->setIOMultiplexing(req.address, req.multiplex))
+    {
+        res.success = true;
+        return res.success;
+    }
 
-    res.success = true;
+    res.success = false;
     return res.success;
 }
 
@@ -93,24 +112,31 @@ bool DobotRosWrapper::setIODigitalOutput(dobot_magician_driver::SetIODigitalOutp
 {
     int multiplex;
     _driver->getIOMultiplexing(req.address, multiplex);
-    if(multiplex != 1) {
+    if( (IOMux) multiplex != IODO ) {
         ROS_WARN("DobotRosWrapper: the pin is not being mutiplexed for digital output");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    if(req.address < 1 || req.address > 20){
+    if(!inIORange(req.address)){
         ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
     if(req.level != 0 && req.level != 1){
         ROS_WARN("DobotRosWrapper: ensure to use boolean for the level output (0 or 1)");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    _driver->setIODigitalOutput(req.address, req.level);
+    if(_driver->setIODigitalOutput(req.address, req.level))
+    {
+        res.success = true;
+        return res.success;
+    }
 
-    res.success = true;
+    res.success = false;
     return res.success;
 }
 
@@ -118,29 +144,37 @@ bool DobotRosWrapper::setIOPWMOutput(dobot_magician_driver::SetIOPWMOutputReques
 {
     int multiplex;
     _driver->getIOMultiplexing(req.address, multiplex);
-    if(multiplex != 2) {
+    if( (IOMux) multiplex != IOPWM ) {
         ROS_WARN("DobotRosWrapper: the pin is not being mutiplexed for PWM input");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    if(req.address < 1 || req.address > 20){
+    if(!inIORange(req.address)){
         ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    if(req.frequency < 10 || req.address > 1000000){
+    if(req.frequency < IO_PWM_HZ_MIN || req.address > IO_PWM_HZ_MAX){
         ROS_WARN("DobotRosWrapper: please specify the correct frequency (10Hz to 1MHz)");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    if(req.duty_cycle < 0 || req.duty_cycle > 100){
+    if(req.duty_cycle < IO_PWM_DC_MIN || req.duty_cycle > IO_PWM_DC_MAX){
         ROS_WARN("DobotRosWrapper: please specify the correct duty cycle (0 to 100)");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    _driver->setIOPWM(req.address, req.frequency, req.duty_cycle);
+    if(_driver->setIOPWM(req.address, req.frequency, req.duty_cycle))
+    {
+        res.success = true;
+        return res.success;
+    }
 
-    res.success = true;
+    res.success = false;
     return res.success;
 }
 
@@ -148,21 +182,27 @@ bool DobotRosWrapper::getIODigitalInput(dobot_magician_driver::GetIODigitalInput
 {
     int multiplex;
     _driver->getIOMultiplexing(req.address, multiplex);
-    if(multiplex != 3 && multiplex != 5 && multiplex != 6) {
+    if( (IOMux) multiplex != IODI && (IOMux) multiplex != IODIPU && (IOMux) multiplex != IODIPD) {
         ROS_WARN("DobotRosWrapper: the pin is not being mutiplexed for digital input");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    if(req.address < 1 || req.address > 20){
+    if(!inIORange(req.address)){
         ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
     bool level;
-    _driver->getIODigitalInput(req.address, level);
+    if(_driver->getIODigitalInput(req.address, level))
+    {
+        res.level = level;
+        res.success = true;
+        return res.success;
+    }
 
-    res.level = level;
-    res.success = true;
+    res.success = false;
     return res.success;
 }
 
@@ -170,30 +210,40 @@ bool DobotRosWrapper::getIOAnalogInput(dobot_magician_driver::GetIOAnalogInputRe
 {
     int multiplex;
     _driver->getIOMultiplexing(req.address, multiplex);
-    if(multiplex != 4) {
+    if( (IOMux) multiplex != IOADC ) {
         ROS_WARN("DobotRosWrapper: the pin is not being mutiplexed for analog input");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
-    if(req.address < 1 || req.address > 20){
+    if(!inIORange(req.address)){
         ROS_WARN("DobotRosWrapper: please specify the correct pin address (1 to 20)");
-        return false;
+        res.success = false;
+        return res.success;
     }
 
     int value;
-    _driver->getIOAnalogInput(req.address, value);
+    if(_driver->getIOAnalogInput(req.address, value))
+    {
+        res.value = value;
+        res.success = true;
+        return res.success;
+    }
 
-    res.value = value;
-    res.success = true;
+    res.success = false;
     return res.success;
 }
 
 bool DobotRosWrapper::setEMotor(dobot_magician_driver::SetEMotorRequest &req, dobot_magician_driver::SetEMotorResponse &res)
 {
 
-    _driver->setEMotor(req.index,req.is_enabled,req.speed,req.direction);
+    if(_driver->setEMotor(req.index,req.is_enabled,req.speed,req.direction))
+    {
+        res.success = true;
+        return res.success;
+    }
 
-    res.success = true;
+    res.success = false;
     return res.success;
 }
 
@@ -202,23 +252,26 @@ bool DobotRosWrapper::setCPParams(dobot_magician_driver::SetCPParamsRequest &req
     if(req.cp_params.size() != 3){
         ROS_WARN("DobotRosWrapper: specify correct number of CP parameters");
         res.success = false;
-        return false;
+        return res.success;
     }
     if(req.real_time_track != 0 && req.real_time_track != 1){
         ROS_WARN("DobotRosWrapper: ensure to use boolean value only (0 or 1)");
         res.success = false;
-        return false;
+        return res.success;
     }
 
     std::vector<float> cp_params;
     for(int i = 0; i < req.cp_params.size(); ++i){
         cp_params.push_back(req.cp_params[i]);
     }
-    _driver->setCPParams(cp_params,req.real_time_track);
-    res.success = true;
+    if(_driver->setCPParams(cp_params,req.real_time_track))
+    {
+        res.success = true;
+        return res.success;
+    }
 
+    res.success = false;
     return res.success;
-
 }
 
 bool DobotRosWrapper::getCPParams(dobot_magician_driver::GetCPParamsRequest &req, dobot_magician_driver::GetCPParamsResponse &res)
@@ -226,23 +279,16 @@ bool DobotRosWrapper::getCPParams(dobot_magician_driver::GetCPParamsRequest &req
     std::vector<float> cp_params;
     uint8_t real_time_track;
 
-    if(!_driver->getCPParams(cp_params,real_time_track))
+    if(_driver->getCPParams(cp_params,real_time_track))
     {
-        ROS_WARN("Unable to get CPParams. Please try again!");
-        res.success = false;
-        return false;
+        res.cp_params = cp_params;
+        res.real_time_track = real_time_track;
+        res.success= true;
+        return res.success;
     }
 
-    res.cp_params = cp_params;
-    res.real_time_track = real_time_track;
-    res.success= true;
-
-    // std::cout << "CP Parameters:" << std::endl;
-    // std::cout << "planAcc: " << cp_params.at(0) << std::endl;
-    // std::cout << "junctionVel: " << cp_params.at(1) << std::endl;
-    // std::cout << "acc - period: " << cp_params.at(2) << std::endl;
-    // std::cout << "realTimeTrack: " << real_time_track << std::endl;
-
+    ROS_WARN("Unable to get CPParams. Please try again!");
+    res.success = true;
     return res.success;
 }
 
@@ -252,20 +298,25 @@ bool DobotRosWrapper::setCPCmd(dobot_magician_driver::SetCPCmdRequest &req, dobo
     if(req.cp_cmd.size() != 4){
         ROS_WARN("DobotRosWrapper: specify correct number of CP points");
         res.success = false;
-        return false;
+        return res.success;
     }
     if(req.cp_mode != 0 && req.cp_mode != 1){
         ROS_WARN("DobotRosWrapper: ensure to use boolean value only (0 or 1)");
         res.success = false;
-        return false;
+        return res.success;
     }
     std::vector<float> cp_cmd;
     for(int i = 0; i < req.cp_cmd.size(); ++i){
         cp_cmd.push_back(req.cp_cmd[i]);
     }
-    _driver->setCPCmd(cp_cmd,req.cp_mode);
-    res.success = true;
 
+    if(_driver->setCPCmd(cp_cmd,req.cp_mode))
+    {
+        res.success = true;
+        return res.success;
+    }
+
+    res.success = false;
     return res.success;
 }
 
@@ -316,6 +367,12 @@ void DobotRosWrapper::update_state_loop()
         _rate.sleep();
     }
 
+}
+
+bool DobotRosWrapper::inIORange(int address)
+{
+    if( address < IO_PIN_MIN || address > IO_PIN_MAX ) {return false;}
+    else {return true;}
 }
 
 DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port)

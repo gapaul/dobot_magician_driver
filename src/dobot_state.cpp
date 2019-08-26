@@ -41,7 +41,7 @@ bool DobotStates::unpackCPParams(std::vector<uint8_t> &data, std::vector<float> 
     {
         cp_params.push_back(unpackFloat(data.begin()+2 + i*4));
     }
-    
+
     real_time_track = (uint8_t)*(data.begin()+14);
     return true;
 }

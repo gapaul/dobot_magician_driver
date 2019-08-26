@@ -1,4 +1,5 @@
 #include "dobot_magician_driver/dobot_driver.h"
+#include <thread>
 
 // DobotDriver
 DobotDriver::DobotDriver(std::string port)
@@ -10,7 +11,7 @@ DobotDriver::DobotDriver(std::string port)
 
 bool DobotDriver::getCurrentConfiguration(std::vector<double> &cart_pos, std::vector<double> &joint_angles)
 {
-    std::vector<u_int8_t> data;
+    std::vector<uint8_t> data;
     std::vector<double> pose_data;
 
     if(_dobot_serial->getPose(data))
@@ -27,7 +28,7 @@ bool DobotDriver::getCurrentConfiguration(std::vector<double> &cart_pos, std::ve
 
 bool DobotDriver::getJointAngles(std::vector<double> &joint_angles)
 {
-    std::vector<u_int8_t> data;
+    std::vector<uint8_t> data;
     std::vector<double> pose_data;
 
     if(_dobot_serial->getPose(data))
@@ -43,7 +44,7 @@ bool DobotDriver::getJointAngles(std::vector<double> &joint_angles)
 
 bool DobotDriver::getCartesianPos(std::vector<double> &cart_pos)
 {
-    std::vector<u_int8_t> data;
+    std::vector<uint8_t> data;
     std::vector<double> pose_data;
 
     if(_dobot_serial->getPose(data))
@@ -59,44 +60,39 @@ bool DobotDriver::getCartesianPos(std::vector<double> &cart_pos)
 
 bool DobotDriver::setJointAngles(std::vector<float> &joint_angles)
 {
-    if(std::isnan(_dobot_serial->setPTPCmd(4,joint_angles)))
+    if(_dobot_serial->setPTPCmd(4,joint_angles))
     {
-        return false;
+        return true;
 
     }
-    return true;
+    return false;
 }
 
 bool DobotDriver::setCartesianPos(std::vector<float> &cart_pos)
 {
-    if(std::isnan(_dobot_serial->setPTPCmd(2,cart_pos)))
+    if(_dobot_serial->setPTPCmd(2,cart_pos))
     {
-        return false;
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool DobotDriver::setGripper(bool is_ctrl_enabled, bool is_gripped)
 {
-    if(std::isnan(_dobot_serial->setEndEffectorGripper(is_ctrl_enabled, is_gripped)))
+    if(_dobot_serial->setEndEffectorGripper(is_ctrl_enabled, is_gripped))
     {
-        return false;
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool DobotDriver::setSuctionCup(bool is_ctrl_enabled, bool is_sucked)
 {
-    uint64_t test;
-    if(!_dobot_serial->setEndEffectorSuctionCup(is_ctrl_enabled, is_sucked, test,0))
+    if(_dobot_serial->setEndEffectorSuctionCup(is_ctrl_enabled, is_sucked))
     {
-        return false;
+        return true;
     }
-    std::vector<uint8_t> returned_data;
-
-    _dobot_serial->getEndEffectorSuctionCup(returned_data);
-
-    return true;
+    return false;
 }
 
 /*
@@ -105,11 +101,11 @@ bool DobotDriver::setSuctionCup(bool is_ctrl_enabled, bool is_sucked)
 
 bool DobotDriver::setCPParams(std::vector<float> &cp_params, bool real_time_track)
 {
-    if (!_dobot_serial->setCPParams(cp_params, real_time_track,0))
+    if (_dobot_serial->setCPParams(cp_params, real_time_track,0))
 	{
-		return false;
+		return true;
 	}
-	return true;
+	return false;
 }
 
 bool DobotDriver::getCPParams(std::vector<float> &cp_params, uint8_t &real_time_track)
@@ -129,11 +125,11 @@ bool DobotDriver::getCPParams(std::vector<float> &cp_params, uint8_t &real_time_
 bool DobotDriver::setCPCmd(std::vector<float> &cp_cmd, bool cp_mode)
 {
 	uint64_t queue_command_index;
-    if (!_dobot_serial->setCPCmd(cp_cmd, cp_mode,queue_command_index,1))
+    if (_dobot_serial->setCPCmd(cp_cmd, cp_mode,queue_command_index,1))
 	{
-		return false;
+		return true;
 	}
-	return true;
+	return false;
 }
 
 /*
@@ -235,7 +231,8 @@ void DobotDriver::initialiseDobot()
 {
     std::vector<float> start_joint_angles={0,0.4,0.3,0};
     setJointAngles(start_joint_angles);
-    _dobot_serial->setHOMECmd(1); //create setter for this to access from ros wrapper
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    _dobot_serial->setHOMECmd(); //create setter for this to access from ros wrapper
 //    _dobot_serial->setEMotor(0,false,5000,true);//turn off stepper 1
 //    _dobot_serial->setEMotor(1,false,5000,true);//turn off stepper 2
 
