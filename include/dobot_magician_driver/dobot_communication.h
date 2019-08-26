@@ -184,38 +184,40 @@ public:
           5 - IOFunctionDIPU;   // Pull-up input
           6 - IOFunctionDIPD    // Pull-down input
      * @param is_queued: indicates whether the instruction should be a queue command
-     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+     * @param queue_cmd_index: the uint64_t queue command index returned from the dobot if is_queued = 1
+     * @return bool indicates whether the command sent was successful
      */
-    uint64_t setIOMultiplexing(int address, int multiplex, bool is_queued = 0);
+    bool setIOMultiplexing(int address, int multiplex, bool is_queued = 0);
+    bool setIOMultiplexing(int address, int multiplex, uint64_t &queue_cmd_index, bool is_queued = 1);
 
     /**
      * @brief Function sends a command to the Dobot to get the multiplexing of IO pins
      * @param address: the address of the IO pin (from 1-20)
      * @param returned_data: container that holds the "params" component of the payload from the returned
      * command packet
-     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
-     * Here it will always return -1 because the command is not queued by default
+     * @return bool indicates whether the command sent was successful
      */
-    uint64_t getIOMultiplexing(int address, std::vector<u_int8_t> &returned_data);
+    bool getIOMultiplexing(int address, std::vector<uint8_t> &returned_data);
 
     /**
      * @brief Function sends a command to the Dobot to send a digital output on its IO pins
      * @param address: the address of the IO pin (from 1-20)
      * @param level: the level output (0-LOW, 1-HIGH)
      * @param is_queued: indicates whether the instruction should be a queue command
-     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+     * @param queue_cmd_index: the uint64_t queue command index returned from the dobot if is_queued = 1
+     * @return bool indicates whether the command sent was successful
      */
-    uint64_t setIODO(int address, bool level, bool is_queued = 0);
+    bool setIODO(int address, bool level, bool is_queued = 0);
+    bool setIODO(int address, bool level, uint64_t &queue_cmd_index, bool is_queued = 0);
 
     /**
      * @brief Function sends a command to the Dobot to get the digital output on its IO pins
      * @param address: the address of the IO pin (from 1-20)
      * @param returned_data: container that holds the "params" component of the payload from the returned
      * command packet
-     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
-     * Here it will always return -1 because the command is not queued by default
+     * @return bool indicates whether the command sent was successful
      */
-    uint64_t getIODO(int address, std::vector<u_int8_t> &returned_data);
+    bool getIODO(int address, std::vector<uint8_t> &returned_data);
 
     /**
      * @brief Function sends a command to the Dobot to send a PWM signal at an IO pin address
@@ -223,9 +225,11 @@ public:
      * @param frequency: the PWM frequency (10Hz - 1MHz)
      * @param duty_cycle: the PWM duty ratio (0 - 100)
      * @param is_queued: indicates whether the instruction should be a queue command
-     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
+     * @param queue_cmd_index: the uint64_t queue command index returned from the dobot if is_queued = 1
+     * @return bool indicates whether the command sent was successful
      */
-    uint64_t setIOPWM(int address, float frequency, float duty_cycle, bool is_queued = 0);
+    bool setIOPWM(int address, float frequency, float duty_cycle, bool is_queued = 0);
+    bool setIOPWM(int address, float frequency, float duty_cycle, uint64_t &queue_cmd_index, bool is_queued = 0);
 
 //    getIOPWM
 
@@ -234,20 +238,18 @@ public:
      * @param address: the address of the IO pin (from 1-20)
      * @param returned_data: container that holds the "params" component of the payload from the returned
      * command packet
-     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
-     * Here it will always return -1 because the command is not queued by default
+     * @return bool indicates whether the command sent was successful
      */
-    uint64_t getIODI(int address, std::vector<u_int8_t> &returned_data);
+    bool getIODI(int address, std::vector<uint8_t> &returned_data);
 
     /**
      * @brief Function sends a command to the Dobot to get the the 10-bit ADC value on its IO pins
      * @param address: the address of the IO pin (from 1-20)
      * @param returned_data: container that holds the "params" component of the payload from the returned
      * command packet
-     * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
-     * Here it will always return -1 because the command is not queued by default
+     * @return bool indicates whether the command sent was successful
      */
-    uint64_t getIOADC(int address, std::vector<u_int8_t> &returned_data);
+    bool getIOADC(int address, std::vector<uint8_t> &returned_data);
 
     uint64_t setEMotor(int index,bool is_enabled,float speed,bool direction,bool is_queued = 0);
     /**

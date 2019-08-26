@@ -143,19 +143,20 @@ bool DobotDriver::setCPCmd(std::vector<float> &cp_cmd, bool cp_mode)
 
 bool DobotDriver::setIOMultiplexing(int address, int multiplex)
 {
-    if(_dobot_serial->setIOMultiplexing(address,multiplex) >= -1){
-      return true;
+    if(_dobot_serial->setIOMultiplexing(address,multiplex))
+    {
+        return true;
     }
     return false;
 }
 
 bool DobotDriver::getIOMultiplexing(int address, int &multiplex)
 {
-    std::vector<u_int8_t> data;
+    std::vector<uint8_t> data;
 
     if(_dobot_serial->getIOMultiplexing(address,data))
     {
-        multiplex = (int) data.at(1);
+        multiplex = (int) data.at(3);
         return true;
     }
 
@@ -164,19 +165,20 @@ bool DobotDriver::getIOMultiplexing(int address, int &multiplex)
 
 bool DobotDriver::setIODigitalOutput(int address, bool level)
 {
-    if(_dobot_serial->setIODO(address,level) >= -1){
-      return true;
+    if(_dobot_serial->setIODO(address,level))
+    {
+        return true;
     }
     return false;
 }
 
 bool DobotDriver::getIODigitalOutput(int address, bool &level)
 {
-    std::vector<u_int8_t> data;
+    std::vector<uint8_t> data;
 
     if(_dobot_serial->getIODO(address,data))
     {
-        level = (bool) data.at(1);
+        level = (bool) data.at(3);
         return true;
     }
 
@@ -185,19 +187,20 @@ bool DobotDriver::getIODigitalOutput(int address, bool &level)
 
 bool DobotDriver::setIOPWM(int address, float frequency, float duty_cycle)
 {
-    if(_dobot_serial->setIOPWM(address,frequency,duty_cycle) >= -1){
-      return true;
+    if(_dobot_serial->setIOPWM(address,frequency,duty_cycle))
+    {
+        return true;
     }
     return false;
 }
 
 bool DobotDriver::getIODigitalInput(int address, bool &level)
 {
-    std::vector<u_int8_t> data;
+    std::vector<uint8_t> data;
 
     if(_dobot_serial->getIODI(address,data))
     {
-        level = (bool) data.at(1);
+        level = (bool) data.at(3);
         return true;
     }
 
@@ -206,11 +209,11 @@ bool DobotDriver::getIODigitalInput(int address, bool &level)
 
 bool DobotDriver::getIOAnalogInput(int address, int &value)
 {
-    std::vector<u_int8_t> data;
+    std::vector<uint8_t> data;
 
     if(_dobot_serial->getIOADC(address,data))
     {
-        value = (data.at(2)<<8) | data.at(1);
+        value = (data.at(4)<<8) | data.at(3);
         return true;
     }
 

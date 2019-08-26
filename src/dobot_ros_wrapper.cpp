@@ -84,6 +84,7 @@ bool DobotRosWrapper::setIOMultiplexing(dobot_magician_driver::SetIOMultiplexing
     }
 
     _driver->setIOMultiplexing(req.address, req.multiplex);
+
     res.success = true;
     return res.success;
 }

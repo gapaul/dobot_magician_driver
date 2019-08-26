@@ -1,4 +1,6 @@
 #include "dobot_magician_driver/dobot_communication.h"
+#include "ros/ros.h"
+#include "ros/console.h"
 #include <sstream>
 
 DobotCommunication::DobotCommunication(std::string port) :
@@ -62,10 +64,9 @@ bool DobotCommunication::getResponse(std::vector<uint8_t> &returned_payload)
     bool read_success = false;
     int try_iteration = 0;
     int header_size = 0;
-    unsigned char header = 0xaa;
+    unsigned char header = 0xAA;
 
     // find the header
-    
     while (header_size < 2)
     {
         read_success = tryReadByte(next_char);
@@ -84,7 +85,7 @@ bool DobotCommunication::getResponse(std::vector<uint8_t> &returned_payload)
             return false;
         }
     }
-    
+
     // get length
     if (tryReadByte(next_char))
     {
@@ -216,8 +217,6 @@ uint64_t DobotCommunication::setEndEffectorGripper(bool is_ctrl_enabled, bool is
     }
 }
 
-
-
 uint64_t DobotCommunication::setPTPCmd(int ptp_mode, std::vector<float> &target_points, bool is_queued)
 {
     uint8_t ctrl = (is_queued << 1) | 0x01;
@@ -239,111 +238,134 @@ uint64_t DobotCommunication::setPTPCmd(int ptp_mode, std::vector<float> &target_
 /*
  *  I/O COMMANDS
  */
-
- uint64_t DobotCommunication::setIOMultiplexing(int address, int multiplex, bool is_queued)
- {
-    u_int8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x82,ctrl,(uint8_t)address,(uint8_t)multiplex};
-
-    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
-    sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
-    if(is_queued){
-        return getQueuedCmdIndex(data);
-
-    }else{
-        return -1;
-    }
- }
-
- uint64_t DobotCommunication::getIOMultiplexing(int address, std::vector<u_int8_t> &returned_data)
- {
-     u_int8_t ctrl = 0x00;
-     std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x82,ctrl,(uint8_t)address,0x00};
-
-     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
-     sendCommand(ctrl_cmd);
-     std::vector<u_int8_t> data;
-     if(!getResponse(data)){return -2;}
-     returned_data = data;
-     return -1;
- }
-
-uint64_t DobotCommunication::setIODO(int address, bool level, bool is_queued)
+bool DobotCommunication::setIOMultiplexing(int address, int multiplex, bool is_queued)
 {
-    u_int8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x83,ctrl,(uint8_t)address,(uint8_t)level};
-
-    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
-    sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
-    if(is_queued){
-        return getQueuedCmdIndex(data);
-
-    }else{
-        return -1;
-    }
+    uint64_t queue_cmd_index;
+    return setIOMultiplexing(address, multiplex, queue_cmd_index, is_queued);
 }
 
-uint64_t DobotCommunication::getIODO(int address, std::vector<u_int8_t> &returned_data)
+bool DobotCommunication::setIOMultiplexing(int address, int multiplex, uint64_t &queue_cmd_index, bool is_queued)
 {
-    u_int8_t ctrl = 0x00;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x83,ctrl,(uint8_t)address,0x00};
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x82,ctrl,(uint8_t)address,(uint8_t)multiplex};
 
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
+}
+
+bool DobotCommunication::getIOMultiplexing(int address, std::vector<uint8_t> &returned_data)
+{
+    uint8_t ctrl = 0x00;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x82,ctrl,(uint8_t)address,0x00};
+
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> data;
+    if(!getResponse(data)){return false;}
     returned_data = data;
-    return -1;
+    return true;
 }
 
-uint64_t DobotCommunication::setIOPWM(int address, float frequency, float duty_cycle, bool is_queued)
+bool DobotCommunication::setIODO(int address, bool level, bool is_queued)
 {
-    u_int8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x0B,0x84,ctrl,(uint8_t)address};
+    uint64_t queue_cmd_index;
+    return setIODO(address, level, queue_cmd_index, is_queued);
+}
+
+bool DobotCommunication::setIODO(int address, bool level, uint64_t &queue_cmd_index, bool is_queued)
+{
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x83,ctrl,(uint8_t)address,(uint8_t)level};
+
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
+}
+
+bool DobotCommunication::getIODO(int address, std::vector<uint8_t> &returned_data)
+{
+    uint8_t ctrl = 0x00;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x83,ctrl,(uint8_t)address,0x00};
+
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> data;
+    if(!getResponse(data)){return false;}
+    returned_data = data;
+    return true;
+}
+
+bool DobotCommunication::setIOPWM(int address, float frequency, float duty_cycle, bool is_queued)
+{
+    uint64_t queue_cmd_index;
+    return setIOPWM(address, frequency, duty_cycle, queue_cmd_index, is_queued);
+}
+
+bool DobotCommunication::setIOPWM(int address, float frequency, float duty_cycle, uint64_t &queue_cmd_index, bool is_queued)
+{
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x0B,0x84,ctrl,(uint8_t)address};
 
     std::vector<float> params = {frequency, duty_cycle};
     packFromFloat(params,ctrl_cmd);
 
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
     if(is_queued){
-        return getQueuedCmdIndex(data);
-
-    }else{
-        return -1;
+        queue_cmd_index = getQueuedCmdIndex(payload);
     }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
 }
 
-uint64_t DobotCommunication::getIODI(int address, std::vector<u_int8_t> &returned_data)
+bool DobotCommunication::getIODI(int address, std::vector<uint8_t> &returned_data)
 {
-    u_int8_t ctrl = 0x00;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x85,ctrl,(uint8_t)address,0x00};
+    uint8_t ctrl = 0x00;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x85,ctrl,(uint8_t)address,0x00};
 
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
+    std::vector<uint8_t> data;
+    if(!getResponse(data)){return false;}
     returned_data = data;
-    return -1;
+    return true;
 }
 
-uint64_t DobotCommunication::getIOADC(int address, std::vector<u_int8_t> &returned_data)
+bool DobotCommunication::getIOADC(int address, std::vector<uint8_t> &returned_data)
 {
-    u_int8_t ctrl = 0x00;
-    std::vector<u_int8_t> ctrl_cmd = {0xAA,0xAA,0x05,0x86,ctrl,(uint8_t)address,0x00,0x00};
+    uint8_t ctrl = 0x00;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x05,0x86,ctrl,(uint8_t)address,0x00,0x00};
 
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
-    std::vector<u_int8_t> data;
-    if(!getResponse(data)){return -2;}
+    std::vector<uint8_t> data;
+    if(!getResponse(data)){return false;}
     returned_data = data;
-    return -1;
+    return true;
 }
 
 uint64_t DobotCommunication::setEMotor(int index,bool is_enabled,float speed, bool direction, bool is_queued)
@@ -466,7 +488,7 @@ uint64_t DobotCommunication::setHOMECmd(bool is_queued)
     }
 }
 
-void DobotCommunication::sendCommand(std::vector<u_int8_t> &ctrl_cmd)
+void DobotCommunication::sendCommand(std::vector<uint8_t> &ctrl_cmd)
 {
     std::vector<uint8_t> payload(ctrl_cmd.begin() + 3, ctrl_cmd.end());
 //    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
