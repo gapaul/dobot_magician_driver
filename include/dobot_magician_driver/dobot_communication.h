@@ -295,12 +295,46 @@ public:
 //    getWIFIConnectStatus
 
     /// Queued execution control commands
-//    SetQueuedCmdStartExec
-//    SetQueuedCmdStopExec
-//    SetQueuedCmdForceStopExec
+
+    /**
+     * @brief Function that starts the execution of queued commands in the buffer. This function must be called whenever 
+     * a Stop of Force Stop function is called previously. If not, the Dobot will not be able to perform any subsequence 
+     * actions. For Force Stop case, the Dobot will ignored the current command that was stopped by Force Stop and start 
+     * executing the next one.
+     * 
+     * @return bool indicates whether the command was successful
+     */
+    bool setQueuedCmdStartExec(void);
+
+    /**
+     * @brief Function to stop the execution of all queued commands that are currently in the buffer. If this function is called
+     * while the Dobot is performing an action, it will continue to finish that action and then stop. For example, if the Dobot 
+     * is moving from point A to point B and this function is called, it will move to point B and stop.
+     * Note: setQueuedCmdStartExec must be called to perform all of the remaining queued actions left in the buffer.
+     * 
+     * @return bool indicates whether the command was successful
+     */
+    bool setQueuedCmdStopExec(void);
+
+    /**
+     * @brief Function to IMMEDIATELY stop the execution of all queued commands that are currently in the buffer. If this function
+     * is called while the Dobot is performing an action, it will stop immediately regardless what current action is. For example, 
+     * if the Dobot is moving from point A to B and this function is called, it will stop immediately.
+     * Note: setQueuedCmdStartExec must be called to perform all of the remaining queued actions left in the buffer. In this scenario,
+     * the Dobot will ignore the current command that it is performing by the time the Force Stop is called and continue with the next
+     * one in the buffer.
+     * @return bool indicates whether the command was successful
+     */
+    bool setQueuedCmdForceStopExec(void);
+
 //    SetQueuedCmdStartDownload
 //    SetQueuedCmdStopDownload
-//    SetQueuedCmdClear
+
+    /**
+     * @brief Function that clears all Queued Commands in the buffer
+     * @return bool indicates whether the command was successful
+     */
+    bool setQueuedCmdClear(void);
 //    GetQueuedCmdCurrentIndex
 
     /**

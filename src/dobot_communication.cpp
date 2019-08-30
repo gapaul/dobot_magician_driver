@@ -523,6 +523,46 @@ bool DobotCommunication::setHOMECmd(uint64_t &queue_cmd_index, bool is_queued)
     return true;
 }
 
+bool DobotCommunication::setQueuedCmdStartExec(void)
+{
+    std::vector<uint8_t>  ctrl_cmd = {0xAA,0xAA,0x02,0xF0,0x01};
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    return true;
+}
+
+bool DobotCommunication::setQueuedCmdStopExec(void)
+{
+    std::vector<uint8_t>  ctrl_cmd = {0xAA,0xAA,0x02,0xF1,0x01};
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    return true;
+}
+
+bool DobotCommunication::setQueuedCmdForceStopExec(void)
+{
+    std::vector<uint8_t>  ctrl_cmd = {0xAA,0xAA,0x02,0xF2,0x01};
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    return true;
+}
+
+bool DobotCommunication::setQueuedCmdClear(void)
+{
+    std::vector<uint8_t>  ctrl_cmd = {0xAA,0xAA,0x02,0xF5,0x01};
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    return true;
+}
+
 void DobotCommunication::sendCommand(std::vector<uint8_t> &ctrl_cmd)
 {
     std::vector<uint8_t> payload(ctrl_cmd.begin() + 3, ctrl_cmd.end());

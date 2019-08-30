@@ -226,9 +226,38 @@ bool DobotDriver::setEMotor(int index,bool is_enabled,float speed,bool direction
     return false;
 }
 
+/* QUEUED EXECUTION CONTROL COMMANDS */
+
+bool DobotDriver::setQueuedCmdStartExec(void)
+{
+    if (_dobot_serial->setQueuedCmdStartExec())
+    {
+        return true;
+    }
+    return false;
+}
+
+bool DobotDriver::setQueuedCmdStopExec(void)
+{
+    if (_dobot_serial->setQueuedCmdStopExec())
+    {
+        return true;
+    }
+    return false;
+}
+
+bool DobotDriver::setQueuedCmdForceStopExec(void)
+{
+    if (_dobot_serial->setQueuedCmdForceStopExec())
+    {
+        return true;
+    }
+    return false;
+}
 
 void DobotDriver::initialiseDobot()
 {
+    _dobot_serial->setQueuedCmdClear();
     std::vector<float> start_joint_angles={0,0.4,0.3,0};
     setJointAngles(start_joint_angles);
     std::this_thread::sleep_for(std::chrono::seconds(2));
