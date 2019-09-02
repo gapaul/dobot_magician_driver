@@ -29,6 +29,10 @@
 #include "dobot_magician_driver/SetQueuedCmdStopExec.h"
 #include "dobot_magician_driver/SetQueuedCmdForceStopExec.h"
 
+#include "dobot_magician_driver/SetEStop.h"
+
+#include "dobot_magician_driver/SetInitialise.h"
+
 #define IO_PIN_MIN 1
 #define IO_PIN_MAX 20
 #define IO_PWM_HZ_MIN 10        // Hz
@@ -82,6 +86,10 @@ private:
     ros::ServiceServer _set_queued_cmd_start_srv;
     ros::ServiceServer _set_queued_cmd_stop_srv;
     ros::ServiceServer _set_queued_cmd_force_stop_srv;
+
+    ros::ServiceServer _set_e_stop_srv;
+
+    ros::ServiceServer _set_initialise_srv;
 
     /**
      * @brief ROS Service to set the status of the gripper
@@ -227,6 +235,19 @@ private:
      * @return bool indicates whether the command was successfull or not
      */
     bool setQueuedCmdForceStopExec(dobot_magician_driver::SetQueuedCmdForceStopExecRequest &req, dobot_magician_driver::SetQueuedCmdForceStopExecResponse &res);
+
+    /**
+     * @brief ROS Service to e-stop the Dobot. When executed, the Dobot will stop the current motion, the pump and all IO ports (1 to 20).
+     * All of the queued command will also be cleared at the same time. The Dobot must be re-initalised to work normally.
+     * @return bool indicates whether the command was successfull or not
+     */
+    bool setEStop(dobot_magician_driver::SetEStopRequest &req, dobot_magician_driver::SetEStopResponse &res);
+    
+    /**
+     * @brief ROS Service to initialise the Dobot. This includes the Homing procedure and it also clears the queued commands buffer and 
+     * the IO port at the same time.
+     */
+    bool setInitialise(dobot_magician_driver::SetInitialiseRequest &req, dobot_magician_driver::SetInitialiseResponse &res);
 
     std::thread *update_state_thread;
     /**

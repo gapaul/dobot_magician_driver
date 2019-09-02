@@ -74,6 +74,8 @@ pkg_check_modules(SERIAL libserial)
    SetQueuedCmdStartExec.srv
    SetQueuedCmdStopExec.srv
    SetQueuedCmdForceStopExec.srv
+   SetEStop.srv
+   SetInitialise.srv
 
 #   Service1.srv
 #   Service2.srv

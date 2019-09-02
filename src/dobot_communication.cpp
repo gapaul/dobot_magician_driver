@@ -3,9 +3,6 @@
 #include "ros/console.h"
 #include <sstream>
 
-#define SERIAL_TIMEOUT 300 // miliseconds
-#define TRY_LIMIT 100
-
 DobotCommunication::DobotCommunication(std::string port) :
     _baud(SerialPort::BAUD_115200),
     _stop_bit(SerialPort::STOP_BITS_1),

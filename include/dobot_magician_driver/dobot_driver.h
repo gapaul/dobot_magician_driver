@@ -11,6 +11,8 @@ private:
     DobotCommunication *_dobot_serial;
     DobotStates *_dobot_states;
 
+    bool _is_e_stopped;
+
 public:
 
 
@@ -202,7 +204,26 @@ public:
      */
     bool setQueuedCmdForceStopExec(void);
 
+    /**
+     * @brief Function to clear the queued command buffer.
+     * @return bool indicates whether the command was sucessfull
+     */
+    bool setQueuedCmdClear(void);
 
+    /**
+     * @brief Funtion to stop all IO ports (set them to be outputs of 0)
+     * @return bool indicates whether the command was successfull
+     */
+    bool stopAllIO(void);
+
+    /**
+     * @brief Function to e-stop the Dobot.When executed, the Dobot will stop the current motion, the pump and all IO ports (1 to 20).
+     * All of the queued command will also be cleared at the same time. The Dobot must be re-initalised to work normally.
+     * @return bool indicates whether the command was successfull
+     */
+    bool setEStop(void);
+
+    bool isEStopped(void);
 
 };
 

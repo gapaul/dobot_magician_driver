@@ -15,6 +15,10 @@
 #include <SerialStreamBuf.h>
 
 
+#define SERIAL_TIMEOUT 300 // miliseconds
+#define TRY_LIMIT 100
+
+
 class DobotCommunication{
 
 public:
@@ -147,8 +151,8 @@ public:
 	 * @param queue_cmd_index is the queue command index returned from the dobot if is_queued = 1
      * @return bool indicates whether the command sent was successful
 	 */
-	bool setCPParams(std::vector<float> &cp_params, bool real_time_track, bool is_queued);
-    bool setCPParams(std::vector<float> &cp_params, bool real_time_track, uint64_t &queue_cmd_index, bool is_queued);
+	bool setCPParams(std::vector<float> &cp_params, bool real_time_track, bool is_queued = 0);
+    bool setCPParams(std::vector<float> &cp_params, bool real_time_track, uint64_t &queue_cmd_index, bool is_queued = 0);
 
     /**
 	 * @brief Function sends a command to the Dobot to get the CP Parameters
@@ -165,8 +169,8 @@ public:
 	 * @param is_queued: indicates whether the instruction should be a queue command
 	 * @return uint64_t is the queue command index returned from the dobot if is_queued = 1
 	 */
-    bool setCPCmd(std::vector<float> &cp_cmd, bool cp_mode, bool is_queued);
-	bool setCPCmd(std::vector<float> &cp_cmd, bool cp_mode, uint64_t &queue_cmd_index, bool is_queued);
+    bool setCPCmd(std::vector<float> &cp_cmd, bool cp_mode, bool is_queued = 1);
+	bool setCPCmd(std::vector<float> &cp_cmd, bool cp_mode, uint64_t &queue_cmd_index, bool is_queued = 1);
 
     /// ARC
 //    setARCParams
@@ -196,7 +200,7 @@ public:
      * @param queue_cmd_index: the uint64_t queue command index returned from the dobot if is_queued = 1
      * @return bool indicates whether the command sent was successful
      */
-    bool setIOMultiplexing(int address, int multiplex, bool is_queued = 0);
+    bool setIOMultiplexing(int address, int multiplex, bool is_queued = 1);
     bool setIOMultiplexing(int address, int multiplex, uint64_t &queue_cmd_index, bool is_queued = 1);
 
     /**
@@ -216,8 +220,8 @@ public:
      * @param queue_cmd_index: the uint64_t queue command index returned from the dobot if is_queued = 1
      * @return bool indicates whether the command sent was successful
      */
-    bool setIODO(int address, bool level, bool is_queued = 0);
-    bool setIODO(int address, bool level, uint64_t &queue_cmd_index, bool is_queued = 0);
+    bool setIODO(int address, bool level, bool is_queued = 1);
+    bool setIODO(int address, bool level, uint64_t &queue_cmd_index, bool is_queued = 1);
 
     /**
      * @brief Function sends a command to the Dobot to get the digital output on its IO pins
@@ -237,8 +241,8 @@ public:
      * @param queue_cmd_index: the uint64_t queue command index returned from the dobot if is_queued = 1
      * @return bool indicates whether the command sent was successful
      */
-    bool setIOPWM(int address, float frequency, float duty_cycle, bool is_queued = 0);
-    bool setIOPWM(int address, float frequency, float duty_cycle, uint64_t &queue_cmd_index, bool is_queued = 0);
+    bool setIOPWM(int address, float frequency, float duty_cycle, bool is_queued = 1);
+    bool setIOPWM(int address, float frequency, float duty_cycle, uint64_t &queue_cmd_index, bool is_queued = 1);
 
 //    getIOPWM
 
@@ -270,8 +274,8 @@ public:
      * @param queue_cmd_index: the uint64_t queue command index returned from the dobot if is_queued = 1
      * @return bool indicates whether the command sent was successful
      */
-    bool setEMotor(int index, bool is_enabled, float speed, bool direction, bool is_queued = 0);
-    bool setEMotor(int index, bool is_enabled, float speed, bool direction, uint64_t &queue_cmd_index, bool is_queued = 0);
+    bool setEMotor(int index, bool is_enabled, float speed, bool direction, bool is_queued = 1);
+    bool setEMotor(int index, bool is_enabled, float speed, bool direction, uint64_t &queue_cmd_index, bool is_queued = 1);
 
     /// Calibration
 //    setAngleSensorStaticError

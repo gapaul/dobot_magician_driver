@@ -353,6 +353,29 @@ bool DobotRosWrapper::setQueuedCmdForceStopExec(dobot_magician_driver::SetQueued
     return res.success;
 }
 
+bool DobotRosWrapper::setEStop(dobot_magician_driver::SetEStopRequest &req, dobot_magician_driver::SetEStopResponse &res)
+{
+    if (_driver->setEStop())
+    {
+        res.success = true;
+        return res.success;
+    }
+    res.success = false;
+    return res.success;
+}
+
+bool DobotRosWrapper::setInitialise(dobot_magician_driver::SetInitialiseRequest &req, dobot_magician_driver::SetInitialiseResponse &res)
+{
+    _driver->initialiseDobot();
+
+    ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
+    std::this_thread::sleep_for(std::chrono::seconds(30));
+    ROS_INFO("DobotRosWrapper: this thread will now wake up");
+
+    res.success = true;
+    return res.success;
+}
+
 void DobotRosWrapper::update_state_loop()
 {
     std::vector<double> latest_joint_angles;
@@ -436,6 +459,10 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     _set_queued_cmd_start_srv = _nh.advertiseService("queued_cmd/set_cmd_start_exec",&DobotRosWrapper::setQueuedCmdStartExec,this);
     _set_queued_cmd_stop_srv = _nh.advertiseService("queued_cmd/set_cmd_stop_exec",&DobotRosWrapper::setQueuedCmdStopExec,this);
     _set_queued_cmd_force_stop_srv = _nh.advertiseService("queued_cmd/set_cmd_force_stop_exec",&DobotRosWrapper::setQueuedCmdForceStopExec,this);
+
+    _set_e_stop_srv = _nh.advertiseService("set_e_stop",&DobotRosWrapper::setEStop,this);
+
+    _set_initialise_srv = _nh.advertiseService("initialise",&DobotRosWrapper::setInitialise,this);
 
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
     std::this_thread::sleep_for(std::chrono::seconds(30));

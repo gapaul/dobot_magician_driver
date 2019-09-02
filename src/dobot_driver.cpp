@@ -1,4 +1,5 @@
 #include "dobot_magician_driver/dobot_driver.h"
+#include <iostream>
 #include <thread>
 
 // DobotDriver
@@ -255,15 +256,76 @@ bool DobotDriver::setQueuedCmdForceStopExec(void)
     return false;
 }
 
+bool DobotDriver::setQueuedCmdClear(void)
+{
+    if (_dobot_serial->setQueuedCmdClear())
+    {
+        return true;
+    }
+    return false;
+}
+
+/* E-STOP */
+
+bool DobotDriver::stopAllIO(void)
+{
+    int check_IO = 0;
+
+    for (int i = 1; i<=20;i++)
+    {
+        if (_dobot_serial->setIOMultiplexing(i,1,0) && _dobot_serial->setIODO(i,0,0))
+        {
+            check_IO++;
+        }
+    }
+
+    if (check_IO != 20)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool DobotDriver::setEStop(void)
+{
+    bool stop_pump;
+
+    bool stop_queued = setQueuedCmdForceStopExec();
+    setQueuedCmdClear();
+    
+    if (!_dobot_serial->setEndEffectorSuctionCup(0,0,0) || !_dobot_serial->setEndEffectorGripper(0,0,0))
+    {
+        stop_pump = false;
+        return false;
+    }
+    else stop_pump = true;
+
+    bool stop_IO = stopAllIO();
+
+    if (stop_queued && stop_pump && stop_IO)
+    {
+        _is_e_stopped = true;
+        return true;
+    }
+    return false;
+}
+
+bool DobotDriver::isEStopped(void)
+{
+    return _is_e_stopped;
+}
+
 void DobotDriver::initialiseDobot()
 {
+    _is_e_stopped = false;
+    _dobot_serial->setQueuedCmdStartExec();
     _dobot_serial->setQueuedCmdClear();
+    stopAllIO();
     std::vector<float> start_joint_angles={0,0.4,0.3,0};
     setJointAngles(start_joint_angles);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    // std::this_thread::sleep_for(std::chrono::seconds(2));
     _dobot_serial->setHOMECmd(); //create setter for this to access from ros wrapper
 //    _dobot_serial->setEMotor(0,false,5000,true);//turn off stepper 1
 //    _dobot_serial->setEMotor(1,false,5000,true);//turn off stepper 2
-
-
 }
