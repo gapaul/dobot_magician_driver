@@ -8,6 +8,8 @@ DobotDriver::DobotDriver(std::string port)
     _dobot_serial = new DobotCommunication(port);
     _dobot_states = new DobotStates();
 
+    _is_on_linear_rail = false;
+
 }
 
 bool DobotDriver::getCurrentConfiguration(std::vector<double> &cart_pos, std::vector<double> &joint_angles)
@@ -216,9 +218,9 @@ bool DobotDriver::getIOAnalogInput(int address, int &value)
     return false;
 }
 
-bool DobotDriver::setEMotor(int index,bool is_enabled,float speed,bool direction)
+bool DobotDriver::setEMotor(int index,bool is_enabled,int32_t speed)
 {
-    if(_dobot_serial->setEMotor(index,is_enabled,speed,direction) >= -1)
+    if(_dobot_serial->setEMotor(index,is_enabled,speed))
 
     {
         return true;
@@ -303,6 +305,9 @@ bool DobotDriver::setEStop(void)
 
     bool stop_IO = stopAllIO();
 
+    _dobot_serial->setEMotor(0,false,0);//turn off stepper 1
+    _dobot_serial->setEMotor(1,false,0);//turn off stepper 2
+
     if (stop_queued && stop_pump && stop_IO)
     {
         _is_e_stopped = true;
@@ -316,16 +321,54 @@ bool DobotDriver::isEStopped(void)
     return _is_e_stopped;
 }
 
+/* LINEAR RAIL */
+
+bool DobotDriver::setLinearRailStatus(bool is_enabled)
+{
+    if (_dobot_serial->setLinearRailStatus(is_enabled,0,0))
+    {
+        if(is_enabled)
+        {
+            _is_on_linear_rail = true;
+        }
+        else _is_on_linear_rail = false;
+
+        return true;
+    }
+    return false;
+}
+
+bool DobotDriver::setCartesianPosWithRail(std::vector<float> &cart_pos)
+{
+    if (!isOnLinearRail())
+    {
+        return false;
+    }
+    
+    if(_dobot_serial->setPTPWithRailCmd(2,cart_pos))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool DobotDriver::isOnLinearRail(void)
+{
+    return _is_on_linear_rail;
+}
+
 void DobotDriver::initialiseDobot()
 {
     _is_e_stopped = false;
     _dobot_serial->setQueuedCmdStartExec();
     _dobot_serial->setQueuedCmdClear();
+
+    _dobot_serial->setEMotor(0,false,0);//turn off stepper 1
+    _dobot_serial->setEMotor(1,false,0);//turn off stepper 2
+
     stopAllIO();
     std::vector<float> start_joint_angles={0,0.4,0.3,0};
     setJointAngles(start_joint_angles);
-    // std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     _dobot_serial->setHOMECmd(); //create setter for this to access from ros wrapper
-//    _dobot_serial->setEMotor(0,false,5000,true);//turn off stepper 1
-//    _dobot_serial->setEMotor(1,false,5000,true);//turn off stepper 2
 }

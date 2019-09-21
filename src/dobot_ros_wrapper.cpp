@@ -84,6 +84,36 @@ bool DobotRosWrapper::setCartesianPos(dobot_magician_driver::SetTargetPointsRequ
     return res.success;
 }
 
+bool DobotRosWrapper::setCartesianPosWithRail(dobot_magician_driver::SetTargetPointsWithRailRequest &req, dobot_magician_driver::SetTargetPointsWithRailResponse &res)
+{
+    if (!_driver->isOnLinearRail())
+    {
+        ROS_WARN("DobotRosWrapper: the linear rail is not initialised");
+        res.success = false;
+        return res.success;
+    }
+
+    if(req.target_points.size() != 5){
+        ROS_WARN("DobotRosWrapper: specify correct number of target points");
+        res.success = false;
+        return res.success;
+    }
+
+    std::vector<float> target_points;
+    for(int i = 0; i < req.target_points.size(); ++i){
+        target_points.push_back(req.target_points[i]*1000);
+    }
+
+    if(_driver->setCartesianPosWithRail(target_points))
+    {
+        res.success = true;
+        return res.success;
+    }
+
+    res.success = false;
+    return res.success;
+}
+
 bool DobotRosWrapper::setIOMultiplexing(dobot_magician_driver::SetIOMultiplexingRequest &req, dobot_magician_driver::SetIOMultiplexingResponse &res)
 {
     if(!inIORange(req.address)){
@@ -237,7 +267,7 @@ bool DobotRosWrapper::getIOAnalogInput(dobot_magician_driver::GetIOAnalogInputRe
 bool DobotRosWrapper::setEMotor(dobot_magician_driver::SetEMotorRequest &req, dobot_magician_driver::SetEMotorResponse &res)
 {
 
-    if(_driver->setEMotor(req.index,req.is_enabled,req.speed,req.direction))
+    if(_driver->setEMotor(req.index,req.is_enabled,req.speed))
     {
         res.success = true;
         return res.success;
@@ -262,7 +292,7 @@ bool DobotRosWrapper::setCPParams(dobot_magician_driver::SetCPParamsRequest &req
 
     std::vector<float> cp_params;
     for(int i = 0; i < req.cp_params.size(); ++i){
-        cp_params.push_back(req.cp_params[i]);
+        cp_params.push_back(req.cp_params[i]*1000);
     }
     if(_driver->setCPParams(cp_params,req.real_time_track))
     {
@@ -277,18 +307,24 @@ bool DobotRosWrapper::setCPParams(dobot_magician_driver::SetCPParamsRequest &req
 bool DobotRosWrapper::getCPParams(dobot_magician_driver::GetCPParamsRequest &req, dobot_magician_driver::GetCPParamsResponse &res)
 {
     std::vector<float> cp_params;
+    std::vector<float> converted_cp_params;
     uint8_t real_time_track;
 
     if(_driver->getCPParams(cp_params,real_time_track))
     {
-        res.cp_params = cp_params;
+        for(int i = 0; i < cp_params.size(); ++i)
+        {
+            converted_cp_params.push_back(cp_params[i]/1000);
+        }
+
+        res.cp_params = converted_cp_params;
         res.real_time_track = real_time_track;
         res.success= true;
         return res.success;
     }
 
     ROS_WARN("Unable to get CPParams. Please try again!");
-    res.success = true;
+    res.success = false;
     return res.success;
 }
 
@@ -307,7 +343,7 @@ bool DobotRosWrapper::setCPCmd(dobot_magician_driver::SetCPCmdRequest &req, dobo
     }
     std::vector<float> cp_cmd;
     for(int i = 0; i < req.cp_cmd.size(); ++i){
-        cp_cmd.push_back(req.cp_cmd[i]);
+        cp_cmd.push_back(req.cp_cmd[i]*1000);
     }
 
     if(_driver->setCPCmd(cp_cmd,req.cp_mode))
@@ -320,7 +356,7 @@ bool DobotRosWrapper::setCPCmd(dobot_magician_driver::SetCPCmdRequest &req, dobo
     return res.success;
 }
 
-bool DobotRosWrapper::setQueuedCmdStartExec(dobot_magician_driver::SetQueuedCmdStartExecRequest &req, dobot_magician_driver::SetQueuedCmdStartExecResponse &res)
+bool DobotRosWrapper::setQueuedCmdStartExec(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res)
 {
     if (_driver->setQueuedCmdStartExec())
     {
@@ -331,7 +367,7 @@ bool DobotRosWrapper::setQueuedCmdStartExec(dobot_magician_driver::SetQueuedCmdS
     return res.success;
 }
 
-bool DobotRosWrapper::setQueuedCmdStopExec(dobot_magician_driver::SetQueuedCmdStopExecRequest &req, dobot_magician_driver::SetQueuedCmdStopExecResponse &res)
+bool DobotRosWrapper::setQueuedCmdStopExec(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res)
 {
     if (_driver->setQueuedCmdStopExec())
     {
@@ -342,9 +378,20 @@ bool DobotRosWrapper::setQueuedCmdStopExec(dobot_magician_driver::SetQueuedCmdSt
     return res.success;
 }
 
-bool DobotRosWrapper::setQueuedCmdForceStopExec(dobot_magician_driver::SetQueuedCmdForceStopExecRequest &req, dobot_magician_driver::SetQueuedCmdForceStopExecResponse &res)
+bool DobotRosWrapper::setQueuedCmdForceStopExec(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res)
 {
     if (_driver->setQueuedCmdForceStopExec())
+    {
+        res.success = true;
+        return res.success;
+    }
+    res.success = false;
+    return res.success;
+}
+
+bool DobotRosWrapper::setQueuedCmdClear(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res)
+{
+    if(_driver->setQueuedCmdClear())
     {
         res.success = true;
         return res.success;
@@ -369,10 +416,26 @@ bool DobotRosWrapper::setInitialise(dobot_magician_driver::SetInitialiseRequest 
     _driver->initialiseDobot();
 
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
-    std::this_thread::sleep_for(std::chrono::seconds(30));
+    if (_driver->isOnLinearRail())
+    {
+        ROS_INFO("DobotRosWrapper: start Homing with the linear rail");
+        std::this_thread::sleep_for(std::chrono::seconds(60));
+    }
+    else std::this_thread::sleep_for(std::chrono::seconds(30));
     ROS_INFO("DobotRosWrapper: this thread will now wake up");
 
     res.success = true;
+    return res.success;
+}
+
+bool DobotRosWrapper::setLinearRailStatus(dobot_magician_driver::SetLinearRailRequest &req, dobot_magician_driver::SetLinearRailResponse &res)
+{
+    if (_driver->setLinearRailStatus(req.set_linear_rail))
+    {
+        res.success = true;
+        return res.success;
+    }
+    res.success = false;
     return res.success;
 }
 
@@ -459,10 +522,14 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
     _set_queued_cmd_start_srv = _nh.advertiseService("queued_cmd/set_cmd_start_exec",&DobotRosWrapper::setQueuedCmdStartExec,this);
     _set_queued_cmd_stop_srv = _nh.advertiseService("queued_cmd/set_cmd_stop_exec",&DobotRosWrapper::setQueuedCmdStopExec,this);
     _set_queued_cmd_force_stop_srv = _nh.advertiseService("queued_cmd/set_cmd_force_stop_exec",&DobotRosWrapper::setQueuedCmdForceStopExec,this);
+    _set_queued_cmd_clear_srv = _nh.advertiseService("queued_cmd/set_clear",&DobotRosWrapper::setQueuedCmdClear,this);
 
     _set_e_stop_srv = _nh.advertiseService("set_e_stop",&DobotRosWrapper::setEStop,this);
 
     _set_initialise_srv = _nh.advertiseService("initialise",&DobotRosWrapper::setInitialise,this);
+
+    _set_linear_rail_srv = _nh.advertiseService("linear_rail/set_linear_rail_status",&DobotRosWrapper::setLinearRailStatus,this);
+    _set_cartesian_pos_with_rail_srv = _nh.advertiseService("PTP/set_cartesian_pos_with_rail",&DobotRosWrapper::setCartesianPosWithRail,this);
 
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
     std::this_thread::sleep_for(std::chrono::seconds(30));

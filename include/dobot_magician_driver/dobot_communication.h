@@ -31,6 +31,8 @@ public:
 //    setDeviceName
 //    setDeviceName
 //    getDeviceVersion
+    bool setLinearRailStatus(bool is_enabled, uint8_t version, bool is_queued);
+    bool setLinearRailStatus(bool is_enabled, uint8_t version, uint64_t &queue_cmd_index, bool is_queued);
 
     /// Pose
     /**
@@ -133,9 +135,12 @@ public:
     bool setPTPCmd(int ptp_mode, std::vector<float> &target_points, bool is_queued = 1);
     bool setPTPCmd(int ptp_mode, std::vector<float> &target_points, uint64_t &queue_cmd_index, bool is_queued = 1);
 
+    bool setPTPWithRailCmd(int ptp_mode, std::vector<float> &target_points, bool is_queued = 1);
+    bool setPTPWithRailCmd(int ptp_mode, std::vector<float> &target_points, uint64_t &queue_cmd_index, bool is_queued = 1);
+
     ///CP
 	/**
-	* @CP: Continuos Path
+	* @CP: Continuous Path
 	* @CP parameters:
 	*	*planAcc: Maximum planned acceleration
 	*	*junctionVel: Maximum junction acceleration
@@ -274,8 +279,8 @@ public:
      * @param queue_cmd_index: the uint64_t queue command index returned from the dobot if is_queued = 1
      * @return bool indicates whether the command sent was successful
      */
-    bool setEMotor(int index, bool is_enabled, float speed, bool direction, bool is_queued = 1);
-    bool setEMotor(int index, bool is_enabled, float speed, bool direction, uint64_t &queue_cmd_index, bool is_queued = 1);
+    bool setEMotor(int index, bool is_enabled, int32_t speed, bool is_queued = 1);
+    bool setEMotor(int index, bool is_enabled, int32_t speed, uint64_t &queue_cmd_index, bool is_queued = 1);
 
     /// Calibration
 //    setAngleSensorStaticError

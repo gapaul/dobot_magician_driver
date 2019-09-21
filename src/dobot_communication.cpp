@@ -164,6 +164,31 @@ uint64_t DobotCommunication::getQueuedCmdIndex(std::vector<uint8_t> payload)
     return queuedCmdIndex;
 }
 
+
+bool DobotCommunication::setLinearRailStatus(bool is_enabled, uint8_t version, bool is_queued)
+{
+    uint64_t queue_cmd_index;
+    return setLinearRailStatus(is_enabled,version,queue_cmd_index,is_queued);
+}
+
+bool DobotCommunication::setLinearRailStatus(bool is_enabled, uint8_t version, uint64_t &queue_cmd_index, bool is_queued)
+{
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3, ctrl,(uint8_t)is_enabled, version};
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
+}
+
 bool DobotCommunication::setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool is_queued)
 {
     uint64_t queue_cmd_index;
@@ -211,6 +236,32 @@ bool DobotCommunication::setEndEffectorGripper(bool is_ctrl_enabled, bool is_gri
 {
     uint8_t ctrl = (is_queued << 1) | 0x01;
     std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x04,0x3f, ctrl, (uint8_t)is_ctrl_enabled, (uint8_t)is_gripped};
+
+    std::lock_guard<std::mutex> send_command_lk(_communication_mt);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
+}
+
+bool DobotCommunication::setPTPWithRailCmd(int ptp_mode, std::vector<float> &target_points, bool is_queued)
+{
+    uint64_t queue_cmd_index;
+    return setPTPWithRailCmd(ptp_mode, target_points, queue_cmd_index, is_queued);
+}
+
+bool DobotCommunication::setPTPWithRailCmd(int ptp_mode, std::vector<float> &target_points, uint64_t &queue_cmd_index, bool is_queued)
+{
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x17,0x56,ctrl,(uint8_t)ptp_mode};
+    packFromFloat(target_points,ctrl_cmd);
 
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
@@ -385,29 +436,19 @@ bool DobotCommunication::getIOADC(int address, std::vector<uint8_t> &returned_da
     return true;
 }
 
-bool DobotCommunication::setEMotor(int index,bool is_enabled,float speed, bool direction, bool is_queued)
+bool DobotCommunication::setEMotor(int index,bool is_enabled, int32_t speed, bool is_queued)
 {
     uint64_t queue_cmd_index;
-    return setEMotor(index, is_enabled, speed, direction, queue_cmd_index, is_queued);
+    return setEMotor(index, is_enabled, speed, queue_cmd_index, is_queued);
 }
 
-bool DobotCommunication::setEMotor(int index,bool is_enabled,float speed, bool direction, uint64_t &queue_cmd_index, bool is_queued)
+bool DobotCommunication::setEMotor(int index,bool is_enabled, int32_t speed, uint64_t &queue_cmd_index, bool is_queued)
 {
-    if (direction ==0){
-        speed=speed *1;
-    }
-
-    else if (direction ==1){
-        speed=speed *-1;
-    }
-
-    uint8_t ctrl = (is_queued << 1) | 0x01;
-    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x08,0x87,ctrl,uint8_t(index),uint8_t(is_enabled)};
-    uint32_t speed_32_bit = uint32_t(speed);//convert float to 32 bit hex
-    std::vector<std::uint8_t> speed_8_bit( (std::uint8_t*)&speed_32_bit, (std::uint8_t*)&(speed_32_bit) + sizeof(std::uint32_t)); //split 32bit hex to 4 8bit hex
-    ctrl_cmd.insert( ctrl_cmd.end(), speed_8_bit.begin(), speed_8_bit.end() ); //place the speed into ctrl_cmd
-    ctrl_cmd.push_back (checksumCalc(ctrl_cmd)); //add the checksum
-
+    uint8_t ctrl = (is_queued << 1) | 0x00;
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x08,0x87,ctrl,(uint8_t)index,(uint8_t)is_enabled};
+    speed = (uint32_t)speed;
+    std::vector<uint8_t> speed_8_bit((uint8_t*)&(speed), (uint8_t*)&(speed) + sizeof(uint32_t)); //split 32bit hex to 4 8bit hex
+    ctrl_cmd.insert(ctrl_cmd.end(), speed_8_bit.begin(), speed_8_bit.end()); //place the speed into ctrl_cmd
     std::lock_guard<std::mutex> send_command_lk(_communication_mt);
     sendCommand(ctrl_cmd);
     std::vector<uint8_t> payload;

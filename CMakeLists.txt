@@ -71,11 +71,11 @@ pkg_check_modules(SERIAL libserial)
    SetCPParams.srv
    GetCPParams.srv
    SetCPCmd.srv
-   SetQueuedCmdStartExec.srv
-   SetQueuedCmdStopExec.srv
-   SetQueuedCmdForceStopExec.srv
+   SetQueuedCmd.srv
    SetEStop.srv
    SetInitialise.srv
+   SetLinearRail.srv
+   SetTargetPointsWithRail.srv
 
 #   Service1.srv
 #   Service2.srv

@@ -12,6 +12,7 @@ private:
     DobotStates *_dobot_states;
 
     bool _is_e_stopped;
+    bool _is_on_linear_rail;
 
 public:
 
@@ -51,6 +52,8 @@ public:
      * @param bool indicates that the command was received by the Dobot
      */
     bool setCartesianPos(std::vector<float> &cart_pos);
+
+    bool setCartesianPosWithRail(std::vector<float> &cart_pos);
 
     /**
      * @brief Specifies the correct instructions for the command packet to set the desired gripper
@@ -92,7 +95,9 @@ public:
 	* @param bool indicates that the command was received by the Dobot
 	*/
 
-    void initialiseDobot(void);
+    void initialiseDobot();
+
+    bool setLinearRailStatus(bool is_enabled = false);
 
 //    bool setHomeCalibrate()
 
@@ -171,7 +176,7 @@ public:
      * @param is_enabled: sets whether to turn on or turn off the stepper motor (0-0ff 1-on)
      * @param speed: sets the speed of the motor  (+ values clockwise, - values counterclockwise)
      */
-    bool setEMotor(int index,bool is_enabled,float speed,bool direction);
+    bool setEMotor(int index,bool is_enabled,int32_t speed);
 
     /**
      * @brief Function that starts the execution of queued commands in the buffer. This function must be called whenever 
@@ -224,6 +229,8 @@ public:
     bool setEStop(void);
 
     bool isEStopped(void);
+
+    bool isOnLinearRail(void);
 
 };
 

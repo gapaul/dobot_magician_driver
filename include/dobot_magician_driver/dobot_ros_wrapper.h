@@ -25,13 +25,14 @@
 #include "dobot_magician_driver/GetCPParams.h"
 #include "dobot_magician_driver/SetCPCmd.h"
 
-#include "dobot_magician_driver/SetQueuedCmdStartExec.h"
-#include "dobot_magician_driver/SetQueuedCmdStopExec.h"
-#include "dobot_magician_driver/SetQueuedCmdForceStopExec.h"
+#include "dobot_magician_driver/SetQueuedCmd.h"
 
 #include "dobot_magician_driver/SetEStop.h"
 
 #include "dobot_magician_driver/SetInitialise.h"
+
+#include "dobot_magician_driver/SetLinearRail.h"
+#include "dobot_magician_driver/SetTargetPointsWithRail.h"
 
 #define IO_PIN_MIN 1
 #define IO_PIN_MAX 20
@@ -66,7 +67,6 @@ private:
     ros::Publisher _end_effector_state_pub; //is this the best name?
     ros::Publisher _tool_vel_pub; //not sure if exists
 
-
     ros::ServiceServer _set_gripper_srv;
     ros::ServiceServer _set_suction_cup_srv;
     ros::ServiceServer _set_cartesian_pos_srv;
@@ -86,10 +86,14 @@ private:
     ros::ServiceServer _set_queued_cmd_start_srv;
     ros::ServiceServer _set_queued_cmd_stop_srv;
     ros::ServiceServer _set_queued_cmd_force_stop_srv;
+    ros::ServiceServer _set_queued_cmd_clear_srv;
 
     ros::ServiceServer _set_e_stop_srv;
 
     ros::ServiceServer _set_initialise_srv;
+
+    ros::ServiceServer _set_linear_rail_srv;
+    ros::ServiceServer _set_cartesian_pos_with_rail_srv;
 
     /**
      * @brief ROS Service to set the status of the gripper
@@ -212,7 +216,7 @@ private:
      * 
      * @return bool indicates whether the command was successfull or not
      */
-    bool setQueuedCmdStartExec(dobot_magician_driver::SetQueuedCmdStartExecRequest &req, dobot_magician_driver::SetQueuedCmdStartExecResponse &res);
+    bool setQueuedCmdStartExec(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res);
     
     /**
      * @brief ROS Service to stop the execution of all queued commands that are currently in the buffer. If this Service is called
@@ -222,7 +226,7 @@ private:
      * 
      * @return bool indicates whether the command was successfull or not
      */
-    bool setQueuedCmdStopExec(dobot_magician_driver::SetQueuedCmdStopExecRequest &req, dobot_magician_driver::SetQueuedCmdStopExecResponse &res);
+    bool setQueuedCmdStopExec(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res);
 
     /**
      * @brief ROS Service to immediately stop the execution of all queued commands that are currently in the buffer. If this Service
@@ -234,7 +238,9 @@ private:
      * 
      * @return bool indicates whether the command was successfull or not
      */
-    bool setQueuedCmdForceStopExec(dobot_magician_driver::SetQueuedCmdForceStopExecRequest &req, dobot_magician_driver::SetQueuedCmdForceStopExecResponse &res);
+    bool setQueuedCmdForceStopExec(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res);
+
+    bool setQueuedCmdClear(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res);
 
     /**
      * @brief ROS Service to e-stop the Dobot. When executed, the Dobot will stop the current motion, the pump and all IO ports (1 to 20).
@@ -248,6 +254,10 @@ private:
      * the IO port at the same time.
      */
     bool setInitialise(dobot_magician_driver::SetInitialiseRequest &req, dobot_magician_driver::SetInitialiseResponse &res);
+
+    bool setLinearRailStatus(dobot_magician_driver::SetLinearRailRequest &req, dobot_magician_driver::SetLinearRailResponse &res);
+
+    bool setCartesianPosWithRail(dobot_magician_driver::SetTargetPointsWithRailRequest &req, dobot_magician_driver::SetTargetPointsWithRailResponse &res);
 
     std::thread *update_state_thread;
     /**
