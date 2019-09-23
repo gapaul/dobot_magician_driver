@@ -369,6 +369,7 @@ void DobotDriver::initialiseDobot()
     stopAllIO();
     std::vector<float> start_joint_angles={0,0.4,0.3,0};
     setJointAngles(start_joint_angles);
+    setLinearRailStatus(isOnLinearRail());
     std::this_thread::sleep_for(std::chrono::seconds(2));
     _dobot_serial->setHOMECmd(); //create setter for this to access from ros wrapper
 }
