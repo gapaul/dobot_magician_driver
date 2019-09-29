@@ -21,6 +21,39 @@
 #include "dobot_magician_driver/GetIODigitalInput.h"
 #include "dobot_magician_driver/GetIOAnalogInput.h"
 
+#include "dobot_magician_driver/SetCPParams.h"
+#include "dobot_magician_driver/GetCPParams.h"
+#include "dobot_magician_driver/SetCPCmd.h"
+
+#include "dobot_magician_driver/SetQueuedCmd.h"
+
+#include "dobot_magician_driver/SetEStop.h"
+
+#include "dobot_magician_driver/SetInitialise.h"
+
+#include "dobot_magician_driver/SetLinearRail.h"
+#include "dobot_magician_driver/SetTargetPointsWithRail.h"
+
+#define IO_PIN_MIN 1
+#define IO_PIN_MAX 20
+#define IO_PWM_HZ_MIN 10        // Hz
+#define IO_PWM_HZ_MAX 1000000   // Hz
+#define IO_PWM_DC_MIN 0     // %
+#define IO_PWM_DC_MAX 100   // %
+
+#define CP_PARAM_SIZE 3
+#define CP_CMD_SIZE 4
+
+enum IOMux {
+    IODummy,  // Invalid
+    IODO,     // I/O output
+    IOPWM,    // PWM output
+    IODI,     // I/O input
+    IOADC,    // A/D input
+    IODIPU,   // Pull-up input
+    IODIPD    // Pull-down input
+};
+
 class DobotRosWrapper {
 
 private:
@@ -34,7 +67,6 @@ private:
     ros::Publisher _end_effector_state_pub; //is this the best name?
     ros::Publisher _tool_vel_pub; //not sure if exists
 
-
     ros::ServiceServer _set_gripper_srv;
     ros::ServiceServer _set_suction_cup_srv;
     ros::ServiceServer _set_cartesian_pos_srv;
@@ -46,6 +78,22 @@ private:
     ros::ServiceServer _set_io_pwm_output_srv;
     ros::ServiceServer _get_io_digital_input_srv;
     ros::ServiceServer _get_io_analog_input_srv;
+
+    ros::ServiceServer _set_cp_params_srv;
+    ros::ServiceServer _get_cp_params_srv;
+    ros::ServiceServer _set_cp_cmd_srv;
+
+    ros::ServiceServer _set_queued_cmd_start_srv;
+    ros::ServiceServer _set_queued_cmd_stop_srv;
+    ros::ServiceServer _set_queued_cmd_force_stop_srv;
+    ros::ServiceServer _set_queued_cmd_clear_srv;
+
+    ros::ServiceServer _set_e_stop_srv;
+
+    ros::ServiceServer _set_initialise_srv;
+
+    ros::ServiceServer _set_linear_rail_srv;
+    ros::ServiceServer _set_cartesian_pos_with_rail_srv;
 
     /**
      * @brief ROS Service to set the status of the gripper
@@ -129,11 +177,98 @@ private:
 
     bool setEMotor(dobot_magician_driver::SetEMotorRequest &req, dobot_magician_driver::SetEMotorResponse &res);
 
+    /*
+     * CONTINUOUS PATH COMMAND
+     */
+
+    /**
+     * @brief ROS Service to set the Continuos Path Parameters
+     * @param req: contains the CP parameters
+     * @param res: contains whether the command was received by the Dobot
+     * @return bool indicates whether invalid parameters were set
+     */
+    bool setCPParams(dobot_magician_driver::SetCPParamsRequest &req, dobot_magician_driver::SetCPParamsResponse &res);
+
+    /**
+     * @brief ROS Service to get the current Conitnuous Path Paramemters from the Dobot
+     * @param res: contains the CP Parameters
+     * @return bool indicates whether the command was successfull
+     */
+    bool getCPParams(dobot_magician_driver::GetCPParamsRequest &req, dobot_magician_driver::GetCPParamsResponse &res);
+
+    /**
+     * @brief ROS Service to set the Continuous Path command for the Dobot
+     * @param req: contains the CP command: coordinate points (x,y,z) and velocity, and CP mode: relative or absolute 
+     * @param res: contains whether the command was received by the Dobot
+     * @return bool indicates whether the command was succesfull
+     */
+    bool setCPCmd(dobot_magician_driver::SetCPCmdRequest &req, dobot_magician_driver::SetCPCmdResponse &res);
+
+    /*
+     * QUEUED COMMANDS CONTROL COMMAND
+     */
+
+    /**
+     * @brief ROS Service to start executing all queued commands that are currently in the buffer now. This service must
+     * be called whenever a Stop or Force_Stop Service is called previously or else the Dobot would not be able to perform 
+     * any subsequence actions. For Force Stop case, the Dobot will ignored the current command that was stopped by Force Stop
+     * Service and start executing the next one.
+     * 
+     * @return bool indicates whether the command was successfull or not
+     */
+    bool setQueuedCmdStartExec(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res);
+    
+    /**
+     * @brief ROS Service to stop the execution of all queued commands that are currently in the buffer. If this Service is called
+     * while the Dobot is performing an action, it will continue to finish that action and then stop. For example, if the Dobot 
+     * is moving from point A to point B and this Service is called, it will move to point B and stop any subsequence action
+     * Note: setQueuedCmdStartExec must be called to perform all of the remaining queued actions left in the buffer.
+     * 
+     * @return bool indicates whether the command was successfull or not
+     */
+    bool setQueuedCmdStopExec(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res);
+
+    /**
+     * @brief ROS Service to immediately stop the execution of all queued commands that are currently in the buffer. If this Service
+     * is called while the Dobot is performing an action, it will stop regardless what current action is. For example, if the Dobot is 
+     * moving from point A to B and this Service is called, it will stop immediately.
+     * Note: setQueuedCmdStartExec must be called to perform all of the remaining queued actions left in the buffer. In this scenario,
+     * the Dobot will ignore the current command that it is performing by the time the Force Stop is called and continue with the next
+     * one in the buffer.
+     * 
+     * @return bool indicates whether the command was successfull or not
+     */
+    bool setQueuedCmdForceStopExec(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res);
+
+    bool setQueuedCmdClear(dobot_magician_driver::SetQueuedCmdRequest &req, dobot_magician_driver::SetQueuedCmdResponse &res);
+
+    /**
+     * @brief ROS Service to e-stop the Dobot. When executed, the Dobot will stop the current motion, the pump and all IO ports (1 to 20).
+     * All of the queued command will also be cleared at the same time. The Dobot must be re-initalised to work normally.
+     * @return bool indicates whether the command was successfull or not
+     */
+    bool setEStop(dobot_magician_driver::SetEStopRequest &req, dobot_magician_driver::SetEStopResponse &res);
+    
+    /**
+     * @brief ROS Service to initialise the Dobot. This includes the Homing procedure and it also clears the queued commands buffer and 
+     * the IO port at the same time.
+     */
+    bool setInitialise(dobot_magician_driver::SetInitialiseRequest &req, dobot_magician_driver::SetInitialiseResponse &res);
+
+    bool setLinearRailStatus(dobot_magician_driver::SetLinearRailRequest &req, dobot_magician_driver::SetLinearRailResponse &res);
+
+    bool setCartesianPosWithRail(dobot_magician_driver::SetTargetPointsWithRailRequest &req, dobot_magician_driver::SetTargetPointsWithRailResponse &res);
+
     std::thread *update_state_thread;
     /**
      * @brief Publishes "state" of the Dobot
      */
     void update_state_loop();
+
+    /**
+     * @brief Checks if the pin address is within the IO range
+     */
+    bool inIORange(int address);
 
 public:
     DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port);

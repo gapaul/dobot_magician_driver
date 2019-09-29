@@ -1,7 +1,7 @@
 #request
 int8 index
 bool is_enabled
-float32 speed
+int32 speed
 ---
 #response
 bool success
