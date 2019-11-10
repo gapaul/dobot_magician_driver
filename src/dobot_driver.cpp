@@ -275,7 +275,7 @@ bool DobotDriver::stopAllIO(void)
 
     for (int i = 1; i<=20;i++)
     {
-        if (_dobot_serial->setIOMultiplexing(i,1,0) && _dobot_serial->setIODO(i,0,0))
+        if (_dobot_serial->setIOMultiplexing(i,0,0))
         {
             check_IO++;
         }
@@ -295,7 +295,7 @@ bool DobotDriver::setEStop(void)
 
     bool stop_queued = setQueuedCmdForceStopExec();
     setQueuedCmdClear();
-    
+
     if (!_dobot_serial->setEndEffectorSuctionCup(0,0,0) || !_dobot_serial->setEndEffectorGripper(0,0,0))
     {
         stop_pump = false;
@@ -344,7 +344,7 @@ bool DobotDriver::setCartesianPosWithRail(std::vector<float> &cart_pos)
     {
         return false;
     }
-    
+
     if(_dobot_serial->setPTPWithRailCmd(2,cart_pos))
     {
         return true;
@@ -360,8 +360,8 @@ bool DobotDriver::isOnLinearRail(void)
 void DobotDriver::initialiseDobot()
 {
     _is_e_stopped = false;
-    _dobot_serial->setQueuedCmdStartExec();
     _dobot_serial->setQueuedCmdClear();
+    _dobot_serial->setQueuedCmdStartExec();
 
     _dobot_serial->setEMotor(0,false,0);//turn off stepper 1
     _dobot_serial->setEMotor(1,false,0);//turn off stepper 2
