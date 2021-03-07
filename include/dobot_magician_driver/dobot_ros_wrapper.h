@@ -13,6 +13,9 @@
 
 #define DOBOT_INIT_TIME 30
 #define MAX_DATA_DEQUE_SIZE 10;
+#define JOINT_ERROR 0.1
+#define LINEAR_ERROR 0.1
+#define ORIENTATION_ERROR 0.01
 
 enum IOMux
 {
@@ -34,7 +37,7 @@ struct PoseDataBuffer
 
 struct JointDataBuffer
 {
-    std::deque<std_msgs::Float64> joint_deq;
+    std::deque<sensor_msgs::JointState> joint_deq;
     std::mutex mtx;
     std::atomic<bool> received;
 };
@@ -48,7 +51,7 @@ struct PoseData
 
 struct JointData
 {
-    std_msgs::Float64 joint_data;
+    sensor_msgs::JointState joint_data;
     std::mutex mtx;
     std::atomic<bool> received;
 }
@@ -56,6 +59,7 @@ struct JointData
 class DobotRosWrapper : public DobotRosWrapperInterface
 {
     public:
+
         DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port);
         ~DobotRosWrapper();
 
@@ -70,24 +74,38 @@ class DobotRosWrapper : public DobotRosWrapperInterface
     private: 
         
         // Private Ros stuff
+        // Publisher
+        ros::Publisher joint_state_pub_;
+        ros::Publisher end_effector_state_pub_;
+
+        // Subscriber 
+        ros::Subscriber target_joint_sub_;
+        ros::Subscriber target_end_effector_sub_;
 
     private:
         
+        bool robot_in_motion_;
+        bool robot_at_target_;
+
+        std::string port_;
+
         JointData target_joint_data_;
         PoseData target_end_effector_pose_data_;
 
         std::thread *update_state_thread_;
         std::thread *robot_control_thread_;
 
-        std::vector<double> latest_joint_angles_;
-        std::vector<double> latest_end_effector_pos_;
+        std::vector<float> latest_joint_angles_;
+        std::vector<float> latest_end_effector_pos_;
 
         void updateStateLoop();
         void robotControlLoop();
 
-        void JointTargetCallback(const sensor_msgs::Pose& msg);
-        void EndEffectorTargetPoseCallback(const std_msgs::Float64& msg);
+        void jointTargetCallback(const sensor_msgs::Pose& msg);
+        void endEffectorTargetPoseCallback(const sensor_msgs::JointState& msg);
         
+        bool moveToTargetJoints();
+        bool moveToTargetEndEffectorPose();
 };
 
 #endif

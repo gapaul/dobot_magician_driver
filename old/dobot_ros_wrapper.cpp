@@ -458,6 +458,7 @@ void DobotRosWrapper::update_state_loop()
 
         if(latest_joint_angles.size() == 4 && latest_cartesian_pos.size() == 4)
         {
+
             joint_ang_msg.position.clear();
             for(int i = 0; i < latest_joint_angles.size(); ++i){
                 joint_ang_msg.position.push_back(latest_joint_angles[i]*M_PI/180);

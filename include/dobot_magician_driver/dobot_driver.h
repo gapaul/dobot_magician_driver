@@ -4,7 +4,6 @@
 #include "dobot_communication.h"
 #include "dobot_state.h"
 
-
 class DobotDriver{
 
 private:
