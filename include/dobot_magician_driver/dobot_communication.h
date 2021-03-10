@@ -10,9 +10,9 @@
 #include <cmath>
 
 
-#include <SerialPort.h>
-#include <SerialStream.h>
-#include <SerialStreamBuf.h>
+#include <libserial/SerialPort.h>
+#include <libserial/SerialStream.h>
+#include <libserial/SerialStreamBuf.h>
 
 
 #define SERIAL_TIMEOUT 300 // miliseconds
@@ -358,12 +358,12 @@ private:
 
     std::string _port;
 
-    SerialPort::BaudRate _baud;
-    SerialPort::Parity _parity;
-    SerialPort::StopBits _stop_bit;
-    SerialPort::CharacterSize _character_size;
+    LibSerial::BaudRate _baud;
+    LibSerial::Parity _parity;
+    LibSerial::StopBits _stop_bit;
+    LibSerial::CharacterSize _character_size;
 
-    SerialPort* _serial_port;
+    LibSerial::SerialPort* _serial_port;
 
     double _serial_timeout;
     int _try_limit;
