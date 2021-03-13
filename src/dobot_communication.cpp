@@ -12,8 +12,7 @@ DobotCommunication::DobotCommunication(std::string port) :
     _try_limit(TRY_LIMIT)
 {
     _serial_port = new LibSerial::SerialPort(port);
-    // _serial_port->Open();
-    _serial_port->Open("/dev/ttyUSB0");
+    _serial_port->Open(port);
     _serial_port->SetBaudRate(_baud);
     _serial_port->SetStopBits(_stop_bit);
     _serial_port->SetParity(_parity);
