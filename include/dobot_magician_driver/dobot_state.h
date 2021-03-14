@@ -5,91 +5,63 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <thread>
 
 #include <libserial/SerialPort.h>
 #include <libserial/SerialStream.h>
 #include <libserial/SerialStreamBuf.h>
 
-
-class DobotStates{
-
-public:
-    struct Pose
-    {
-        float x;
-        float y;
-        float z;
-        float r;
-        std::vector<float> joint_angle;
-
-    };
-
-    DobotStates();
-
-    bool unpackPose(std::vector<uint8_t> &data, std::vector<double> &pose);
-
-    bool unpackCPParams(std::vector<uint8_t> &data, std::vector<float> &cp_params, uint8_t &real_time_track);
+#include "dobot_utils.h"
+#include "dobot_communication.h"
 
 
-private:
+class DobotStates
+{
 
+    public:
 
-    Pose _pose;
+        DobotStates();
+        ~DobotStates();
 
-    struct HOMEParams
-    {
+        void init(std::shared_ptr<DobotCommunication> dobot_serial_ptr);
+        void run();
 
-    }_home_params;
+        JointConfiguration getRobotCurrentJointConfiguration();
+        Pose getRobotCurrentEndEffectorPose();
 
+        void setContinuosPathParams(ContinuousPathParams cp_params);
+        ContinuousPathParams getContinousPathParams();
 
-    struct HOMECmd
-    {
+        bool unpackPose(std::vector<uint8_t> &data, std::vector<double> &pose);
+        bool unpackCPParams(std::vector<uint8_t> &data, std::vector<float> &cp_params, uint8_t &real_time_track);
 
-    }_home_cmd;
+        bool getCurrentConfiguration(std::vector<double> &cart_pos, std::vector<double> &joint_angles);
 
-    struct WIFIGateway
-    {
+    private:
 
-    }_wifi_gateway;
+        std::shared_ptr<DobotCommunication> dobot_serial_;
 
-    struct HHTTrigMode
-    {
+        // Basic states
+        JointConfigurationBuffer current_joint_config_buffer_;
+        PoseBuffer current_end_effector_pose_buffer_;
 
-    }_hht_trig_mode;
+        // Dobot Params
+        ContinuousPathParams cp_params_;
 
-    struct EndEffectorParams
-    {
+        // Others
+        std::thread *update_state_thread_;
 
-    }_end_effector_params;
+        PoseBuffer end_effector_pose_buffer_;
+        JointConfigurationBuffer joint_config_buffer_;
 
-    struct JOGJointParams
-    {
+        void updateRobotStatesThread();
+        
+        void updateRobotCurrentConfiguration(std::vector<uint8_t> &raw_serial_data, std::vector<double> &config_data, Pose &pose_data, JointConfiguration &joint_data);
+        void updateRobotIOStates();
 
-    }_jog_joint_params;
+        void updateContinuosPathParams();
 
-    struct JOGCoordinateParams
-    {
-
-    }_jog_coordinate_params;
-
-    struct JOGCommonParams
-    {
-
-    }_jog_common_params;
-
-    struct JOGCmd
-    {
-
-    }_jog_cmd;
-
-    struct JOGLParams
-    {
-
-    }_jog_l_params;
-
-    float unpackFloat(std::vector<uint8_t>::iterator it);
-
-
+        float unpackFloat(std::vector<uint8_t>::iterator it);
 };
 
 #endif /* DOBOT_STATES_H_ */

@@ -2,20 +2,32 @@
 #define _DOBOT_ROS_WRAPPER_H_
 
 #include <cmath>
+#include <deque>
 #include <thread>
 
 #include "ros/ros.h"
 #include "ros/console.h"
+#include "tf/tf.h"
 #include "sensor_msgs/JointState.h"
 #include "geometry_msgs/PoseStamped.h"
 
-#include "dobot_ros_wrapper_interface.h"
+#include "sensor_msgs/JointState.h"
+#include "geometry_msgs/Pose.h"
+
+#include "dobot_driver.h"
 
 #define DOBOT_INIT_TIME 30
-#define MAX_DATA_DEQUE_SIZE 10;
+#define MAX_DATA_DEQUE_SIZE 10
 #define JOINT_ERROR 0.1
 #define LINEAR_ERROR 0.1
 #define ORIENTATION_ERROR 0.01
+
+#define IO_PIN_MIN 1
+#define IO_PIN_MAX 20
+#define IO_PWM_HZ_MIN 10        // Hz
+#define IO_PWM_HZ_MAX 1000000   // Hz
+#define IO_PWM_DC_MIN 0     // %
+#define IO_PWM_DC_MAX 100   // %
 
 enum IOMux
 {
@@ -30,7 +42,7 @@ enum IOMux
 
 struct PoseDataBuffer
 {
-    std::deque<sensor_msgs::Pose> pose_deq;
+    std::deque<geometry_msgs::Pose> pose_deq;
     std::mutex mtx;
     std::atomic<bool> received;
 };
@@ -44,7 +56,7 @@ struct JointDataBuffer
 
 struct PoseData
 {
-    sensor_msgs::Pose pose_data;
+    geometry_msgs::Pose pose_data;
     std::mutex mtx;
     std::atomic<bool> received;
 };
@@ -54,9 +66,9 @@ struct JointData
     sensor_msgs::JointState joint_data;
     std::mutex mtx;
     std::atomic<bool> received;
-}
+};
 
-class DobotRosWrapper : public DobotRosWrapperInterface
+class DobotRosWrapper
 {
     public:
 
@@ -74,6 +86,11 @@ class DobotRosWrapper : public DobotRosWrapperInterface
     private: 
         
         // Private Ros stuff
+        // Node handle
+        ros::NodeHandle nh_;
+        ros::NodeHandle ph_;
+        ros::Rate rate_;
+
         // Publisher
         ros::Publisher joint_state_pub_;
         ros::Publisher end_effector_state_pub_;
@@ -87,6 +104,8 @@ class DobotRosWrapper : public DobotRosWrapperInterface
         bool robot_in_motion_;
         bool robot_at_target_;
 
+        DobotDriver *driver_;
+
         std::string port_;
 
         JointData target_joint_data_;
@@ -95,14 +114,14 @@ class DobotRosWrapper : public DobotRosWrapperInterface
         std::thread *update_state_thread_;
         std::thread *robot_control_thread_;
 
-        std::vector<float> latest_joint_angles_;
-        std::vector<float> latest_end_effector_pos_;
+        std::vector<double> latest_joint_angles_;
+        std::vector<double> latest_end_effector_pos_;
 
-        void updateStateLoop();
-        void robotControlLoop();
+        void updateStateThread();
+        void robotControlThread();
 
-        void jointTargetCallback(const sensor_msgs::Pose& msg);
-        void endEffectorTargetPoseCallback(const sensor_msgs::JointState& msg);
+        void endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg);
+        void jointTargetCallback(const sensor_msgs::JointStateConstPtr& msg);
         
         bool moveToTargetJoints();
         bool moveToTargetEndEffectorPose();

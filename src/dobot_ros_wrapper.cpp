@@ -1,9 +1,9 @@
 #include "dobot_magician_driver/dobot_ros_wrapper.h"
 
 DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port)
-    : _nh(nh)
-    , _pn(pn)
-    , _rate(100)
+    : nh_(nh)
+    , ph_(pn)
+    , rate_(100)
 {
     port_ = port;
     joint_state_pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
@@ -13,6 +13,7 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
 DobotRosWrapper::~DobotRosWrapper()
 {
     update_state_thread_->join();
+    robot_control_thread_->join();
 }
 
 void DobotRosWrapper::init()
@@ -28,11 +29,11 @@ void DobotRosWrapper::init()
 
 void DobotRosWrapper::run()
 {
-    update_state_thread_ = new std::thread(&DobotRosWrapper::updateStateLoop, this);
-    robot_control_thread_ = new std::thread(&DobotRosWrapper::robotControlLoop, this);
+    update_state_thread_ = new std::thread(&DobotRosWrapper::updateStateThread, this);
+    robot_control_thread_ = new std::thread(&DobotRosWrapper::robotControlThread, this);
 }
 
-void DobotRosWrapper::updateStateLoop()
+void DobotRosWrapper::updateStateThread()
 {
     sensor_msgs::JointState joint_angle_msg;
     geometry_msgs::PoseStamped cart_pos_msg;
@@ -56,12 +57,12 @@ void DobotRosWrapper::updateStateLoop()
             int total_cart_correct = 0;
 
             // Update joint configuration
-            joint_ang_msg.position.clear();
+            joint_angle_msg.position.clear();
             for(int i = 0; i < latest_joint_angles_.size(); ++i)
             {
-                joint_ang_msg.position.push_back(latest_joint_angles_[i]*M_PI/180);
+                joint_angle_msg.position.push_back(latest_joint_angles_[i]*M_PI/180);
 
-                if(abs(latest_joint_angles_[i]*M_PI/180 - target_joint_data_[i]) <= JOINT_ERROR)
+                if(abs(latest_joint_angles_[i]*M_PI/180 - target_joint_data_.joint_data.position[i]) <= JOINT_ERROR)
                 {
                     total_joints_correct++;
                 }
@@ -97,7 +98,7 @@ void DobotRosWrapper::updateStateLoop()
 
             if(latest_end_effector_pos_[3] < 0.0)
             {
-                latest_end_effector_pos_[3] = latest_end_effector_pos_ + 360.0;
+                latest_end_effector_pos_[3] = latest_end_effector_pos_[3] + 360.0;
             }
 
             cart_pos_msg.pose.orientation.w = (cos(latest_end_effector_pos_[3]*0.5*M_PI/180.0)); //assumes only changes in yaw
@@ -109,7 +110,7 @@ void DobotRosWrapper::updateStateLoop()
 
             if(abs(tf::getYaw(cart_pos_msg.pose.orientation) - tf::getYaw(target_end_effector_pose_data_.pose_data.orientation)) <= ORIENTATION_ERROR)
             {
-                total_cart_correct++
+                total_cart_correct++;
             }
 
             if(total_cart_correct == 4)
@@ -134,8 +135,8 @@ void DobotRosWrapper::updateStateLoop()
 
             // Update robot state to ROS
             cart_pos_msg.header.stamp = ros_time;
-            joint_ang_msg.header.stamp = ros_time;
-            joint_state_pub_.publish(joint_ang_msg);
+            joint_angle_msg.header.stamp = ros_time;
+            joint_state_pub_.publish(joint_angle_msg);
             end_effector_state_pub_.publish(cart_pos_msg);
         }
 
@@ -143,8 +144,10 @@ void DobotRosWrapper::updateStateLoop()
     }
 }
 
-void DobotRosWrapper::robotControlLoop()
+void DobotRosWrapper::robotControlThread()
 {
+    ROS_INFO("DobotRosWrapper: Control thread started.");
+
     while(ros::ok())
     {
         // Control loop
@@ -162,21 +165,21 @@ void DobotRosWrapper::robotControlLoop()
     }
 }
 
-void DobotRosWrapper::jointTargetCallback(const sensor_msgs::JointState& msg)
+void DobotRosWrapper::jointTargetCallback(const sensor_msgs::JointStateConstPtr& msg)
 {
     ROS_INFO("New target joint configurations received !!");
     
     target_joint_data_.mtx.lock();
-    target_joint_data_.position = msgs->position;   
-    target_joint_data.mtx.unlock();
+    target_joint_data_.joint_data.position = msg->position;
+    target_joint_data_.mtx.unlock();
 }
 
-void DobotRosWrapper::endEffectorTargetPoseCallback(const sensor_msgs::Pose& msg)
+void DobotRosWrapper::endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg)
 {
     ROS_INFO("New target end effector pose received !!");
 
     target_end_effector_pose_data_.mtx.lock();
-    target_end_effector_pose_data_.pose_data = msgs->poses;
+    target_end_effector_pose_data_.pose_data.position = msg->position;
     target_end_effector_pose_data_.mtx.unlock();
 }
 
@@ -186,7 +189,7 @@ bool DobotRosWrapper::moveToTargetJoints()
     target_joint_data_.mtx.lock();
     for(int i = 0; i < 4; i++)
     {
-        target_joints.push_back(target_joint_data_.position[i] * 180 / M_PI);
+        target_joints.push_back(target_joint_data_.joint_data.position[i] * 180 / M_PI);
     }   
     target_joint_data_.mtx.unlock();
 
@@ -208,10 +211,10 @@ bool DobotRosWrapper::moveToTargetEndEffectorPose()
     std::vector<float> target_points;
     target_end_effector_pose_data_.mtx.lock();
 
-    target_points.push_back(target_joint_data_.pose_data.position.x * 1000);
-    target_points.push_back(target_joint_data_.pose_data.position.y * 1000);
-    target_points.push_back(target_joint_data_.pose_data.position.z * 1000);
-    target_points.push_back(tf::getYaw(target_joint_data_.pose_data.orientation));
+    target_points.push_back(target_end_effector_pose_data_.pose_data.position.x * 1000);
+    target_points.push_back(target_end_effector_pose_data_.pose_data.position.y * 1000);
+    target_points.push_back(target_end_effector_pose_data_.pose_data.position.z * 1000);
+    target_points.push_back(tf::getYaw(target_end_effector_pose_data_.pose_data.orientation));
     
     target_end_effector_pose_data_.mtx.unlock();
 
@@ -228,3 +231,39 @@ bool DobotRosWrapper::moveToTargetEndEffectorPose()
     }
 }
 
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, "dobot_magician_node");
+    std::string port;
+    ros::Rate rate(10);
+    ros::AsyncSpinner spinner(3);
+    
+    if (!(ros::param::get("~port", port))) {
+
+        ROS_ERROR("DobotRosWrapper: port not specified");
+        exit(1);
+
+    }
+
+    ros::NodeHandle nh;
+    ros::NodeHandle pn("~");
+
+    DobotRosWrapper db_ros(nh,pn,port);
+    
+    ROS_INFO("Initialising Wrapper.");
+    db_ros.init();
+    
+    ROS_INFO("Starting Wrapper.");
+    db_ros.run();
+    
+    spinner.start();
+
+    while(ros::ok())
+    {
+        rate.sleep();    
+    }
+
+    spinner.stop();
+    return 0;
+}
