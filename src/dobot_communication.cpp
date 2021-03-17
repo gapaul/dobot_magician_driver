@@ -11,7 +11,7 @@ DobotCommunication::DobotCommunication(std::string port) :
     _serial_timeout(SERIAL_TIMEOUT),
     _try_limit(TRY_LIMIT)
 {
-    _serial_port = new LibSerial::SerialPort(port);
+    _serial_port = new LibSerial::SerialPort();
     _serial_port->Open(port);
     _serial_port->SetBaudRate(_baud);
     _serial_port->SetStopBits(_stop_bit);
