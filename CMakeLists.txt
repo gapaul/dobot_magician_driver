@@ -158,6 +158,7 @@ include_directories(
     src/dobot_ros_wrapper.cpp
     src/dobot_communication.cpp
     src/dobot_state.cpp
+    src/dobot_controller.cpp
     src/dobot_driver.cpp)
  add_executable(dobot_magician_driver ${${PROJECT_NAME}_SOURCES})
 

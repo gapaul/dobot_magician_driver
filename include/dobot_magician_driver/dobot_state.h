@@ -7,13 +7,8 @@
 #include <cstring>
 #include <thread>
 
-#include <libserial/SerialPort.h>
-#include <libserial/SerialStream.h>
-#include <libserial/SerialStreamBuf.h>
-
 #include "dobot_utils.h"
 #include "dobot_communication.h"
-
 
 class DobotStates
 {
@@ -37,6 +32,8 @@ class DobotStates
 
         bool getCurrentConfiguration(std::vector<double> &cart_pos, std::vector<double> &joint_angles);
 
+        bool initialiseRobot();
+
     private:
 
         std::shared_ptr<DobotCommunication> dobot_serial_;
@@ -48,11 +45,18 @@ class DobotStates
         // Dobot Params
         ContinuousPathParams cp_params_;
 
+        // Homing - Initialisation
+        bool is_homed_;
+
         // Others
         std::thread *update_state_thread_;
 
         PoseBuffer end_effector_pose_buffer_;
         JointConfigurationBuffer joint_config_buffer_;
+
+        bool pause_update_thread_;
+
+        std::vector<float> start_joint_angle_;
 
         void updateRobotStatesThread();
         

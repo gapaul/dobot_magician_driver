@@ -5,8 +5,12 @@ DobotStates::DobotStates()
     current_joint_config_buffer_.received = false;
     current_end_effector_pose_buffer_.received = false;
 
+    pause_update_thread_ = false;
+
     cp_params_.received = false;
     cp_params_.user_set = false;
+
+    start_joint_angle_ = {0,0.4,0.3,0};
 }
 
 DobotStates::~DobotStates()
@@ -111,6 +115,11 @@ void DobotStates::updateRobotStatesThread()
 
     while(true)
     {
+        if(pause_update_thread_)
+        {
+            continue;
+        }
+        
         updateRobotCurrentConfiguration(raw_serial_data, config_data, pose_data, joint_data);
     }
 }
@@ -182,4 +191,17 @@ void DobotStates::updateContinuosPathParams()
             cp_params_.received = true;
         }
     }
+}
+
+bool DobotStates::initialiseRobot()
+{
+    dobot_serial_->setQueuedCmdClear();
+    dobot_serial_->setQueuedCmdStartExec();
+
+    dobot_serial_->setEMotor(0,false,0);
+    dobot_serial_->setEMotor(1,false,0);
+
+    dobot_serial_->setPTPCmd(4,start_joint_angle_);   
+    dobot_serial_->setHOMECmd();
+    is_homed_ = true;    
 }

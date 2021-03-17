@@ -18,9 +18,9 @@
 
 #define DOBOT_INIT_TIME 30
 #define MAX_DATA_DEQUE_SIZE 10
-#define JOINT_ERROR 0.1
-#define LINEAR_ERROR 0.1
-#define ORIENTATION_ERROR 0.01
+// #define JOINT_ERROR 0.1
+// #define LINEAR_ERROR 0.1
+// #define ORIENTATION_ERROR 0.01
 
 #define IO_PIN_MIN 1
 #define IO_PIN_MAX 20
