@@ -15,6 +15,10 @@
 #include "geometry_msgs/Pose.h"
 
 #include "dobot_driver.h"
+#include "dobot_state.h"
+#include "dobot_controller.h"
+#include "dobot_communication.h"
+#include "dobot_utils.h"
 
 #define DOBOT_INIT_TIME 30
 #define MAX_DATA_DEQUE_SIZE 10
@@ -100,11 +104,12 @@ class DobotRosWrapper
         ros::Subscriber target_end_effector_sub_;
 
     private:
-        
-        bool robot_in_motion_;
-        bool robot_at_target_;
 
-        DobotDriver *driver_;
+        std::shared_ptr<DobotCommunication> dobot_serial_;
+        std::shared_ptr<DobotStates> dobot_states_manager_;
+        std::shared_ptr<DobotController> dobot_controller_;
+        
+        std::unique_ptr<DobotDriver> dobot_driver_;
 
         std::string port_;
 
@@ -114,15 +119,15 @@ class DobotRosWrapper
         std::thread *update_state_thread_;
         std::thread *robot_control_thread_;
 
-        std::vector<double> latest_joint_angles_;
-        std::vector<double> latest_end_effector_pos_;
-
         void updateStateThread();
         void robotControlThread();
 
         void endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg);
         void jointTargetCallback(const sensor_msgs::JointStateConstPtr& msg);
         
+        void setTargetEndEffectorPose();
+        void setTargetJointConfiguration();
+
         bool moveToTargetJoints();
         bool moveToTargetEndEffectorPose();
 };

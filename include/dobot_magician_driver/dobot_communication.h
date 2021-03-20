@@ -20,8 +20,18 @@ class DobotCommunication
 {
     public:
 
-        DobotCommunication(std::string port);
+        DobotCommunication();
         ~DobotCommunication();
+
+        void init(std::string port);
+
+        bool startConnection();
+        bool closeConnection();
+
+        bool isConnected();
+
+    // Dobot Commands and Response
+    public:
 
         /// Device information
     //    setDeviceSN
@@ -354,7 +364,7 @@ class DobotCommunication
 
     private:
 
-        std::string _port;
+        std::string port_;
 
         LibSerial::BaudRate baud_;
         LibSerial::Parity parity_;

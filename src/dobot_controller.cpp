@@ -53,6 +53,11 @@ void DobotController::setTargetEndEffectorPose(Pose target_end_effector_pose)
 
 bool DobotController::moveToTargetJoint()
 {
+    if(!dobot_serial_->isConnected())
+    {
+        return false;
+    }
+    
     target_joint_config_buffer_.mtx.lock();
     
     std::vector<float> target_joint_config(target_joint_config_buffer_.joint_data.back().position.begin(),
@@ -67,6 +72,11 @@ bool DobotController::moveToTargetJoint()
 
 bool DobotController::moveToTargetPose()
 {
+    if(!dobot_serial_->isConnected())
+    {
+        return false;
+    }
+
     target_ee_pose_buffer_.mtx.lock();
     
     std::vector<float> target_pose;

@@ -3,7 +3,7 @@
 #include "ros/console.h"
 #include <sstream>
 
-DobotCommunication::DobotCommunication(std::string port) :
+DobotCommunication::DobotCommunication() :
     baud_(LibSerial::BaudRate::BAUD_115200),
     stop_bit_(LibSerial::StopBits::STOP_BITS_1),
     parity_(LibSerial::Parity::PARITY_NONE),
@@ -12,11 +12,7 @@ DobotCommunication::DobotCommunication(std::string port) :
     try_limit_(TRY_LIMIT)
 {
     serial_port_ = new LibSerial::SerialPort();
-    serial_port_->Open(port);
-    serial_port_->SetBaudRate(baud_);
-    serial_port_->SetStopBits(stop_bit_);
-    serial_port_->SetParity(parity_);
-    serial_port_->SetCharacterSize(character_size_);
+
 
 //    std::cout << "Port " << port << " is " << (serial_port_->IsOpen() ? "Connected" : "Disconnected") << std::endl;
 }
@@ -24,6 +20,36 @@ DobotCommunication::DobotCommunication(std::string port) :
 DobotCommunication::~DobotCommunication()
 {
     serial_port_->Close();
+}
+
+void DobotCommunication::init(std::string port)
+{
+    port_ = port;
+
+    serial_port_->SetBaudRate(baud_);
+    serial_port_->SetStopBits(stop_bit_);
+    serial_port_->SetParity(parity_);
+    serial_port_->SetCharacterSize(character_size_);   
+}
+
+bool DobotCommunication::startConnection()
+{
+    // Open Serial Port
+    try
+    {
+        serial_port_->Open(port_);
+    }
+    catch(const std::exception& e)
+    {
+        // std::cerr << e.what() << '\n';
+        return false;
+    }
+    return true;
+}
+
+bool DobotCommunication::isConnected()
+{
+    return serial_port_->IsOpen();
 }
 
 uint8_t DobotCommunication::checksumCalc(std::vector<uint8_t> &ctrl_cmd)

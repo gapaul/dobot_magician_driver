@@ -27,14 +27,15 @@ class DobotStates
         void setContinuosPathParams(ContinuousPathParams cp_params);
         ContinuousPathParams getContinousPathParams();
 
-        bool unpackPose(std::vector<uint8_t> &data, std::vector<double> &pose);
-        bool unpackCPParams(std::vector<uint8_t> &data, std::vector<float> &cp_params, uint8_t &real_time_track);
-
         bool getCurrentConfiguration(std::vector<double> &cart_pos, std::vector<double> &joint_angles);
 
         bool initialiseRobot();
+        void setOnRail(bool on_rail);
 
     private:
+
+        // Robot connection
+        bool is_connected_;
 
         std::shared_ptr<DobotCommunication> dobot_serial_;
 
@@ -47,12 +48,10 @@ class DobotStates
 
         // Homing - Initialisation
         bool is_homed_;
+        bool is_on_rail_;
 
         // Others
         std::thread *update_state_thread_;
-
-        PoseBuffer end_effector_pose_buffer_;
-        JointConfigurationBuffer joint_config_buffer_;
 
         bool pause_update_thread_;
 
@@ -65,7 +64,10 @@ class DobotStates
 
         void updateContinuosPathParams();
 
+        // Utils functions
         float unpackFloat(std::vector<uint8_t>::iterator it);
+        bool unpackPose(std::vector<uint8_t> &data, std::vector<double> &pose);
+        bool unpackCPParams(std::vector<uint8_t> &data, std::vector<float> &cp_params, uint8_t &real_time_track);
 };
 
 #endif /* DOBOT_STATES_H_ */

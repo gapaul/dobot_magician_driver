@@ -107,6 +107,11 @@ struct Pose
         theta = input.at(3);
     }
 
+    double distance(Pose input)
+    {
+        return sqrt(pow(input.x - x,2) + pow(input.y - y,2) + pow(input.z - z,2));
+    }
+
 };
 
 struct JointConfiguration
@@ -114,11 +119,82 @@ struct JointConfiguration
     std::vector<double> position;
     std::vector<double> velocity;   
 
+    JointConfiguration operator+(JointConfiguration &input)
+    {
+        JointConfiguration output;
+        output.position.at(0) = position.at(0) + input.position.at(0);
+        output.position.at(1) = position.at(1) + input.position.at(1);
+        output.position.at(2) = position.at(2) + input.position.at(2);
+        output.position.at(3) = position.at(3) + input.position.at(3);
+
+        return output;
+    }
+
+    JointConfiguration operator-(JointConfiguration &input)
+    {
+        JointConfiguration output;
+        output.position.at(0) = position.at(0) - input.position.at(0);
+        output.position.at(1) = position.at(1) - input.position.at(1);
+        output.position.at(2) = position.at(2) - input.position.at(2);
+        output.position.at(3) = position.at(3) - input.position.at(3);
+
+        return output;
+    }
+    
     bool operator==(JointConfiguration &input)
     {
         for(int i = 0; i < position.size(); i++)
         {
             if(position.at(i) != input.position.at(i))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    bool operator<(JointConfiguration &input)
+    {
+        for(int i = 0; i < position.size(); i++)
+        {
+            if(position.at(i) >= input.position.at(i))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool operator<=(JointConfiguration &input)
+    {
+        for(int i = 0; i < position.size(); i++)
+        {
+            if(position.at(i) > input.position.at(i))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool operator>(JointConfiguration &input)
+    {
+        for(int i = 0; i < position.size(); i++)
+        {
+            if(position.at(i) <= input.position.at(i))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool operator>=(JointConfiguration &input)
+    {
+        for(int i = 0; i < position.size(); i++)
+        {
+            if(position.at(i) < input.position.at(i))
             {
                 return false;
             }
@@ -167,6 +243,19 @@ struct PoseBuffer
     std::deque<Pose> pose_data;
     std::mutex mtx;
     std::atomic<bool> received;
+
+    void add(Pose new_pose)
+    {
+        mtx.lock();
+        pose_data.push_back(new_pose);
+
+        if(pose_data.size() > MAX_BUFFER_SIZE)
+        {
+            pose_data.pop_front();
+        }
+
+        mtx.unlock();
+    }
 };
 
 struct JointConfigurationBuffer
@@ -174,6 +263,20 @@ struct JointConfigurationBuffer
     std::deque<JointConfiguration> joint_data;
     std::mutex mtx;
     std::atomic<bool> received;
+
+    void add(JointConfiguration new_joint_config)
+    {
+        mtx.lock();
+
+        joint_data.push_back(new_joint_config);
+
+        if(joint_data.size() > MAX_BUFFER_SIZE)
+        {
+            joint_data.pop_front();
+        }
+
+        mtx.unlock();
+    }
 };
 
 #endif

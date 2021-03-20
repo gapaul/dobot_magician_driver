@@ -25,12 +25,17 @@ class DobotController
         bool moveToTargetJoint();
         bool moveToTargetPose();
 
+        // TODO: Trajectory
+
+        // TODO: Velocity control
     private:
 
         std::shared_ptr<DobotCommunication> dobot_serial_;
 
         PoseBuffer target_ee_pose_buffer_;
         JointConfigurationBuffer target_joint_config_buffer_;
+
+        PoseBuffer target_ee_traj_;
 
 };
 

@@ -11,6 +11,12 @@ DobotStates::DobotStates()
     cp_params_.user_set = false;
 
     start_joint_angle_ = {0,0.4,0.3,0};
+
+    // Initialise flag
+    is_homed_ = false;
+    is_on_rail_ = false;
+
+    is_connected_ = false;
 }
 
 DobotStates::~DobotStates()
@@ -113,9 +119,12 @@ void DobotStates::updateRobotStatesThread()
     Pose pose_data;
     JointConfiguration joint_data;
 
+    // Check robot connection
+    is_connected_ = dobot_serial_->isConnected();
+    
     while(true)
     {
-        if(pause_update_thread_)
+        if(!is_connected_)
         {
             continue;
         }
@@ -126,8 +135,13 @@ void DobotStates::updateRobotStatesThread()
 
 void DobotStates::updateRobotCurrentConfiguration(std::vector<uint8_t> &raw_serial_data, std::vector<double> &config_data, Pose &pose_data, JointConfiguration &joint_data)
 {
-    // Update robot configuration state
+    // Only update if the connection with the robot is still there   
+    if(!dobot_serial_->isConnected())
+    {
+        return;
+    }
 
+    // Update robot configuration state
     if(dobot_serial_->getPose(raw_serial_data))
     {
         if(unpackPose(raw_serial_data,config_data))
@@ -201,7 +215,17 @@ bool DobotStates::initialiseRobot()
     dobot_serial_->setEMotor(0,false,0);
     dobot_serial_->setEMotor(1,false,0);
 
-    dobot_serial_->setPTPCmd(4,start_joint_angle_);   
+    dobot_serial_->setPTPCmd(4,start_joint_angle_); 
+
+    dobot_serial_->setLinearRailStatus(is_on_rail_,0,0);  
     dobot_serial_->setHOMECmd();
-    is_homed_ = true;    
+    is_homed_ = true; 
+
+    return true;   
+}
+
+void DobotStates::setOnRail(bool on_rail)
+{
+    is_on_rail_ = on_rail;
+    dobot_serial_->setLinearRailStatus(is_on_rail_,0,0);
 }

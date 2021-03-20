@@ -16,11 +16,6 @@ void DobotDriver::init(std::shared_ptr<DobotStates> dobot_state_ptr, std::shared
     dobot_controller_ = dobot_controller_ptr;
 }
 
-void DobotDriver::run()
-{
-    update_thread_ = new std::thread(&DobotDriver::driverUpdateThread, this);
-}
-
 void DobotDriver::setStateManager(std::shared_ptr<DobotStates> dobot_state_ptr)
 {
     dobot_state_ = dobot_state_ptr;
@@ -31,12 +26,27 @@ void DobotDriver::setController(std::shared_ptr<DobotController> dobot_controlle
     dobot_controller_ = dobot_controller_ptr;
 }
 
-void DobotDriver::driverUpdateThread()
+void DobotDriver::initialiseRobot()
 {
-    while(true)
-    {
-        
-    }
+    dobot_state_->initialiseRobot();
+}
+
+// not a very good way to do this
+bool DobotDriver::isRobotAtTarget()
+{      
+    return at_target_;
+}
+
+bool DobotDriver::isRobotInMotion()
+{
+    return in_motion_;
+}
+
+void DobotDriver::isRobotOnLinearRail(bool is_on_rail)
+{
+    is_on_rail_ = is_on_rail;
+
+    dobot_state_->setOnRail(is_on_rail_);
 }
 
 JointConfiguration DobotDriver::getCurrentJointConfiguration()
@@ -72,4 +82,49 @@ void DobotDriver::setTargetEndEffectorPose(std::vector<double> target_end_effect
     Pose end_effector_pose ;
     end_effector_pose.convert(target_end_effector_pose_vec);
     dobot_controller_->setTargetEndEffectorPose(end_effector_pose);
+}
+
+bool DobotDriver::moveToTargetJointConfiguration()
+{
+    bool result = dobot_controller_->moveToTargetJoint();
+    return result;
+}
+
+bool DobotDriver::moveToTargetEndEffectorPose()
+{
+    bool result = dobot_controller_->moveToTargetPose();
+    return result;
+}
+
+void DobotDriver::driverUpdateThread()
+{
+    JointConfiguration current_config;
+    int check_config = 0;
+
+    while(true)
+    {
+        current_config = dobot_state_->getRobotCurrentJointConfiguration();
+    
+        for(int i = 0; i < current_config.position.size(); i++)
+        {
+            if(abs(current_config.position.at(i) - current_target_config_.position.at(i)) >= JOINT_ERROR)
+            {
+                at_target_ = false;
+                in_motion_ = true;
+            }
+            else
+            {
+                check_config++;
+            }
+        }
+
+        if(check_config == 4)
+        {
+            at_target_ = true;
+            in_motion_ = false;
+
+            check_config = false;
+        }
+        
+    }
 }
