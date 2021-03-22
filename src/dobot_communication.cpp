@@ -4,19 +4,19 @@
 #include <sstream>
 
 DobotCommunication::DobotCommunication(std::string port) :
-    _baud(SerialPort::BAUD_115200),
-    _stop_bit(SerialPort::STOP_BITS_1),
-    _parity(SerialPort::PARITY_NONE),
-    _character_size(SerialPort::CHAR_SIZE_8),
+    _baud(LibSerial::BaudRate::BAUD_115200),
+    _stop_bit(LibSerial::StopBits::STOP_BITS_1),
+    _parity(LibSerial::Parity::PARITY_NONE),
+    _character_size(LibSerial::CharacterSize::CHAR_SIZE_8),
     _serial_timeout(SERIAL_TIMEOUT),
     _try_limit(TRY_LIMIT)
 {
-    _serial_port = new SerialPort(port);
-    _serial_port->Open();
+    _serial_port = new LibSerial::SerialPort();
+    _serial_port->Open(port);
     _serial_port->SetBaudRate(_baud);
-    _serial_port->SetNumOfStopBits(_stop_bit);
+    _serial_port->SetStopBits(_stop_bit);
     _serial_port->SetParity(_parity);
-    _serial_port->SetCharSize(_character_size);
+    _serial_port->SetCharacterSize(_character_size);
 
 //    std::cout << "Port " << port << " is " << (_serial_port->IsOpen() ? "Connected" : "Disconnected") << std::endl;
 }
@@ -125,7 +125,7 @@ bool DobotCommunication::getResponse(std::vector<uint8_t> &returned_payload)
     {
         return false;
     }
-
+    
     returned_payload = payload; // std::vector<uint8_t>(data.begin() + 5, data.end() /*-1 use this if no pop back*/);
 
     return true;
@@ -614,11 +614,13 @@ bool DobotCommunication::tryReadByte(uint8_t &next_char)
 {
     try
     {
-        next_char = _serial_port->ReadByte(_serial_timeout);
+        _serial_port->ReadByte(next_char,_serial_timeout);
+
         return true;
     }
-    catch (SerialPort::ReadTimeout &e)
+    catch (LibSerial::ReadTimeout &e)
     {
         return false;
     }
+    
 }
