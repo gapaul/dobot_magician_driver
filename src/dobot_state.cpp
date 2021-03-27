@@ -39,7 +39,7 @@ void DobotStates::run()
 JointConfiguration DobotStates::getRobotCurrentJointConfiguration()
 {
     JointConfiguration current_joint_config;
-
+    
     current_joint_config_buffer_.mtx.lock();
     current_joint_config = current_joint_config_buffer_.joint_data.back();
     current_joint_config_buffer_.mtx.unlock();
@@ -118,30 +118,105 @@ void DobotStates::updateRobotStatesThread()
     std::vector<double> config_data;
     Pose pose_data;
     JointConfiguration joint_data;
+    JointConfiguration pre_joint_data;
+
+    // std::chrono::duration;
+
+    joint_data.position = std::vector<double>({0,0,0,0});
+    joint_data.velocity = std::vector<double>({0,0,0,0});
+
+    auto start_time = std::chrono::system_clock::now();
+    auto end_time = std::chrono::system_clock::now();
+
+    std::chrono::duration<double> elapsed_seconds;
 
     // Check robot connection
     is_connected_ = dobot_serial_->isConnected();
     
     while(true)
     {
-        if(!is_connected_)
+        // if(!is_connected_)
+        // {
+        //     continue;
+        // }
+
+        if(dobot_serial_->getPose(raw_serial_data))
         {
-            continue;
+            if(unpackPose(raw_serial_data,config_data))
+            {
+                // UPDATE END EFFECTOR STATE
+                current_end_effector_pose_buffer_.mtx.lock();
+                
+                pose_data.x = config_data.at(0);
+                pose_data.y = config_data.at(1);
+                pose_data.z = config_data.at(2);
+                pose_data.theta = config_data.at(3);
+
+                current_end_effector_pose_buffer_.pose_data.push_back(pose_data);
+
+                if(current_end_effector_pose_buffer_.pose_data.size() > MAX_BUFFER_SIZE)
+                {
+                    current_end_effector_pose_buffer_.pose_data.pop_front();
+                }
+                
+                current_end_effector_pose_buffer_.received = true;
+                current_end_effector_pose_buffer_.mtx.unlock();
+
+
+                // UPDATE JOINT STATE
+                current_joint_config_buffer_.mtx.lock();
+                
+                joint_data.position = std::vector<double>(config_data.begin() + 4,config_data.end());
+
+                if(current_joint_config_buffer_.joint_data.size() > 1)
+                {
+                    pre_joint_data = current_joint_config_buffer_.joint_data.back();
+                    
+                    for(int i = 0; i < pre_joint_data.position.size(); i ++)
+                    {
+
+                        end_time = std::chrono::system_clock::now();
+
+                        elapsed_seconds = (end_time - start_time);
+
+                        double duration = elapsed_seconds.count();
+                        // std::cout<<duration<<std::endl;
+                        joint_data.velocity.at(i) = (joint_data.position.at(i) - pre_joint_data.position.at(i))/duration;
+                    }
+
+                    std::cout<<joint_data.velocity.at(0)<<std::endl;
+                }
+
+                start_time = std::chrono::system_clock::now();
+                
+                current_joint_config_buffer_.joint_data.push_back(joint_data);
+
+                if(current_joint_config_buffer_.joint_data.size() > MAX_BUFFER_SIZE)
+                {
+                    current_joint_config_buffer_.joint_data.pop_front();
+                }
+
+                current_joint_config_buffer_.received = true;
+                // std::cout<<current_joint_config_buffer_.joint_data.back().position.at(0)<<std::endl;
+                current_joint_config_buffer_.mtx.unlock();
+            }
         }
-        
-        updateRobotCurrentConfiguration(raw_serial_data, config_data, pose_data, joint_data);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
 void DobotStates::updateRobotCurrentConfiguration(std::vector<uint8_t> &raw_serial_data, std::vector<double> &config_data, Pose &pose_data, JointConfiguration &joint_data)
 {
     // Only update if the connection with the robot is still there   
-    if(!dobot_serial_->isConnected())
-    {
-        return;
-    }
+    // if(!dobot_serial_->isConnected())
+    // {
+    //     return;
+    // }
 
     // Update robot configuration state
+    JointConfiguration pre_joint_data;
+
     if(dobot_serial_->getPose(raw_serial_data))
     {
         if(unpackPose(raw_serial_data,config_data))
@@ -164,10 +239,23 @@ void DobotStates::updateRobotCurrentConfiguration(std::vector<uint8_t> &raw_seri
             current_end_effector_pose_buffer_.received = true;
             current_end_effector_pose_buffer_.mtx.unlock();
 
+
             // Update current joint configuration
             current_joint_config_buffer_.mtx.lock();
             
             joint_data.position = std::vector<double>(config_data.begin() + 4,config_data.end());
+
+            if(current_joint_config_buffer_.joint_data.size() > 1)
+            {
+                pre_joint_data = current_joint_config_buffer_.joint_data.back();
+                
+                for(int i = 0; i < pre_joint_data.position.size(); i ++)
+                {
+
+                    double duration = 1;
+                    joint_data.velocity.at(i) = (joint_data.position.at(i) - pre_joint_data.position.at(i))/duration;
+                }
+            }
             
             current_joint_config_buffer_.joint_data.push_back(joint_data);
 
@@ -177,6 +265,7 @@ void DobotStates::updateRobotCurrentConfiguration(std::vector<uint8_t> &raw_seri
             }
 
             current_joint_config_buffer_.received = true;
+            // std::cout<<current_joint_config_buffer_.joint_data.back().position.at(0)<<std::endl;
             current_joint_config_buffer_.mtx.unlock();
         }
     }

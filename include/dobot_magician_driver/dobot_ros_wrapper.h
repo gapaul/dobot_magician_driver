@@ -8,11 +8,11 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 #include "tf/tf.h"
-#include "sensor_msgs/JointState.h"
-#include "geometry_msgs/PoseStamped.h"
 
 #include "sensor_msgs/JointState.h"
 #include "geometry_msgs/Pose.h"
+#include "geometry_msgs/PoseStamped.h"
+#include "trajectory_msgs/JointTrajectory.h"
 
 #include "dobot_driver.h"
 #include "dobot_state.h"
@@ -67,7 +67,7 @@ struct PoseData
 
 struct JointData
 {
-    sensor_msgs::JointState joint_data;
+    trajectory_msgs::JointTrajectoryPoint joint_data;
     std::mutex mtx;
     std::atomic<bool> received;
 };
@@ -100,8 +100,10 @@ class DobotRosWrapper
         ros::Publisher end_effector_state_pub_;
 
         // Subscriber 
-        ros::Subscriber target_joint_sub_;
+        ros::Subscriber target_joint_traj_sub_;
         ros::Subscriber target_end_effector_sub_;
+        
+        
 
     private:
 
@@ -109,9 +111,11 @@ class DobotRosWrapper
         std::shared_ptr<DobotStates> dobot_states_manager_;
         std::shared_ptr<DobotController> dobot_controller_;
         
-        std::unique_ptr<DobotDriver> dobot_driver_;
+        std::shared_ptr<DobotDriver> dobot_driver_;
 
         std::string port_;
+
+        std::vector<std::string> joint_names_ = {"shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", "wrist_joint"};
 
         JointData target_joint_data_;
         PoseData target_end_effector_pose_data_;
@@ -123,10 +127,7 @@ class DobotRosWrapper
         void robotControlThread();
 
         void endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg);
-        void jointTargetCallback(const sensor_msgs::JointStateConstPtr& msg);
-        
-        void setTargetEndEffectorPose();
-        void setTargetJointConfiguration();
+        void jointTargetCallback(const trajectory_msgs::JointTrajectoryConstPtr& msg);
 
         bool moveToTargetJoints();
         bool moveToTargetEndEffectorPose();

@@ -7,13 +7,19 @@ DobotDriver::DobotDriver()
 
 DobotDriver::~DobotDriver()
 {
-
+    driver_update_thread_->join();
+    delete driver_update_thread_;
 }
 
 void DobotDriver::init(std::shared_ptr<DobotStates> dobot_state_ptr, std::shared_ptr<DobotController> dobot_controller_ptr)
 {
     dobot_state_ = dobot_state_ptr;
     dobot_controller_ = dobot_controller_ptr;
+}
+
+void DobotDriver::run()
+{
+    driver_update_thread_ = new std::thread(&DobotDriver::driverUpdateThread,this);
 }
 
 void DobotDriver::setStateManager(std::shared_ptr<DobotStates> dobot_state_ptr)
@@ -100,31 +106,31 @@ void DobotDriver::driverUpdateThread()
 {
     JointConfiguration current_config;
     int check_config = 0;
-
+    
     while(true)
     {
-        current_config = dobot_state_->getRobotCurrentJointConfiguration();
+        // current_config = dobot_state_->getRobotCurrentJointConfiguration();
     
-        for(int i = 0; i < current_config.position.size(); i++)
-        {
-            if(abs(current_config.position.at(i) - current_target_config_.position.at(i)) >= JOINT_ERROR)
-            {
-                at_target_ = false;
-                in_motion_ = true;
-            }
-            else
-            {
-                check_config++;
-            }
-        }
+        // for(int i = 0; i < current_config.position.size(); i++)
+        // {
+        //     if(abs(current_config.position.at(i) - current_target_config_.position.at(i)) >= JOINT_ERROR)
+        //     {
+        //         at_target_ = false;
+        //         in_motion_ = true;
+        //     }
+        //     else
+        //     {
+        //         check_config++;
+        //     }
+        // }
 
-        if(check_config == 4)
-        {
-            at_target_ = true;
-            in_motion_ = false;
+        // if(check_config == 4)
+        // {
+        //     at_target_ = true;
+        //     in_motion_ = false;
 
-            check_config = false;
-        }
+        //     check_config = false;
+        // }
         
     }
 }

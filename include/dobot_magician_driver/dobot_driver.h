@@ -1,3 +1,4 @@
+
 #ifndef _DOBOT_DRIVER_H_
 #define _DOBOT_DRIVER_H_
 
@@ -19,6 +20,7 @@ class DobotDriver
         ~DobotDriver();
 
         void init(std::shared_ptr<DobotStates> dobot_state_ptr, std::shared_ptr<DobotController> dobot_controller_ptr);
+        void run();
 
         void setStateManager(std::shared_ptr<DobotStates> dobot_state_ptr);
         void setController(std::shared_ptr<DobotController> dobot_controller_ptr);
@@ -61,7 +63,6 @@ class DobotDriver
         bool is_on_rail_;
 
         void driverUpdateThread();
-
 };  
 
 #endif

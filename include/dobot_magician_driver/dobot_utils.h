@@ -112,6 +112,14 @@ struct Pose
         return sqrt(pow(input.x - x,2) + pow(input.y - y,2) + pow(input.z - z,2));
     }
 
+    void set(Pose &input)
+    {
+        x = input.x;
+        y = input.y;
+        z = input.z;
+        theta = input.theta;
+    }
+
 };
 
 struct JointConfiguration

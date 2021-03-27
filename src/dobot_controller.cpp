@@ -57,15 +57,16 @@ bool DobotController::moveToTargetJoint()
     {
         return false;
     }
+    std::vector<float> target_joint_config;
     
     target_joint_config_buffer_.mtx.lock();
     
-    std::vector<float> target_joint_config(target_joint_config_buffer_.joint_data.back().position.begin(),
-                                           target_joint_config_buffer_.joint_data.back().position.end());
+    target_joint_config = std::vector<float>(target_joint_config_buffer_.joint_data.back().position.begin(),
+                                             target_joint_config_buffer_.joint_data.back().position.end());
     
     target_joint_config_buffer_.mtx.unlock();
 
-    bool result = dobot_serial_->setPTPCmd(4,target_joint_config);
+    bool result = dobot_serial_->setPTPCmd(4,target_joint_config,1);
 
     return result;
 }
@@ -77,15 +78,15 @@ bool DobotController::moveToTargetPose()
         return false;
     }
 
-    target_ee_pose_buffer_.mtx.lock();
-    
     std::vector<float> target_pose;
     
-    target_pose.push_back((double)target_ee_pose_buffer_.pose_data.back().x);
-    target_pose.push_back((double)target_ee_pose_buffer_.pose_data.back().y);
-    target_pose.push_back((double)target_ee_pose_buffer_.pose_data.back().z);
-    target_pose.push_back((double)target_ee_pose_buffer_.pose_data.back().theta);
+    target_ee_pose_buffer_.mtx.lock();
     
+    target_pose.push_back(target_ee_pose_buffer_.pose_data.back().x);
+    target_pose.push_back(target_ee_pose_buffer_.pose_data.back().y);
+    target_pose.push_back(target_ee_pose_buffer_.pose_data.back().z);
+    target_pose.push_back(target_ee_pose_buffer_.pose_data.back().theta);
+
     target_ee_pose_buffer_.mtx.unlock();
 
     bool result = dobot_serial_->setPTPCmd(2,target_pose);

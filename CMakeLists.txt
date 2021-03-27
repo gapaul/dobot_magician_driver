@@ -18,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+# find_package(Boost REQUIRED COMPONENTS system signals)
+
 find_package(PkgConfig)
 pkg_check_modules(SERIAL libserial)
 
