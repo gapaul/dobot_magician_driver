@@ -2,7 +2,7 @@
 
 DobotDriver::DobotDriver()
 {
-
+    is_on_rail_ = false;
 }
 
 DobotDriver::~DobotDriver()
@@ -109,28 +109,78 @@ void DobotDriver::driverUpdateThread()
     
     while(true)
     {
-        // current_config = dobot_state_->getRobotCurrentJointConfiguration();
-    
-        // for(int i = 0; i < current_config.position.size(); i++)
-        // {
-        //     if(abs(current_config.position.at(i) - current_target_config_.position.at(i)) >= JOINT_ERROR)
-        //     {
-        //         at_target_ = false;
-        //         in_motion_ = true;
-        //     }
-        //     else
-        //     {
-        //         check_config++;
-        //     }
-        // }
+        current_config = dobot_state_->getRobotCurrentJointConfiguration();
 
-        // if(check_config == 4)
-        // {
-        //     at_target_ = true;
-        //     in_motion_ = false;
+        if(current_target_config_.position.size() != current_config.position.size())
+        {
+            at_target_ = true;
+            in_motion_ = false;
 
-        //     check_config = false;
-        // }
+            continue;
+        }
+
+        for(int i = 0; i < current_config.position.size(); i++)
+        {
+            
+            if(abs(current_config.position.at(i) - current_target_config_.position.at(i)) >= JOINT_ERROR)
+            {
+                at_target_ = false;
+                in_motion_ = true;
+            }
+            else
+            {
+                check_config++;
+            }
+        }
+
+        if(check_config == 4)
+        {
+            at_target_ = true;
+            in_motion_ = false;
+
+            check_config = 0;
+        }
         
     }
+}
+
+void DobotDriver::setToolState(bool state)
+{
+    dobot_controller_->setToolState(state);
+}
+
+bool DobotDriver::getToolState()
+{
+    return dobot_controller_->getToolState();
+}
+
+void DobotDriver::setEStop()
+{
+    dobot_state_->setEStop();
+}
+
+SafetyState DobotDriver::getRobotSafetyState()
+{
+    return dobot_state_->getRobotSafetyState();
+}
+
+void DobotDriver::setEMotor(int index, bool is_enabled, int speed)
+{
+    dobot_controller_->setEMotorSpeed(index,is_enabled,speed);
+}
+
+void DobotDriver::setIOState(int address, int multiplex, std::vector<double> data)
+{
+    dobot_controller_->setIOState(address,multiplex,data);
+}
+
+void DobotDriver::getIOState(std::vector<double> &io_mux, std::vector<double> &data)
+{
+    std::vector<int> out_io;
+    std::vector<float> out_data;
+
+    dobot_state_->getIOState(out_io, out_data);
+
+    io_mux = std::vector<double>(out_io.begin(),out_io.end());
+    data = std::vector<double>(out_data.begin(),out_data.end());
 }

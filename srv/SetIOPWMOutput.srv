@@ -1,7 +1,0 @@
-#request
-int32 address
-float32 frequency
-float32 duty_cycle
----
-#response
-bool success

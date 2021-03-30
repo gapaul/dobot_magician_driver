@@ -7,13 +7,39 @@ DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::
 {
     port_ = port;
 
-    // Publisher
+    // Publishers
+    // Robot States
     joint_state_pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
     end_effector_state_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("end_effector_states", 1);
+    
+    // Tool state
+    tool_state_pub_ = nh_.advertise<std_msgs::Bool>("tool_state",1);
 
-    // Subscriber
+    // Safety state
+    safety_state_pub_ = nh_.advertise<std_msgs::UInt8>("safety_state",1);
+
+    // Subscribers
+    // Robot control
     target_joint_traj_sub_ = nh_.subscribe("PTP/target_joint_states",10,&DobotRosWrapper::jointTargetCallback,this);
     target_end_effector_sub_ = nh_.subscribe("PTP/target_end_effector_states",10,&DobotRosWrapper::endEffectorTargetPoseCallback,this);
+
+    // Tool control
+    tool_state_sub_ = nh_.subscribe("EE/target_tool_state",10,&DobotRosWrapper::toolStateCallback,this);
+
+    // Safety state control
+    safety_state_sub_ = nh_.subscribe("Safety/target_safety_state",10,&DobotRosWrapper::safetyStateCallback,this);
+
+    // Linear Rail control
+    use_linear_rail_sub_ = nh_.subscribe("LR/target_rail_state",10,&DobotRosWrapper::linearRailStateCallback,this);
+
+    // EMotor control
+    e_motor_sub_ = nh_.subscribe("EM/target_e_motor",10,&DobotRosWrapper::eMotorCallback,this);
+
+    // IO control
+    io_control_sub_ = nh_.subscribe("IO/target_io_control",10,&DobotRosWrapper::ioStateCallback,this);
+
+    // Use at own risk
+    custom_command_sub_ = nh_.subscribe("custom_command",10,&DobotRosWrapper::customCommandCallback,this);
 
     target_joint_data_.received = false;
     target_end_effector_pose_data_.received = false;
@@ -42,7 +68,7 @@ void DobotRosWrapper::init()
     dobot_controller_->init(dobot_serial_);
 
     // Wait for hardware controller and state manager to start updating data
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     // Initialise driver
     dobot_driver_ = std::shared_ptr<DobotDriver>(new DobotDriver);
@@ -52,9 +78,8 @@ void DobotRosWrapper::init()
     dobot_driver_->run();
 
     // Initialise robot
-    // dobot_driver_->initialiseRobot();
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
-    // std::this_thread::sleep_for(std::chrono::seconds(30));
+    dobot_driver_->initialiseRobot();
     ROS_INFO("DobotRosWrapper: this thread will now wake up");
 }
 
@@ -72,6 +97,22 @@ void DobotRosWrapper::updateStateThread()
     JointConfiguration current_joint;
     Pose current_ee_pose;
 
+    std_msgs::Bool tool_state_msg;
+    std_msgs::UInt8 safety_state_msg;
+    std_msgs::Float64MultiArray io_state_msg;
+
+    std::vector<double> io_mux;
+    std::vector<double> io_data;
+
+    joint_angle_msg.name = joint_names_;
+
+    io_state_msg.layout.dim.at(0).label = "height";
+    io_state_msg.layout.dim.at(0).size = 2;
+    io_state_msg.layout.dim.at(0).stride = 40;
+    io_state_msg.layout.dim.at(1).label = "width";
+    io_state_msg.layout.dim.at(1).size = 20;
+    io_state_msg.layout.dim.at(1).stride = 20;
+
     ROS_INFO("DobotRosWrapper: data from Dobot is now being published");
     ROS_DEBUG("DobotRosWrapper: update_state_thread started");
 
@@ -85,7 +126,12 @@ void DobotRosWrapper::updateStateThread()
         joint_angle_msg.position.clear();
         joint_angle_msg.velocity.clear();
 
-        ros_time = ros::Time::now();
+        io_state_msg.data.clear();
+
+        io_mux.clear();
+        io_data.clear();
+
+        // Joint Configuration
         current_joint = dobot_driver_->getCurrentJointConfiguration();
 
         for(int i = 0; i < current_joint.position.size(); ++i)
@@ -94,6 +140,7 @@ void DobotRosWrapper::updateStateThread()
             joint_angle_msg.velocity.push_back(current_joint.velocity.at(i)*M_PI/180);
         }
         
+        // End effector Pose
         current_ee_pose = dobot_driver_->getCurrentEndEffectorPose();
 
         cart_pos_msg.pose.position.x = current_ee_pose.x/1000;
@@ -110,14 +157,48 @@ void DobotRosWrapper::updateStateThread()
         cart_pos_msg.pose.orientation.y = 0;
         cart_pos_msg.pose.orientation.z = sqrt(1-pow(cart_pos_msg.pose.orientation.w,2));
 
+        // Tool state 
+        tool_state_msg.data = dobot_driver_->getToolState();
+
+        // Safety state
+        safety_state_msg.data = (uint8_t)dobot_driver_->getRobotSafetyState();
+
+        // IO state
+        // TODO: Find a better way to store these io data
+        dobot_driver_->getIOState(io_mux,io_data);
+        
+        for(int i = 0; i < 40; i++)
+        {
+            if(i < 20)
+            {
+                io_state_msg.data.push_back(io_mux.at(i));  
+            }
+            else
+            {
+                io_state_msg.data.push_back(io_data.at(i-20));  
+            } 
+        }
+
         // Update robot state to ROS
+        ros_time = ros::Time::now();
+        
+        // Update joint states
         joint_angle_msg.header.stamp = ros_time;
-        joint_angle_msg.name = joint_names_;
         joint_state_pub_.publish(joint_angle_msg);
 
+        // Update end effector pose
         cart_pos_msg.header.stamp = ros_time;
         end_effector_state_pub_.publish(cart_pos_msg);
 
+        // Update tool state
+        tool_state_pub_.publish(tool_state_msg);
+        
+        // Update safety state
+        safety_state_pub_.publish(safety_state_msg);
+
+        // Update IO state
+        io_data_pub_.publish(io_state_msg);
+        
         rate_.sleep();
     }
 }
@@ -188,6 +269,72 @@ void DobotRosWrapper::endEffectorTargetPoseCallback(const geometry_msgs::PoseCon
     dobot_driver_->setTargetEndEffectorPose(target_pose);
     
     target_end_effector_pose_data_.received = true;
+}
+
+void DobotRosWrapper::toolStateCallback(const std_msgs::BoolConstPtr& msg)
+{
+    dobot_driver_->setToolState(msg->data);
+}
+
+void DobotRosWrapper::safetyStateCallback(const std_msgs::UInt8ConstPtr& msg)
+{
+    switch(msg->data)
+    {
+        case INITIALISING:
+            dobot_driver_->initialiseRobot();
+            break;
+
+        case ESTOPPED:
+            dobot_driver_->setEStop();
+            break;
+    }
+}
+
+void DobotRosWrapper::linearRailStateCallback(const std_msgs::BoolConstPtr& msg)
+{
+    dobot_driver_->isRobotOnLinearRail(msg->data);
+}
+
+void DobotRosWrapper::eMotorCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
+{
+    std::vector<double> data = msg->data;
+    if(msg->data.size() < 3)
+    {
+        dobot_driver_->setEMotor(1,false,0);
+        return;
+    }
+    dobot_driver_->setEMotor((int)msg->data.at(0),(bool)msg->data.at(1),(int)msg->data.at(2));
+}
+
+void DobotRosWrapper::ioStateCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
+{
+    if(msg->data.size() < 3)
+    {
+        return;
+    }
+
+    int address = msg->data.at(0);
+    int multiplex = msg->data.at(1);
+    std::vector<double> data;
+
+    for(int i = 2; i < msg->data.size() ; i++)
+    {
+        data.push_back(msg->data.at(i));
+    }
+
+    dobot_driver_->setIOState(address, multiplex, data);
+}
+
+void DobotRosWrapper::customCommandCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
+{
+    mtx_.lock();
+    custom_command_ = msg->data;
+
+    std::vector<float> converted_command = std::vector<float>(custom_command_.begin(),custom_command_.end());
+    mtx_.unlock();
+
+    uint64_t queue_cmd_index = 0;
+    dobot_serial_->sendCustomCommand(converted_command,queue_cmd_index,false);    
 }
 
 bool DobotRosWrapper::moveToTargetJoints()

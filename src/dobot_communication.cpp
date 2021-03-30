@@ -12,9 +12,6 @@ DobotCommunication::DobotCommunication():
     try_limit_(TRY_LIMIT)
 {
     serial_port_ = new LibSerial::SerialPort();
-
-
-//    std::cout << "Port " << port << " is " << (serial_postd::shared_ptr<rt_->IsOpen() ? "Connected" : "Disconnected") << std::endl;
 }
 
 DobotCommunication::~DobotCommunication()
@@ -663,4 +660,22 @@ bool DobotCommunication::tryReadByte(uint8_t &next_char)
         return false;
     }
     
+}
+
+bool DobotCommunication::sendCustomCommand(std::vector<float> cmd, uint64_t &queue_cmd_index, bool is_queued)
+{
+    std::vector<uint8_t>  ctrl_cmd = {0xAA,0xAA};
+    packFromFloat(cmd, ctrl_cmd);
+    std::lock_guard<std::mutex> send_command_lk(communication_mt_);
+	sendCommand(ctrl_cmd);
+	std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
 }

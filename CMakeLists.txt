@@ -60,28 +60,29 @@ pkg_check_modules(SERIAL libserial)
 # )
 
 ## Generate services in the 'srv' folder
- add_service_files(
-   FILES
-   SetEndEffector.srv
-   SetTargetPoints.srv
-   SetEMotor.srv
-   SetIOMultiplexing.srv
-   SetIODigitalOutput.srv
-   GetIODigitalInput.srv
-   SetIOPWMOutput.srv
-   GetIOAnalogInput.srv 
-   SetCPParams.srv
-   GetCPParams.srv
-   SetCPCmd.srv
-   SetQueuedCmd.srv
-   SetEStop.srv
-   SetInitialise.srv
-   SetLinearRail.srv
-   SetTargetPointsWithRail.srv
+# LEGACY STUFF
+#  add_service_files(
+#    FILES
+#    SetEndEffector.srv
+#    SetTargetPoints.srv
+#    SetEMotor.srv
+#    SetIOMultiplexing.srv
+#    SetIODigitalOutput.srv
+#    GetIODigitalInput.srv
+#    SetIOPWMOutput.srv
+#    GetIOAnalogInput.srv 
+#    SetCPParams.srv
+#    GetCPParams.srv
+#    SetCPCmd.srv
+#    SetQueuedCmd.srv
+#    SetEStop.srv
+#    SetInitialise.srv
+#    SetLinearRail.srv
+#    SetTargetPointsWithRail.srv
 
 #   Service1.srv
 #   Service2.srv
- )
+#  )
 
 ## Generate actions in the 'action' folder
 # add_action_files(

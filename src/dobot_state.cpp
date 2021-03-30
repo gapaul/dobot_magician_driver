@@ -12,11 +12,18 @@ DobotStates::DobotStates()
 
     start_joint_angle_ = {0,0.4,0.3,0};
 
+    for(int address = 0; address <= 20; address ++)
+    {
+        io_state_.io_mux.push_back(IODummy);
+        io_state_.data.push_back(0);
+    }
+
     // Initialise flag
     is_homed_ = false;
     is_on_rail_ = false;
 
     is_connected_ = false;
+    is_e_stopped_ = false;
 }
 
 DobotStates::~DobotStates()
@@ -116,35 +123,37 @@ void DobotStates::updateRobotStatesThread()
 {
     std::vector<uint8_t> raw_serial_data;
     std::vector<double> config_data;
+    
     Pose pose_data;
+    Pose pre_pose_data;
+
     JointConfiguration joint_data;
     JointConfiguration pre_joint_data;
-
-    // std::chrono::duration;
 
     joint_data.position = std::vector<double>({0,0,0,0});
     joint_data.velocity = std::vector<double>({0,0,0,0});
 
     auto start_time = std::chrono::system_clock::now();
     auto end_time = std::chrono::system_clock::now();
-
     std::chrono::duration<double> elapsed_seconds;
 
-    // Check robot connection
-    is_connected_ = dobot_serial_->isConnected();
+    std::vector<uint8_t> io_data;
     
     while(true)
     {
-        // if(!is_connected_)
-        // {
-        //     continue;
-        // }
+        if(!dobot_serial_->isConnected())
+        {
+            safety_state_.mtx.lock();
+            safety_state_.safety_state = DISCONNECTED;
+            safety_state_.mtx.unlock();
+            continue;
+        }
 
         if(dobot_serial_->getPose(raw_serial_data))
         {
             if(unpackPose(raw_serial_data,config_data))
             {
-                // UPDATE END EFFECTOR STATE
+                // #### UPDATE END EFFECTOR STATE ####
                 current_end_effector_pose_buffer_.mtx.lock();
                 
                 pose_data.x = config_data.at(0);
@@ -159,11 +168,17 @@ void DobotStates::updateRobotStatesThread()
                     current_end_effector_pose_buffer_.pose_data.pop_front();
                 }
                 
+                // TODO: velocity calculation
+                if(current_end_effector_pose_buffer_.pose_data.size() > 1)
+                {
+
+                }
+
                 current_end_effector_pose_buffer_.received = true;
                 current_end_effector_pose_buffer_.mtx.unlock();
 
 
-                // UPDATE JOINT STATE
+                // #### UPDATE JOINT STATE ####
                 current_joint_config_buffer_.mtx.lock();
                 
                 joint_data.position = std::vector<double>(config_data.begin() + 4,config_data.end());
@@ -184,7 +199,7 @@ void DobotStates::updateRobotStatesThread()
                         joint_data.velocity.at(i) = (joint_data.position.at(i) - pre_joint_data.position.at(i))/duration;
                     }
 
-                    std::cout<<joint_data.velocity.at(0)<<std::endl;
+                    // std::cout<<joint_data.velocity.at(0)<<std::endl;
                 }
 
                 start_time = std::chrono::system_clock::now();
@@ -202,78 +217,68 @@ void DobotStates::updateRobotStatesThread()
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-}
-
-void DobotStates::updateRobotCurrentConfiguration(std::vector<uint8_t> &raw_serial_data, std::vector<double> &config_data, Pose &pose_data, JointConfiguration &joint_data)
-{
-    // Only update if the connection with the robot is still there   
-    // if(!dobot_serial_->isConnected())
-    // {
-    //     return;
-    // }
-
-    // Update robot configuration state
-    JointConfiguration pre_joint_data;
-
-    if(dobot_serial_->getPose(raw_serial_data))
-    {
-        if(unpackPose(raw_serial_data,config_data))
+        // #### UPDATE ROBOT IO STATES #####
+        io_state_.mtx.lock();
+        for(int address = 1; address <= 20; address++)
         {
-            // Update current end effector pose
-            current_end_effector_pose_buffer_.mtx.lock();
-            
-            pose_data.x = config_data.at(0);
-            pose_data.y = config_data.at(1);
-            pose_data.z = config_data.at(2);
-            pose_data.theta = config_data.at(3);
+            dobot_serial_->getIOMultiplexing(address, io_data);
+            io_state_.io_mux.at(address) = (int)io_data.at(3);
 
-            current_end_effector_pose_buffer_.pose_data.push_back(pose_data);
-
-            if(current_end_effector_pose_buffer_.pose_data.size() > MAX_BUFFER_SIZE)
+            switch(io_state_.io_mux.at(address))
             {
-                current_end_effector_pose_buffer_.pose_data.pop_front();
+                case IODummy:
+                    io_state_.data.at(address) = 0;
+                    break;
+
+                case IODO:
+                    dobot_serial_->getIODO(address,io_data);
+                    io_state_.data.at(address) = (float)io_data.at(3);
+                    break;
+
+                case IOPWM:
+                    // TODO
+                    // dobot_serial_->getIOPW
+                    io_state_.data.at(address) = 0;
+                    break;
+
+                case IODI:
+                    dobot_serial_->getIODI(address, io_data);
+                    io_state_.data.at(address) = (float)io_data.at(3);
+                    break;
+
+                case IOADC:
+                    dobot_serial_->getIOADC(address, io_data);
+                    io_state_.data.at(address) = (io_data.at(4) << 8) | io_data.at(3);
+                    break;
+
+                case IODIPU:
+                    // TODO
+                    io_state_.data.at(address) = 0;
+                    break;
+
+                case IODIPD:
+                    // TODO
+                    io_state_.data.at(address) = 0;
+                    break;
+
+                default:
+                    io_state_.data.at(address) = 0;
+                    break;
             }
-            
-            current_end_effector_pose_buffer_.received = true;
-            current_end_effector_pose_buffer_.mtx.unlock();
-
-
-            // Update current joint configuration
-            current_joint_config_buffer_.mtx.lock();
-            
-            joint_data.position = std::vector<double>(config_data.begin() + 4,config_data.end());
-
-            if(current_joint_config_buffer_.joint_data.size() > 1)
-            {
-                pre_joint_data = current_joint_config_buffer_.joint_data.back();
-                
-                for(int i = 0; i < pre_joint_data.position.size(); i ++)
-                {
-
-                    double duration = 1;
-                    joint_data.velocity.at(i) = (joint_data.position.at(i) - pre_joint_data.position.at(i))/duration;
-                }
-            }
-            
-            current_joint_config_buffer_.joint_data.push_back(joint_data);
-
-            if(current_joint_config_buffer_.joint_data.size() > MAX_BUFFER_SIZE)
-            {
-                current_joint_config_buffer_.joint_data.pop_front();
-            }
-
-            current_joint_config_buffer_.received = true;
-            // std::cout<<current_joint_config_buffer_.joint_data.back().position.at(0)<<std::endl;
-            current_joint_config_buffer_.mtx.unlock();
         }
+
+        io_state_.mtx.unlock();
+
+        // #### SAFETY STATE ####
+        
+
+
+        // Allow the motor some time for actual update on the hardware. The sampling speed of the
+        // encoders are faster than the motion of the motors themselves.
+
+        // TODO : Remove the use of a pausing function in a loop
+        std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_THREAD_DELAY_MS));
     }
-}
-
-void DobotStates::updateRobotIOStates()
-{
-
 }
 
 void DobotStates::updateContinuosPathParams()
@@ -301,6 +306,10 @@ bool DobotStates::initialiseRobot()
     dobot_serial_->setQueuedCmdClear();
     dobot_serial_->setQueuedCmdStartExec();
 
+    safety_state_.mtx.lock();
+    safety_state_.safety_state = INITIALISING;
+    safety_state_.mtx.unlock();
+
     dobot_serial_->setEMotor(0,false,0);
     dobot_serial_->setEMotor(1,false,0);
 
@@ -308,7 +317,14 @@ bool DobotStates::initialiseRobot()
 
     dobot_serial_->setLinearRailStatus(is_on_rail_,0,0);  
     dobot_serial_->setHOMECmd();
+
+    std::this_thread::sleep_for(std::chrono::seconds(DOBOT_INIT_TIME));
+    
     is_homed_ = true; 
+
+    safety_state_.mtx.lock();
+    safety_state_.safety_state = OPERATING;
+    safety_state_.mtx.unlock();
 
     return true;   
 }
@@ -317,4 +333,113 @@ void DobotStates::setOnRail(bool on_rail)
 {
     is_on_rail_ = on_rail;
     dobot_serial_->setLinearRailStatus(is_on_rail_,0,0);
+}
+
+void DobotStates::stopAllIO()
+{   
+    for(int address = 1; address <= 20 ; address ++)
+    {
+        dobot_serial_->setIOMultiplexing(address,IODummy,false);
+    }
+}
+
+bool DobotStates::setEStop()
+{
+    // Stop tool
+    bool stop_pump = dobot_serial_->setEndEffectorSuctionCup(0,0,0);
+    
+    // Stop all current action
+    bool stop_queued_cmd = dobot_serial_->setQueuedCmdForceStopExec();
+    dobot_serial_->setQueuedCmdClear();
+
+    // Reset all IO ports
+    stopAllIO();
+
+    // Reset EMotors
+    dobot_serial_->setEMotor(0,false,0);
+    dobot_serial_->setEMotor(1,false,0);
+
+    if(stop_pump && stop_queued_cmd)
+    {
+        is_e_stopped_ = true;
+    }
+    else 
+    {
+        is_e_stopped_ = false;
+    }
+
+    safety_state_.mtx.lock();
+    safety_state_.safety_state = ESTOPPED;
+    safety_state_.mtx.unlock();
+
+    return is_e_stopped_;
+}
+
+bool DobotStates::setOperate()
+{
+    if(dobot_serial_->setQueuedCmdStartExec())
+    {
+        safety_state_.mtx.lock();
+        safety_state_.safety_state = OPERATING;
+        safety_state_.mtx.unlock();
+
+        return true;
+    }
+    else return false;
+}
+
+bool DobotStates::setPause()
+{
+    if(dobot_serial_->setQueuedCmdStopExec())
+    {
+        safety_state_.mtx.lock();
+        safety_state_.safety_state = PAUSED;
+        safety_state_.mtx.unlock();
+
+        return true;
+    }
+    else return false;
+}
+
+bool DobotStates::setStop()
+{
+    if(dobot_serial_->setQueuedCmdForceStopExec())
+    {
+        safety_state_.mtx.lock();
+        safety_state_.safety_state = STOPPED;
+        safety_state_.mtx.unlock();
+        
+        return true;
+    }
+    else return false;
+}
+
+SafetyState DobotStates::getRobotSafetyState()
+{
+    SafetyState current_safety_state;
+
+    safety_state_.mtx.lock();
+    current_safety_state = safety_state_.safety_state;
+    safety_state_.mtx.unlock();
+
+    return current_safety_state;
+}
+
+void DobotStates::resetSafetyState()
+{
+    is_e_stopped_ = false;
+    is_operate_ = false;
+    is_paused_ = false;
+    is_stopped_ = false;
+}
+
+void DobotStates::getIOState(std::vector<int> &io_mux, std::vector<float> &data)
+{
+
+    io_state_.mtx.lock();
+    
+    io_mux = io_state_.io_mux;
+    data = io_state_.data;
+
+    io_state_.mtx.unlock();
 }

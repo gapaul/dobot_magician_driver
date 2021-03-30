@@ -46,6 +46,22 @@ class DobotDriver
         bool moveToTargetJointConfiguration();
 
         // #TODO: Trajectory
+
+        // Tool state
+        void setToolState(bool state);
+        bool getToolState();
+
+        // Safety State
+        SafetyState getRobotSafetyState();
+        void setEStop();
+
+        // EMotor
+        void setEMotor(int index, bool is_enabled, int speed);
+
+        // IO 
+        void setIOState(int address, int multiplex, std::vector<double> data);
+        void getIOState(std::vector<double> &io_mux, std::vector<double> &data);
+
     private:
 
         std::shared_ptr<DobotStates> dobot_state_;
@@ -58,8 +74,6 @@ class DobotDriver
 
         bool in_motion_;
         bool at_target_;
-        
-        bool is_e_stopped_;
         bool is_on_rail_;
 
         void driverUpdateThread();

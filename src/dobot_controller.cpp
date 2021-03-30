@@ -93,3 +93,61 @@ bool DobotController::moveToTargetPose()
 
     return result;
 }
+
+// Tool control
+void DobotController::setToolState(bool state)
+{
+    tool_state_ = state;
+
+    dobot_serial_->setEndEffectorSuctionCup(state,state);
+}
+
+bool DobotController::getToolState()
+{
+    std::vector<uint8_t> return_data;
+    dobot_serial_->getEndEffectorSuctionCup(return_data);
+    tool_state_ = (bool)return_data.at(3);
+
+    return tool_state_;
+}
+
+// IO control
+void DobotController::setIOState(int address, int multiplex, std::vector<double> data)
+{
+    dobot_serial_->setIOMultiplexing(address, multiplex);
+
+    switch (multiplex)
+    {
+        case IODummy:
+            break;
+
+        case IODO:
+            dobot_serial_->setIODO(address,(bool)data.at(0));
+            break;
+
+        case IOPWM:
+            dobot_serial_->setIOPWM(address,data.at(0),data.at(1));
+            break;
+
+        case IODI:
+            break;
+
+        case IOADC:
+            break;
+
+        case IODIPU:
+            break;
+
+        case IODIPD:
+            break;
+
+        default:
+            break;
+    }
+}
+
+// EMotor Control
+void DobotController::setEMotorSpeed(int index, bool is_enabled, int speed)
+{
+    dobot_serial_->setEMotor(index, is_enabled, speed);
+}

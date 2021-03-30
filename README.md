@@ -1,4 +1,4 @@
-# dobot_magician_driver
+# DOBOT Magician Driver
 The dobot_magician_driver provides a ROS interface to communicate with the Dobot Magician.
 Please refer to wiki for more detailed instructions on how to install dobot_magician_driver to raspberry pi and interface with Matlab. 
 ## Dependencies

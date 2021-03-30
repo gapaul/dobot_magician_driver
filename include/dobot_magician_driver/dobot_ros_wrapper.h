@@ -13,36 +13,15 @@
 #include "geometry_msgs/Pose.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "trajectory_msgs/JointTrajectory.h"
+#include "std_msgs/Bool.h"
+#include "std_msgs/UInt8.h"
+#include "std_msgs/Float64MultiArray.h"
 
 #include "dobot_driver.h"
 #include "dobot_state.h"
 #include "dobot_controller.h"
 #include "dobot_communication.h"
 #include "dobot_utils.h"
-
-#define DOBOT_INIT_TIME 30
-#define MAX_DATA_DEQUE_SIZE 10
-// #define JOINT_ERROR 0.1
-// #define LINEAR_ERROR 0.1
-// #define ORIENTATION_ERROR 0.01
-
-#define IO_PIN_MIN 1
-#define IO_PIN_MAX 20
-#define IO_PWM_HZ_MIN 10        // Hz
-#define IO_PWM_HZ_MAX 1000000   // Hz
-#define IO_PWM_DC_MIN 0     // %
-#define IO_PWM_DC_MAX 100   // %
-
-enum IOMux
-{
-    IODummy,  // Invalid
-    IODO,     // I/O output
-    IOPWM,    // PWM output
-    IODI,     // I/O input
-    IOADC,    // A/D input
-    IODIPU,   // Pull-up input
-    IODIPD    // Pull-down input
-};
 
 struct PoseDataBuffer
 {
@@ -99,11 +78,44 @@ class DobotRosWrapper
         ros::Publisher joint_state_pub_;
         ros::Publisher end_effector_state_pub_;
 
+        ros::Publisher tool_state_pub_;
+
+        ros::Publisher safety_state_pub_;
+
+        ros::Publisher io_data_pub_;
+
         // Subscriber 
         ros::Subscriber target_joint_traj_sub_;
         ros::Subscriber target_end_effector_sub_;
+
+        ros::Subscriber tool_state_sub_;
+
+        ros::Subscriber safety_state_sub_;
+
+        ros::Subscriber use_linear_rail_sub_;
+
+        ros::Subscriber e_motor_sub_;
+
+        ros::Subscriber io_control_sub_;
+
+        ros::Subscriber custom_command_sub_;
+
+        // Callback functions
+        void endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg);
+        void jointTargetCallback(const trajectory_msgs::JointTrajectoryConstPtr& msg);
+
+        void toolStateCallback(const std_msgs::BoolConstPtr& msg);
+
+        void safetyStateCallback(const std_msgs::UInt8ConstPtr& msg);
+
+        void linearRailStateCallback(const std_msgs::BoolConstPtr& msg);
         
-        
+        void eMotorCallback(const std_msgs::Float64MultiArrayConstPtr& msg);
+
+        void ioStateCallback(const std_msgs::Float64MultiArrayConstPtr& msg);
+
+        // Use this at your own risk - for development and debugging only
+        void customCommandCallback(const std_msgs::Float64MultiArrayConstPtr& msg);
 
     private:
 
@@ -123,11 +135,11 @@ class DobotRosWrapper
         std::thread *update_state_thread_;
         std::thread *robot_control_thread_;
 
+        std::mutex mtx_;
+        std::vector<double> custom_command_;
+
         void updateStateThread();
         void robotControlThread();
-
-        void endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg);
-        void jointTargetCallback(const trajectory_msgs::JointTrajectoryConstPtr& msg);
 
         bool moveToTargetJoints();
         bool moveToTargetEndEffectorPose();

@@ -33,6 +33,17 @@ class DobotStates
         bool initialiseRobot();
         void setOnRail(bool on_rail);
 
+        // Safety status
+        bool setEStop();
+        bool setOperate();
+        bool setPause();
+        bool setStop();
+
+        SafetyState getRobotSafetyState();
+
+        void getIOState(std::vector<int> &io_mux, std::vector<float> &data);
+
+
     private:
 
         // Robot connection
@@ -40,9 +51,12 @@ class DobotStates
 
         std::shared_ptr<DobotCommunication> dobot_serial_;
 
-        // Basic states
+        // Robot states
         JointConfigurationBuffer current_joint_config_buffer_;
         PoseBuffer current_end_effector_pose_buffer_;
+
+        // IO states
+        IOState io_state_;
 
         // Dobot Params
         ContinuousPathParams cp_params_;
@@ -50,6 +64,14 @@ class DobotStates
         // Homing - Initialisation
         bool is_homed_;
         bool is_on_rail_;
+
+        // Safety
+        bool is_e_stopped_;
+        bool is_operate_;
+        bool is_paused_;
+        bool is_stopped_;
+
+        RobotSafetyState safety_state_;
 
         // Others
         std::thread *update_state_thread_;
@@ -59,11 +81,11 @@ class DobotStates
         std::vector<float> start_joint_angle_;
 
         void updateRobotStatesThread();
-        
-        void updateRobotCurrentConfiguration(std::vector<uint8_t> &raw_serial_data, std::vector<double> &config_data, Pose &pose_data, JointConfiguration &joint_data);
-        void updateRobotIOStates();
 
         void updateContinuosPathParams();
+        void stopAllIO();
+
+        void resetSafetyState();
 
         // Utils functions
         float unpackFloat(std::vector<uint8_t>::iterator it);

@@ -23,7 +23,16 @@ struct DataPacket
 
 };
 
+struct CustomCommand
+{
+    std::vector<double> custom_command;
+    std::mutex mtx;
+    std::atomic<bool> received;
+};
+
 // dobot_state.h
+
+#define UPDATE_THREAD_DELAY_MS 50 
 
 // Robot state
 
@@ -220,6 +229,52 @@ struct CartesianVelocity
 
 // IO State
 
+#define IO_PIN_MIN 1
+#define IO_PIN_MAX 20
+#define IO_PWM_HZ_MIN 10        // Hz
+#define IO_PWM_HZ_MAX 1000000   // Hz
+#define IO_PWM_DC_MIN 0     // %
+#define IO_PWM_DC_MAX 100   // %
+
+#define DOBOT_INIT_TIME 30
+#define MAX_DATA_DEQUE_SIZE 10
+
+enum IOMux
+{
+    IODummy,  // Invalid
+    IODO,     // I/O output
+    IOPWM,    // PWM output
+    IODI,     // I/O input
+    IOADC,    // A/D input
+    IODIPU,   // Pull-up input
+    IODIPD    // Pull-down input
+};
+
+struct IOState
+{
+    std::vector<int> io_mux;
+    std::vector<float> data;
+    std::mutex mtx;
+};
+
+// Safety
+enum SafetyState
+{
+    INVALID,
+    DISCONNECTED,
+    INITIALISING,
+    ESTOPPED,
+    OPERATING,
+    PAUSED,
+    STOPPED,
+};
+
+struct RobotSafetyState
+{
+    SafetyState safety_state;
+    std::mutex mtx;
+};
+
 // Dobot Params
 // CP Params
 
@@ -239,6 +294,8 @@ struct ContinuousPathParams
 };
 
 // dobot_controlller.h
+
+// dobot_alert.h ### TODO
 
 // dobot_driver.h
 

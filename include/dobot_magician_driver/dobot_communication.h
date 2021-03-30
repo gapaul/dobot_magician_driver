@@ -257,6 +257,7 @@ class DobotCommunication
         bool setIOPWM(int address, float frequency, float duty_cycle, bool is_queued = 1);
         bool setIOPWM(int address, float frequency, float duty_cycle, uint64_t &queue_cmd_index, bool is_queued = 1);
 
+        bool getIOPWM(int address); // TODO: add  
     //    getIOPWM
 
         /**
@@ -353,6 +354,8 @@ class DobotCommunication
          */
         bool setQueuedCmdClear(void);
     //    GetQueuedCmdCurrentIndex
+
+        bool sendCustomCommand(std::vector<float> cmd,uint64_t &queue_cmd_index, bool is_queued = 1);
 
         /**
          * @brief Function converts 4 uin8_t into a float
