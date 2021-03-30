@@ -1,6 +1,0 @@
-#request
-bool isEndEffectorEnabled
-bool endEffectorState
----
-#response
-bool success

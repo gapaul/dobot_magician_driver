@@ -1,6 +1,0 @@
-#request
-int32 address
-int32 multiplex
----
-#response
-bool success

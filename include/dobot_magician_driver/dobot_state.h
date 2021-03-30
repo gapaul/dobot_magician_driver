@@ -5,91 +5,92 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <thread>
+#include <chrono>
 
-#include <libserial/SerialPort.h>
-#include <libserial/SerialStream.h>
-#include <libserial/SerialStreamBuf.h>
+#include "dobot_utils.h"
+#include "dobot_communication.h"
 
+class DobotStates
+{
 
-class DobotStates{
+    public:
 
-public:
-    struct Pose
-    {
-        float x;
-        float y;
-        float z;
-        float r;
-        std::vector<float> joint_angle;
+        DobotStates();
+        ~DobotStates();
 
-    };
+        void init(std::shared_ptr<DobotCommunication> dobot_serial_ptr);
+        void run();
 
-    DobotStates();
+        JointConfiguration getRobotCurrentJointConfiguration();
+        Pose getRobotCurrentEndEffectorPose();
 
-    bool unpackPose(std::vector<uint8_t> &data, std::vector<double> &pose);
+        void setContinuosPathParams(ContinuousPathParams cp_params);
+        ContinuousPathParams getContinousPathParams();
 
-    bool unpackCPParams(std::vector<uint8_t> &data, std::vector<float> &cp_params, uint8_t &real_time_track);
+        bool getCurrentConfiguration(std::vector<double> &cart_pos, std::vector<double> &joint_angles);
 
+        bool initialiseRobot();
+        void setOnRail(bool on_rail);
 
-private:
+        // Safety status
+        bool setEStop();
+        bool setOperate();
+        bool setPause();
+        bool setStop();
 
+        SafetyState getRobotSafetyState();
 
-    Pose _pose;
-
-    struct HOMEParams
-    {
-
-    }_home_params;
-
-
-    struct HOMECmd
-    {
-
-    }_home_cmd;
-
-    struct WIFIGateway
-    {
-
-    }_wifi_gateway;
-
-    struct HHTTrigMode
-    {
-
-    }_hht_trig_mode;
-
-    struct EndEffectorParams
-    {
-
-    }_end_effector_params;
-
-    struct JOGJointParams
-    {
-
-    }_jog_joint_params;
-
-    struct JOGCoordinateParams
-    {
-
-    }_jog_coordinate_params;
-
-    struct JOGCommonParams
-    {
-
-    }_jog_common_params;
-
-    struct JOGCmd
-    {
-
-    }_jog_cmd;
-
-    struct JOGLParams
-    {
-
-    }_jog_l_params;
-
-    float unpackFloat(std::vector<uint8_t>::iterator it);
+        void getIOState(std::vector<int> &io_mux, std::vector<float> &data);
 
 
+    private:
+
+        // Robot connection
+        bool is_connected_;
+
+        std::shared_ptr<DobotCommunication> dobot_serial_;
+
+        // Robot states
+        JointConfigurationBuffer current_joint_config_buffer_;
+        PoseBuffer current_end_effector_pose_buffer_;
+
+        // IO states
+        IOState io_state_;
+
+        // Dobot Params
+        ContinuousPathParams cp_params_;
+
+        // Homing - Initialisation
+        bool is_homed_;
+        bool is_on_rail_;
+
+        // Safety
+        bool is_e_stopped_;
+        bool is_operate_;
+        bool is_paused_;
+        bool is_stopped_;
+
+        RobotSafetyState safety_state_;
+
+        // Others
+        std::thread *update_state_thread_;
+
+        bool pause_update_thread_;
+
+        std::vector<float> start_joint_angle_;
+
+        void updateRobotStatesThread();
+
+        void updateContinuosPathParams();
+        void stopAllIO();
+
+        void resetSafetyState();
+
+        // Utils functions
+        float unpackFloat(std::vector<uint8_t>::iterator it);
+        bool unpackPose(std::vector<uint8_t> &data, std::vector<double> &pose);
+        bool unpackCPParams(std::vector<uint8_t> &data, std::vector<float> &cp_params, uint8_t &real_time_track);
 };
 
 #endif /* DOBOT_STATES_H_ */

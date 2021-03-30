@@ -1,6 +1,0 @@
-#request
-int32 address
-bool level
----
-#response
-bool success
