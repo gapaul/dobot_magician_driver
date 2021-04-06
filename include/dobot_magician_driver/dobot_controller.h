@@ -33,10 +33,16 @@ class DobotController
         // EMotor
         // TODO: convert this to position control instead of velocity control
         void setEMotorSpeed(int index, bool is_enabled, int speed);
+
+        void setTargetRailWithEEPoses(std::vector<double> target_pose);
+        bool moveToTargetRailPosition();
         
         // TODO: Trajectory
 
         // TODO: Velocity control
+        void setTargetJointVelocity(JointConfiguration joint_vel_config);
+        bool moveWithTargetVelocity();
+
     private:
 
         std::shared_ptr<DobotCommunication> dobot_serial_;
@@ -44,9 +50,15 @@ class DobotController
         PoseBuffer target_ee_pose_buffer_;
         JointConfigurationBuffer target_joint_config_buffer_;
 
+        JointConfigurationBuffer target_joint_velocity_buffer_;
+
+        UtilsBuffer target_rail_position_buffer_;
+
         PoseBuffer target_ee_traj_;
 
         bool tool_state_;
+
+        std::vector<int> direction_;
 
 };
 

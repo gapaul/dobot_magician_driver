@@ -151,3 +151,78 @@ void DobotController::setEMotorSpeed(int index, bool is_enabled, int speed)
 {
     dobot_serial_->setEMotor(index, is_enabled, speed);
 }
+
+// Linear rail positions
+void DobotController::setTargetRailWithEEPoses(std::vector<double> target_pose)
+{
+    target_rail_position_buffer_.add(target_pose);    
+}
+
+bool DobotController::moveToTargetRailPosition()
+{
+    std::vector<double> target = target_rail_position_buffer_.get();
+    std::vector<float> fl_target = std::vector<float>(target.begin(),target.end());
+    
+    bool result =  dobot_serial_->setPTPWithRailCmd(2, fl_target);
+
+    return result;
+}
+
+// Velocity Control 
+
+void DobotController::setTargetJointVelocity(JointConfiguration joint_vel_config)
+{
+    target_joint_velocity_buffer_.add(joint_vel_config);
+    direction_.clear();
+
+    std::vector<float> input_params;
+    for(int i = 0; i < joint_vel_config.velocity.size()*2; i++)
+    {
+        if(i < joint_vel_config.velocity.size())
+        {
+            input_params.push_back(joint_vel_config.velocity.at(i));
+            if(joint_vel_config.velocity.at(i) < 0)
+            {
+                direction_.push_back(-1);   
+            }
+            else
+            {
+                direction_.push_back(1);
+            }
+        }
+        else
+        {
+            input_params.push_back(joint_vel_config.acceleration.at(i - joint_vel_config.velocity.size()));
+        }
+        
+    }
+    dobot_serial_->setJOGJointParams(input_params);
+}
+
+bool DobotController::moveWithTargetVelocity()
+{
+    int check = 0;
+    bool result = false;
+    for(int i = 0; i < direction_.size();i++)
+    {
+        if(direction_.at(i) > 0)
+        {
+            result = dobot_serial_->setJOGCmd(1,i*2 + 1,false);
+        }
+        else
+        {
+            result = dobot_serial_->setJOGCmd(1,i*2 + 2,false);
+        }
+
+        if(result)
+        {
+            check++;
+        }
+    }
+
+    if(check == direction_.size())
+    {
+        return true;
+    }
+    return false;
+}

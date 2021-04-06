@@ -35,12 +35,17 @@ class DobotDriver
         JointConfiguration getCurrentJointConfiguration();
         Pose getCurrentEndEffectorPose();
 
+        Pose getCurrentRailPosition();
+
         // Single target
         void setTargetJointConfiguration(JointConfiguration target_joint_config);
         void setTargetEndEffectorPose(Pose target_end_effector_pose);
 
         void setTargetJointConfiguration(std::vector<double> target_joint_config_vec);
         void setTargetEndEffectorPose(std::vector<double> target_end_effector_pose_vec);
+
+        void setTargetRailPosition(double position);
+        bool moveToTargetRailPosition();
 
         bool moveToTargetEndEffectorPose();
         bool moveToTargetJointConfiguration();
@@ -61,6 +66,9 @@ class DobotDriver
         // IO 
         void setIOState(int address, int multiplex, std::vector<double> data);
         void getIOState(std::vector<double> &io_mux, std::vector<double> &data);
+
+        // #TODO: Velocity Control
+        bool moveWithTargetJointVelocity(std::vector<double> velocity);
 
     private:
 

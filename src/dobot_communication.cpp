@@ -53,21 +53,6 @@ uint8_t DobotCommunication::checksumCalc(std::vector<uint8_t> &ctrl_cmd)
     return checksum;
 }
 
-//void print_hex(std::vector<uint8_t> input){  //used to print the serial command in hex and int for debugging
-
-
-//    for(int k=0;k<input.size();k++){
-//       std::cout<< int(input[k]) << " ";
-//    }
-
-//    std::cout<< std::endl;
-//    for(int k=0;k<input.size();k++){
-//       std::cout<< std::hex << int(input[k]) << " ";
-//    }
-//    std::cout<< std::endl;
-
-//}
-
 
 bool DobotCommunication::getResponse(std::vector<uint8_t> &returned_payload)
 {
@@ -341,6 +326,106 @@ bool DobotCommunication::setPTPCmd(int ptp_mode, std::vector<float> &target_poin
 }
 
 /*
+ *  JOG COMMANDS
+ */
+
+bool DobotCommunication::setJOGJointParams(std::vector<float> &jog_joint_param, bool is_queued)
+{
+    uint64_t queue_cmd_index;
+    return setJOGJointParams(jog_joint_param, queue_cmd_index, is_queued);   
+}
+
+bool DobotCommunication::setJOGJointParams(std::vector<float> &jog_joint_param, uint64_t &queue_cmd_index, bool is_queued)
+{
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+	std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x0F,0x46,ctrl };
+	packFromFloat(jog_joint_param, ctrl_cmd);
+	std::lock_guard<std::mutex> send_command_lk(communication_mt_);
+	sendCommand(ctrl_cmd);
+	std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
+}
+
+bool DobotCommunication::getJOGJointParams(std::vector<uint8_t> &returned_data)
+{
+    std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x02,46,0x00 };
+	std::lock_guard<std::mutex> send_command_lk(communication_mt_);
+	sendCommand(ctrl_cmd);
+	std::vector<uint8_t> data;
+    if(!getResponse(data)){return false;}
+    returned_data = data;
+    return true;
+}
+
+bool DobotCommunication::setJOGCommonParams(std::vector<float> &jog_common_param, bool is_queued)
+{
+    uint64_t queue_cmd_index;
+    return setJOGCommonParams(jog_common_param,queue_cmd_index,is_queued);
+}
+
+bool DobotCommunication::setJOGCommonParams(std::vector<float> &jog_common_param, uint64_t &queue_cmd_index, bool is_queued)
+{
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+	std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x0F,0x48,ctrl };
+	packFromFloat(jog_common_param, ctrl_cmd);
+	std::lock_guard<std::mutex> send_command_lk(communication_mt_);
+	sendCommand(ctrl_cmd);
+	std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
+}
+
+bool DobotCommunication::getJOGCommonParams(std::vector<uint8_t> &returned_data)
+{
+    std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x02,48,0x00 };
+	std::lock_guard<std::mutex> send_command_lk(communication_mt_);
+	sendCommand(ctrl_cmd);
+	std::vector<uint8_t> data;
+    if(!getResponse(data)){return false;}
+    returned_data = data;
+    return true;
+}
+
+bool DobotCommunication::setJOGCmd(uint8_t is_joint, uint8_t cmd, bool is_queued)
+{   
+    uint64_t queue_cmd_index;
+    return setJOGCmd(is_joint, cmd, queue_cmd_index,is_queued);
+}
+
+bool DobotCommunication::setJOGCmd(uint8_t is_joint, uint8_t cmd, uint64_t &queue_cmd_index, bool is_queued)
+{
+    uint8_t ctrl = (is_queued << 1) | 0x01;
+	std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x13,0x5B,ctrl,is_joint,cmd };
+	std::lock_guard<std::mutex> send_command_lk(communication_mt_);
+	sendCommand(ctrl_cmd);
+	std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    if(is_queued){
+        queue_cmd_index = getQueuedCmdIndex(payload);
+    }
+    else
+    {
+        queue_cmd_index = std::numeric_limits<uint64_t>::quiet_NaN();
+    }
+    return true;
+}
+
+/*
  *  I/O COMMANDS
  */
 bool DobotCommunication::setIOMultiplexing(int address, int multiplex, bool is_queued)
@@ -566,6 +651,17 @@ bool DobotCommunication::setCPCmd(std::vector<float> &cp_cmd, bool cp_mode, uint
 bool DobotCommunication::getPose(std::vector<uint8_t> &returned_data)
 {
     std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x02,0x0A,0x00};
+    std::lock_guard<std::mutex> send_command_lk(communication_mt_);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> payload;
+    if(!getResponse(payload)){return false;}
+    returned_data = payload;
+    return true;
+}
+
+bool DobotCommunication::getRailPose(std::vector<uint8_t> &returned_data)
+{
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x02,0x0D,0x00};
     std::lock_guard<std::mutex> send_command_lk(communication_mt_);
     sendCommand(ctrl_cmd);
     std::vector<uint8_t> payload;

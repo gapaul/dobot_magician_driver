@@ -65,6 +65,11 @@ Pose DobotDriver::getCurrentEndEffectorPose()
     return dobot_state_->getRobotCurrentEndEffectorPose();
 }
 
+Pose DobotDriver::getCurrentRailPosition()
+{
+    return dobot_state_->getCurrentRailPosition();
+}
+
 void DobotDriver::setTargetJointConfiguration(JointConfiguration target_joint_config)
 {
     dobot_controller_->setTargetJointConfiguration(target_joint_config);
@@ -183,4 +188,39 @@ void DobotDriver::getIOState(std::vector<double> &io_mux, std::vector<double> &d
 
     io_mux = std::vector<double>(out_io.begin(),out_io.end());
     data = std::vector<double>(out_data.begin(),out_data.end());
+}
+
+void DobotDriver::setTargetRailPosition(double position)
+{
+    Pose current_ee_pose = getCurrentEndEffectorPose();
+
+    std::vector<double> pose_with_rail;
+    pose_with_rail.push_back(current_ee_pose.x);
+    pose_with_rail.push_back(current_ee_pose.y);
+    pose_with_rail.push_back(current_ee_pose.z);
+    pose_with_rail.push_back(current_ee_pose.theta);
+
+    pose_with_rail.push_back(position);
+}
+
+bool DobotDriver::moveToTargetRailPosition()
+{
+    if(!dobot_state_->getRailStatus())
+    {
+        return false;
+    }
+
+    bool result = dobot_controller_->moveToTargetRailPosition();
+    return result;
+}
+
+bool DobotDriver::moveWithTargetJointVelocity(std::vector<double> velocity)
+{
+    JointConfiguration joint_vel_accel;
+    joint_vel_accel.acceleration = {1,1,1,1};
+    joint_vel_accel.velocity = velocity;
+
+    dobot_controller_->setTargetJointVelocity(joint_vel_accel);
+    return dobot_controller_->moveWithTargetVelocity();
+
 }

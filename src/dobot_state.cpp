@@ -65,6 +65,25 @@ Pose DobotStates::getRobotCurrentEndEffectorPose()
     return current_ee_pose;
 }
 
+Pose DobotStates::getCurrentRailPosition()
+{
+    Pose rail_position;
+    rail_position.x = 0;
+    rail_position.y = 0;
+    rail_position.z = 0;
+    rail_position.theta = 0;
+
+    if(!current_rail_position_buffer_.received)
+    {
+        return rail_position;
+    }
+
+    current_rail_position_buffer_.mtx.lock();
+    rail_position = current_rail_position_buffer_.pose_data.back();
+    current_rail_position_buffer_.mtx.unlock();
+    return rail_position;
+}
+
 void DobotStates::setContinuosPathParams(ContinuousPathParams cp_params)
 {
     cp_params_.mtx.lock();
@@ -126,6 +145,11 @@ void DobotStates::updateRobotStatesThread()
     
     Pose pose_data;
     Pose pre_pose_data;
+
+    Pose rail_pos_data;
+    rail_pos_data.x = 0;
+    rail_pos_data.z = 0;
+    rail_pos_data.theta = 0;
 
     JointConfiguration joint_data;
     JointConfiguration pre_joint_data;
@@ -268,11 +292,46 @@ void DobotStates::updateRobotStatesThread()
         }
 
         io_state_.mtx.unlock();
-
-        // #### SAFETY STATE ####
         
 
+        // #### UPDATE LINEAR RAIL POSITION ####
 
+        if(is_on_rail_)
+        {
+            if(dobot_serial_->getRailPose(raw_serial_data))
+            {
+                rail_pos_data.y = unpackFloat(raw_serial_data.begin() + 2);
+
+                current_rail_position_buffer_.mtx.lock();
+
+                current_rail_position_buffer_.pose_data.push_back(rail_pos_data);
+
+                if(current_rail_position_buffer_.pose_data.size() > MAX_BUFFER_SIZE)
+                {
+                    current_rail_position_buffer_.pose_data.pop_front();
+                }
+
+                current_rail_position_buffer_.mtx.unlock();   
+                current_rail_position_buffer_.received = true;
+            }
+        }
+        else
+        {
+            rail_pos_data.y = 0;  
+
+            current_rail_position_buffer_.mtx.lock();
+
+            current_rail_position_buffer_.pose_data.push_back(rail_pos_data);
+
+            if(current_rail_position_buffer_.pose_data.size() > MAX_BUFFER_SIZE)
+            {
+                current_rail_position_buffer_.pose_data.pop_front();
+            }
+
+            current_rail_position_buffer_.mtx.unlock(); 
+            current_rail_position_buffer_.received = true;   
+        }
+        
         // Allow the motor some time for actual update on the hardware. The sampling speed of the
         // encoders are faster than the motion of the motors themselves.
 
@@ -333,6 +392,11 @@ void DobotStates::setOnRail(bool on_rail)
 {
     is_on_rail_ = on_rail;
     dobot_serial_->setLinearRailStatus(is_on_rail_,0,0);
+}
+
+bool DobotStates::getRailStatus()
+{
+    return is_on_rail_;
 }
 
 void DobotStates::stopAllIO()

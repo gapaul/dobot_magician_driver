@@ -15,6 +15,7 @@
 #include "trajectory_msgs/JointTrajectory.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/UInt8.h"
+#include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
 
 #include "dobot_driver.h"
@@ -78,6 +79,8 @@ class DobotRosWrapper
         ros::Publisher joint_state_pub_;
         ros::Publisher end_effector_state_pub_;
 
+        ros::Publisher rail_position_pub_;
+
         ros::Publisher tool_state_pub_;
 
         ros::Publisher safety_state_pub_;
@@ -93,6 +96,7 @@ class DobotRosWrapper
         ros::Subscriber safety_state_sub_;
 
         ros::Subscriber use_linear_rail_sub_;
+        ros::Subscriber target_rail_sub_;
 
         ros::Subscriber e_motor_sub_;
 
@@ -109,6 +113,8 @@ class DobotRosWrapper
         void safetyStateCallback(const std_msgs::UInt8ConstPtr& msg);
 
         void linearRailStateCallback(const std_msgs::BoolConstPtr& msg);
+
+        void targetRailPositionCallback(const std_msgs::Float64ConstPtr& msg);
         
         void eMotorCallback(const std_msgs::Float64MultiArrayConstPtr& msg);
 

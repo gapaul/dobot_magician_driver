@@ -134,7 +134,8 @@ struct Pose
 struct JointConfiguration
 {
     std::vector<double> position;
-    std::vector<double> velocity;   
+    std::vector<double> velocity;  
+    std::vector<double> acceleration; 
 
     JointConfiguration operator+(JointConfiguration &input)
     {
@@ -293,7 +294,62 @@ struct ContinuousPathParams
     std::mutex mtx;
 };
 
+// JOG Params
+
+struct JogParams
+{
+    std::vector<double> velociy;
+    std::vector<double> acceleration;
+    
+    std::vector<double> velocity_ratio;
+    std::vector<double> acceleration_ratio;
+};
+
 // dobot_controlller.h
+
+struct UtilsBuffer
+{
+    std::deque<std::vector<double>> data;
+    std::mutex mtx;
+    std::atomic<bool> received;
+
+    void add(std::vector<double> new_data)
+    {
+        mtx.lock();
+        data.push_back(new_data);
+
+        if(data.size() > MAX_BUFFER_SIZE)
+        {
+            data.pop_front();
+        }
+
+        mtx.unlock();
+    }
+
+    std::vector<double> get()
+    {
+        std::vector<double> output;
+
+        mtx.lock();
+        output = data.back();
+        mtx.unlock();
+
+        return output;
+    }
+};
+
+enum JOGCmd
+{
+    IDLE,
+    SHOULDER_PAN_UP,
+    SHOULDER_PAN_DOWN,
+    SHOULDER_LIFT_UP,
+    SHOULDER_LIFT_DOWN,
+    ELBOW_UP,
+    ELBOW_DOWN,
+    WRIST_UP,
+    WRISR_DOWN
+};
 
 // dobot_alert.h ### TODO
 

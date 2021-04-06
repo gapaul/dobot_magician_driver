@@ -1,4 +1,5 @@
 classdef DobotMagician < handle
+
    properties(Access = private)
         % Subscribers
        jointStateSub;
@@ -36,7 +37,7 @@ classdef DobotMagician < handle
           
        end
        
-       function publishJointTarget(self, jointTarget)
+       function PublishTargetJoint(self, jointTarget)
            trajectoryPoint = rosmessage("trajectory_msgs/JointTrajectoryPoint");
            trajectoryPoint.Positions = jointTarget;
            self.targetJointTrajMsg.Points = trajectoryPoint;
@@ -44,12 +45,12 @@ classdef DobotMagician < handle
            send(self.targetJointTrajPub,self.targetJointTrajMsg);
        end
        
-       function publishEndEffectorPose(self,pose)
+       function PublishEndEffectorPose(self,pose,rotation)
            self.targetEndEffectorMsg.Position.X = pose(1);
            self.targetEndEffectorMsg.Position.Y = pose(2);
            self.targetEndEffectorMsg.Position.Z = pose(3);
            
-           qua = eul2quat([0,0,0]);
+           qua = eul2quat(rotation);
            self.targetEndEffectorMsg.Orientation.W = qua(1);
            self.targetEndEffectorMsg.Orientation.X = qua(2);
            self.targetEndEffectorMsg.Orientation.Y = qua(3);
@@ -58,19 +59,24 @@ classdef DobotMagician < handle
            send(self.targetEndEffectorPub,self.targetEndEffectorMsg);
        end
        
-       function publishToolState(self,state)
+       function PublishToolState(self,state)
            self.toolStateMsg.Data = state;
            send(self.toolStatePub,self.toolStateMsg);
        end
 
-       function initaliseRobot(self)
+       function InitaliseRobot(self)
             self.safetyStateMsg.Data = 2; %% Refer to the Dobot Documentation(WIP) - 2 is defined as INITIALISATION 
             send(self.safetyStatePub,self.safetyStateMsg);
        end
 
-       function eStopRobot(self)
+       function EStopRobot(self)
             self.safetyStateMsg.Data = 3; %% Refer to the Dobot Documentation(WIP) - 3 is defined as ESTOP 
             send(self.safetyStatePub,self.safetyStateMsg);
+       end
+
+       function jointStates = GetCurrentJointState(self)
+            latestJointStateMsg = self.jointStateSub.LatestMessage;
+            jointStates = latestJointStateMsg.Position;
        end
    end
    

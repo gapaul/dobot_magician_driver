@@ -25,6 +25,8 @@ class DobotStates
         JointConfiguration getRobotCurrentJointConfiguration();
         Pose getRobotCurrentEndEffectorPose();
 
+        Pose getCurrentRailPosition();
+
         void setContinuosPathParams(ContinuousPathParams cp_params);
         ContinuousPathParams getContinousPathParams();
 
@@ -32,6 +34,7 @@ class DobotStates
 
         bool initialiseRobot();
         void setOnRail(bool on_rail);
+        bool getRailStatus();
 
         // Safety status
         bool setEStop();
@@ -54,6 +57,8 @@ class DobotStates
         // Robot states
         JointConfigurationBuffer current_joint_config_buffer_;
         PoseBuffer current_end_effector_pose_buffer_;
+
+        PoseBuffer current_rail_position_buffer_;
 
         // IO states
         IOState io_state_;

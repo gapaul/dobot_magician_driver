@@ -52,6 +52,7 @@ class DobotCommunication
          */
         bool getPose(std::vector<uint8_t> &returned_data);
     //    bool resetPose();
+        bool getRailPose(std::vector<uint8_t> &returned_data);
 
         /// Alarm
     //    bool getAlarmState();
@@ -115,13 +116,19 @@ class DobotCommunication
     //    getEndEffectorGripper
 
         /// JOG
-    //    setJOGJointParams
-    //    getJOGJointParams
+       bool setJOGJointParams(std::vector<float> &jog_joint_param, bool is_queued = 0);
+       bool setJOGJointParams(std::vector<float> &jog_joint_param, uint64_t &queue_cmd_index, bool is_queued = 0);
+
+       bool getJOGJointParams(std::vector<uint8_t> &returned_data);
     //    setJOGCoordinateParams
     //    getJOGCoordinateParams
-    //    setJOGCommonParams
-    //    getJOGCommonParams
-    //    setJOGCmd
+       bool setJOGCommonParams(std::vector<float> &jog_common_param, bool is_queued = 0);
+       bool setJOGCommonParams(std::vector<float> &jog_common_param, uint64_t &queue_cmd_index, bool is_queued = 0);
+
+       bool getJOGCommonParams(std::vector<uint8_t> &returned_data);
+
+       bool setJOGCmd(uint8_t is_joint, uint8_t cmd, bool is_queued = 1);
+       bool setJOGCmd(uint8_t is_joint, uint8_t cmd, uint64_t &queue_cmd_index, bool is_queued = 1);
 
         /// PTP
     //    setPTPJointParams
