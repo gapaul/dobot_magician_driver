@@ -34,6 +34,7 @@ void DobotDriver::setController(std::shared_ptr<DobotController> dobot_controlle
 
 void DobotDriver::initialiseRobot()
 {
+    dobot_controller_->setToolState(false);
     dobot_state_->initialiseRobot();
 }
 

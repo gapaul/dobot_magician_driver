@@ -173,7 +173,9 @@ void DobotStates::updateRobotStatesThread()
             continue;
         }
 
-        if(dobot_serial_->getPose(raw_serial_data))
+        bool result = dobot_serial_->getPose(raw_serial_data);
+
+        if(result)
         {
             if(unpackPose(raw_serial_data,config_data))
             {
@@ -219,11 +221,8 @@ void DobotStates::updateRobotStatesThread()
                         elapsed_seconds = (end_time - start_time);
 
                         double duration = elapsed_seconds.count();
-                        // std::cout<<duration<<std::endl;
                         joint_data.velocity.at(i) = (joint_data.position.at(i) - pre_joint_data.position.at(i))/duration;
                     }
-
-                    // std::cout<<joint_data.velocity.at(0)<<std::endl;
                 }
 
                 start_time = std::chrono::system_clock::now();
@@ -245,8 +244,16 @@ void DobotStates::updateRobotStatesThread()
         io_state_.mtx.lock();
         for(int address = 1; address <= 20; address++)
         {
-            dobot_serial_->getIOMultiplexing(address, io_data);
-            io_state_.io_mux.at(address) = (int)io_data.at(3);
+            result = dobot_serial_->getIOMultiplexing(address, io_data);
+            
+            if(result && io_data.size() > 3)
+            {
+                io_state_.io_mux.at(address) = (int)io_data.at(3); 
+            }
+            else
+            {
+                io_state_.io_mux.at(address) = IODummy;
+            }
 
             switch(io_state_.io_mux.at(address))
             {
@@ -255,8 +262,15 @@ void DobotStates::updateRobotStatesThread()
                     break;
 
                 case IODO:
-                    dobot_serial_->getIODO(address,io_data);
-                    io_state_.data.at(address) = (float)io_data.at(3);
+                    result = dobot_serial_->getIODO(address,io_data);
+                    if(result && io_data.size() > 3)
+                    {
+                        io_state_.data.at(address) = (float)io_data.at(3);
+                    }
+                    else
+                    {
+                        io_state_.data.at(address) = 0;   
+                    }
                     break;
 
                 case IOPWM:
@@ -266,13 +280,27 @@ void DobotStates::updateRobotStatesThread()
                     break;
 
                 case IODI:
-                    dobot_serial_->getIODI(address, io_data);
-                    io_state_.data.at(address) = (float)io_data.at(3);
+                    result = dobot_serial_->getIODI(address, io_data);
+                    if(result && io_data.size() > 3)
+                    {
+                        io_state_.data.at(address) = (float)io_data.at(3);
+                    }
+                    else
+                    {
+                        io_state_.data.at(address) = 0;   
+                    }
                     break;
 
                 case IOADC:
-                    dobot_serial_->getIOADC(address, io_data);
-                    io_state_.data.at(address) = (io_data.at(4) << 8) | io_data.at(3);
+                    result = dobot_serial_->getIOADC(address, io_data);
+                    if(result && io_data.size() > 4)
+                    {
+                        io_state_.data.at(address) = (io_data.at(4) << 8) | io_data.at(3);
+                    }
+                    else
+                    {
+                        io_state_.data.at(address) = 0;   
+                    }
                     break;
 
                 case IODIPU:

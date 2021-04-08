@@ -113,7 +113,7 @@ void DobotRosWrapper::updateStateThread()
 
     joint_angle_msg.name = joint_names_;
 
-    // Bugged - Will fix tomorrow
+    // Bugged
     // io_state_msg.layout.dim.at(0).label = "height";
     // io_state_msg.layout.dim.at(0).size = 2;
     // io_state_msg.layout.dim.at(0).stride = 40;
@@ -175,7 +175,7 @@ void DobotRosWrapper::updateStateThread()
         // Safety state
         safety_state_msg.data = (uint8_t)dobot_driver_->getRobotSafetyState();
 
-        // IO state - Bugged - Will fix tomorrow
+        // IO state - Bugged
         // TODO: Find a better way to store these io data
         // dobot_driver_->getIOState(io_mux,io_data);
         
@@ -208,7 +208,7 @@ void DobotRosWrapper::updateStateThread()
         // Update tool state
         tool_state_pub_.publish(tool_state_msg);
         
-        // Update safety state
+        // // Update safety state
         safety_state_pub_.publish(safety_state_msg);
 
         // Update IO state
@@ -296,6 +296,9 @@ void DobotRosWrapper::safetyStateCallback(const std_msgs::UInt8ConstPtr& msg)
     switch(msg->data)
     {
         case INITIALISING:
+            target_joint_data_.received = false;
+            target_end_effector_pose_data_.received = false;
+
             dobot_driver_->initialiseRobot();
             break;
 

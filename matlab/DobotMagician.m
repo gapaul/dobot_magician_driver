@@ -14,6 +14,9 @@ classdef DobotMagician < handle
        
        toolStatePub;
        toolStateMsg;
+       
+       safetyStatePub;
+       safetyStateMsg;
    end
    
    properties(Access = private)
@@ -24,16 +27,16 @@ classdef DobotMagician < handle
            % Initialise subs and pubs as object starts
 
            self.jointStateSub = rossubscriber('/dobot_magician/joint_states');
-           self.endEffectorStateSub = rossubscriber('dobot_magician/end_effector_states');
+           self.endEffectorStateSub = rossubscriber('/dobot_magician/end_effector_poses');
              
            % Publisher for end effector traj control (WIP) For now it can only receive one target pose
-          [self.targetJointTrajPub,self.targetJointTrajMsg] = rospublisher('/dobot_magician/PTP/target_joint_states');
+          [self.targetJointTrajPub,self.targetJointTrajMsg] = rospublisher('/dobot_magician/target_joint_states');
           
           % Publisher for joint traj control (WIP) For now it can only receive one single configuration
-          [self.targetEndEffectorPub,self.targetEndEffectorMsg] = rospublisher('/dobot_magician/PTP/target_end_effector_states');
+          [self.targetEndEffectorPub,self.targetEndEffectorMsg] = rospublisher('/dobot_magician/target_end_effector_pose');
           
-          [self.toolStatePub, self.toolStateMsg] = rospublisher('/dobot_magician/EE/target_tool_state');
-          [self.safetyStatePub,self.safetyStateMsg] = rospublisher('/dobot_magician/Safety/target_safety_state');
+          [self.toolStatePub, self.toolStateMsg] = rospublisher('/dobot_magician/target_tool_state');
+          [self.safetyStatePub,self.safetyStateMsg] = rospublisher('/dobot_magician/target_safety_status');
           
        end
        

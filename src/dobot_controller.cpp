@@ -105,9 +105,14 @@ void DobotController::setToolState(bool state)
 bool DobotController::getToolState()
 {
     std::vector<uint8_t> return_data;
-    dobot_serial_->getEndEffectorSuctionCup(return_data);
-    tool_state_ = (bool)return_data.at(3);
 
+    bool result = dobot_serial_->getEndEffectorSuctionCup(return_data);
+
+    if(result && return_data.size() > 3)
+    {
+        tool_state_ = (bool)return_data.at(3);
+    }
+    
     return tool_state_;
 }
 
