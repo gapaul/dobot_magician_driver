@@ -67,14 +67,14 @@ class DobotStates
         ContinuousPathParams cp_params_;
 
         // Homing - Initialisation
-        bool is_homed_;
-        bool is_on_rail_;
+        std::atomic<bool> is_homed_;
+        std::atomic<bool> is_on_rail_;
 
         // Safety
-        bool is_e_stopped_;
-        bool is_operate_;
-        bool is_paused_;
-        bool is_stopped_;
+        std::atomic<bool> is_e_stopped_;
+        std::atomic<bool> is_operate_;
+        std::atomic<bool> is_paused_;
+        std::atomic<bool> is_stopped_;
 
         RobotSafetyState safety_state_;
 

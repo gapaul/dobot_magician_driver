@@ -138,6 +138,8 @@ class DobotRosWrapper
         JointData target_joint_data_;
         PoseData target_end_effector_pose_data_;
 
+        std::atomic<bool> rail_position_received_;
+
         std::thread *update_state_thread_;
         std::thread *robot_control_thread_;
 

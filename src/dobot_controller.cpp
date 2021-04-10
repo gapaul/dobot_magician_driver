@@ -131,7 +131,7 @@ void DobotController::setIOState(int address, int multiplex, std::vector<double>
             break;
 
         case IOPWM:
-            dobot_serial_->setIOPWM(address,data.at(0),data.at(1));
+            dobot_serial_->setIOPWM(address,(float)data.at(0),(float)data.at(1));
             break;
 
         case IODI:
@@ -160,12 +160,18 @@ void DobotController::setEMotorSpeed(int index, bool is_enabled, int speed)
 // Linear rail positions
 void DobotController::setTargetRailWithEEPoses(std::vector<double> target_pose)
 {
-    target_rail_position_buffer_.add(target_pose);    
+    target_rail_position_buffer_.add(target_pose); 
+    target_rail_position_buffer_.received = true;   
 }
 
 bool DobotController::moveToTargetRailPosition()
 {
-    std::vector<double> target = target_rail_position_buffer_.get();
+    std::vector<double> target;
+
+    target_rail_position_buffer_.mtx.lock();
+    target = target_rail_position_buffer_.data.back();
+    target_rail_position_buffer_.mtx.unlock();
+
     std::vector<float> fl_target = std::vector<float>(target.begin(),target.end());
     
     bool result =  dobot_serial_->setPTPWithRailCmd(2, fl_target);

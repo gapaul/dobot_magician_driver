@@ -8,6 +8,7 @@ rosinit;
 %% Start Dobot ROS
 dobot = DobotMagician();
 
+%% Test Motion
 %% Publish custom joint target
 joint_target = [0.0,0.4,0.3,0.0];
 dobot.PublishTargetJoint(joint_target);
@@ -36,3 +37,34 @@ dobot.EStopRobot();
 
 %% Reinitilise Robot
 dobot.InitaliseRobot();
+
+%% Set Rail status to true
+dobot.SetRobotOnRail(true);
+
+%% Reinitialise robot. It should perform homing with the linear rail
+dobot.InitaliseRobot();
+
+%% Move the rail to the position of 0.5
+dobot.MoveRailToPosition(0.5);
+
+%% Set Rail status to false
+dobot.SetRobotOnRail(false);
+
+%% Reinitialise robot. It should not perform homing with the linear rail
+dobot.InitaliseRobot();
+
+%% Test IO
+%% Get current IO status of all io pins on the robot
+[ioMux, ioData] = dobot.GetCurrentIOStatus();
+
+%% Set a particular pin a particular IO output
+address = 1;
+ioMux = 1;
+data = 1;
+dobot.SetIOData(address,ioMux, data);
+
+%% Set particular pin a particular IO input
+address = 1;
+ioMux = 3;
+data = 0;
+dobot.SetIOData(address,ioMux,data);

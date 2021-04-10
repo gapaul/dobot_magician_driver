@@ -59,6 +59,9 @@ class DobotDriver
         // Safety State
         SafetyState getRobotSafetyState();
         void setEStop();
+        void setStop();
+
+        void setOperate();
 
         // EMotor
         void setEMotor(int index, bool is_enabled, int speed);

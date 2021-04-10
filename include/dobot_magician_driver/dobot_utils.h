@@ -330,6 +330,7 @@ struct UtilsBuffer
     {
         std::vector<double> output;
 
+        std::cout<<data.size()<<std::endl;
         mtx.lock();
         output = data.back();
         mtx.unlock();

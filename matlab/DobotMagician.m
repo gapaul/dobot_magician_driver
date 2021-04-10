@@ -5,6 +5,9 @@ classdef DobotMagician < handle
        jointStateSub;
        endEffectorStateSub;
        
+       ioStatusSub;
+       railPosSub;
+       
        % Publisher
        targetJointTrajPub;
        targetJointTrajMsg;
@@ -17,6 +20,16 @@ classdef DobotMagician < handle
        
        safetyStatePub;
        safetyStateMsg;
+       
+       railStatusPub;
+       railStatusMsg;
+       
+       railPosPub;
+       railPosMsg;
+       
+       ioDataPub;
+       ioDataMsg;
+        
    end
    
    properties(Access = private)
@@ -28,16 +41,24 @@ classdef DobotMagician < handle
 
            self.jointStateSub = rossubscriber('/dobot_magician/joint_states');
            self.endEffectorStateSub = rossubscriber('/dobot_magician/end_effector_poses');
-             
-           % Publisher for end effector traj control (WIP) For now it can only receive one target pose
+           
+           self.ioStatusSub = rossubscriber('/dobot_magician/io_data');
+           
+           % Publisher for joint traj traj control (WIP) For now it can
+           % only receive one configuration
           [self.targetJointTrajPub,self.targetJointTrajMsg] = rospublisher('/dobot_magician/target_joint_states');
           
-          % Publisher for joint traj control (WIP) For now it can only receive one single configuration
+          % Publisher for end effector control (WIP) For now it can only
+          % receive one target pose
           [self.targetEndEffectorPub,self.targetEndEffectorMsg] = rospublisher('/dobot_magician/target_end_effector_pose');
           
           [self.toolStatePub, self.toolStateMsg] = rospublisher('/dobot_magician/target_tool_state');
           [self.safetyStatePub,self.safetyStateMsg] = rospublisher('/dobot_magician/target_safety_status');
           
+          [self.railStatusPub, self.railStatusMsg] = rospublisher('/dobot_magician/target_rail_status');
+          [self.railPosPub,self.railPosMsg] = rospublisher('/dobot_magician/target_rail_position');
+          
+          [self.ioDataPub,self.ioDataMsg] = rospublisher('/dobot_magician/target_io_state');
        end
        
        function PublishTargetJoint(self, jointTarget)
@@ -80,6 +101,28 @@ classdef DobotMagician < handle
        function jointStates = GetCurrentJointState(self)
             latestJointStateMsg = self.jointStateSub.LatestMessage;
             jointStates = latestJointStateMsg.Position;
+       end
+       
+       function SetRobotOnRail(self,status)
+           self.railStatusMsg.Data = status;
+           send(self.railStatusPub,self.railStatusMsg);
+       end
+       
+       function MoveRailToPosition(self,position)
+           self.railPosMsg.Data = position;
+           send(self.railPosPub,self.railPosMsg);
+       end
+       
+       function [ioMux, ioData] = GetCurrentIOStatus(self)
+           latestIODataMsg = self.ioStatusSub.LatestMessage;
+           ioStatus = latestIODataMsg.Data;
+           ioMux = ioStatus(1:20);
+           ioData = ioStatus(21:40);
+       end
+       
+       function SetIOData(self,address,ioMux,data)
+           self.ioDataMsg.Data = [address,ioMux,data];
+           send(self.ioDataPub,self.ioDataMsg);
        end
    end
    

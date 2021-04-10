@@ -68,7 +68,9 @@ Pose DobotDriver::getCurrentEndEffectorPose()
 
 Pose DobotDriver::getCurrentRailPosition()
 {
-    return dobot_state_->getCurrentRailPosition();
+    Pose rail_position = dobot_state_->getCurrentRailPosition();
+    rail_position.y = rail_position.y / 1000;
+    return rail_position;
 }
 
 void DobotDriver::setTargetJointConfiguration(JointConfiguration target_joint_config)
@@ -165,6 +167,16 @@ void DobotDriver::setEStop()
     dobot_state_->setEStop();
 }
 
+void DobotDriver::setOperate()
+{
+    dobot_state_->setOperate();
+}
+
+void DobotDriver::setStop()
+{
+    dobot_state_->setStop();
+}
+
 SafetyState DobotDriver::getRobotSafetyState()
 {
     return dobot_state_->getRobotSafetyState();
@@ -202,15 +214,12 @@ void DobotDriver::setTargetRailPosition(double position)
     pose_with_rail.push_back(current_ee_pose.theta);
 
     pose_with_rail.push_back(position);
+
+    dobot_controller_->setTargetRailWithEEPoses(pose_with_rail);
 }
 
 bool DobotDriver::moveToTargetRailPosition()
 {
-    if(!dobot_state_->getRailStatus())
-    {
-        return false;
-    }
-
     bool result = dobot_controller_->moveToTargetRailPosition();
     return result;
 }

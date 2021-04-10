@@ -39,9 +39,10 @@ class DobotCommunication
     //    setDeviceName
     //    setDeviceName
     //    getDeviceVersion
-        bool setLinearRailStatus(bool is_enabled, uint8_t version, bool is_queued);
-        bool setLinearRailStatus(bool is_enabled, uint8_t version, uint64_t &queue_cmd_index, bool is_queued);
+        bool setLinearRailStatus(bool is_enabled, uint8_t version, bool is_queued = 0);
+        bool setLinearRailStatus(bool is_enabled, uint8_t version, uint64_t &queue_cmd_index, bool is_queued = 0);
 
+        bool getLinearRailStatus(std::vector<uint8_t> &returned_data);
         /// Pose
         /**
          * @brief Function sends a command to the Dobot to obtain the real-time "pose" (as defined in the

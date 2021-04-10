@@ -211,6 +211,17 @@ bool DobotCommunication::setLinearRailStatus(bool is_enabled, uint8_t version, u
     return true;
 }
 
+bool DobotCommunication::getLinearRailStatus(std::vector<uint8_t> &returned_data)
+{
+    std::vector<uint8_t> ctrl_cmd = {0xAA,0xAA,0x02,0x3,0x00};
+    std::lock_guard<std::mutex> send_command_lk(communication_mt_);
+    sendCommand(ctrl_cmd);
+    std::vector<uint8_t> data;
+    if(!getResponse(data)){return false;}
+    returned_data = data;
+    return true;
+}
+
 bool DobotCommunication::setEndEffectorSuctionCup(bool is_ctrl_enabled, bool is_sucked, bool is_queued)
 {
     uint64_t queue_cmd_index;
@@ -392,7 +403,7 @@ bool DobotCommunication::setJOGCommonParams(std::vector<float> &jog_common_param
 
 bool DobotCommunication::getJOGCommonParams(std::vector<uint8_t> &returned_data)
 {
-    std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x02,48,0x00 };
+    std::vector<uint8_t> ctrl_cmd = { 0xAA,0xAA,0x02,0x48,0x00 };
 	std::lock_guard<std::mutex> send_command_lk(communication_mt_);
 	sendCommand(ctrl_cmd);
 	std::vector<uint8_t> data;

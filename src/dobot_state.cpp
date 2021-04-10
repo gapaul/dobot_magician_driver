@@ -322,13 +322,24 @@ void DobotStates::updateRobotStatesThread()
         io_state_.mtx.unlock();
         
 
-        // #### UPDATE LINEAR RAIL POSITION ####
+        // #### UPDATE LINEAR RAIL STATUS ####
+        raw_serial_data.clear();
+        result = dobot_serial_->getLinearRailStatus(raw_serial_data);
+        
+        if(result && raw_serial_data.size() > 2)
+        {
+            is_on_rail_ = (bool)raw_serial_data.at(2);
+            // std::cout << is_on_rail_ << std::endl;
+        }
 
+        // #### UPDATE LINEAR RAIL POSITION ####
         if(is_on_rail_)
         {
             if(dobot_serial_->getRailPose(raw_serial_data))
             {
                 rail_pos_data.y = unpackFloat(raw_serial_data.begin() + 2);
+
+                // std::cout<<rail_pos_data.y<<std::endl;
 
                 current_rail_position_buffer_.mtx.lock();
 
@@ -402,6 +413,8 @@ bool DobotStates::initialiseRobot()
 
     dobot_serial_->setPTPCmd(4,start_joint_angle_); 
 
+    std::cout<<is_on_rail_<<std::endl;
+
     dobot_serial_->setLinearRailStatus(is_on_rail_,0,0);  
     dobot_serial_->setHOMECmd();
 
@@ -418,12 +431,19 @@ bool DobotStates::initialiseRobot()
 
 void DobotStates::setOnRail(bool on_rail)
 {
-    is_on_rail_ = on_rail;
-    dobot_serial_->setLinearRailStatus(is_on_rail_,0,0);
+    dobot_serial_->setLinearRailStatus(on_rail,0,false);
 }
 
 bool DobotStates::getRailStatus()
 {
+    std::vector<uint8_t> raw_serial_data;
+
+    bool result = dobot_serial_->getLinearRailStatus(raw_serial_data);
+    if(result && raw_serial_data.size() > 3)
+    {
+        std::cout<<raw_serial_data.at(3)<<std::endl;
+    }
+
     return is_on_rail_;
 }
 
@@ -438,7 +458,7 @@ void DobotStates::stopAllIO()
 bool DobotStates::setEStop()
 {
     // Stop tool
-    bool stop_pump = dobot_serial_->setEndEffectorSuctionCup(0,0,0);
+    bool stop_pump = dobot_serial_->setEndEffectorSuctionCup(0,0,1);
     
     // Stop all current action
     bool stop_queued_cmd = dobot_serial_->setQueuedCmdForceStopExec();
@@ -448,8 +468,8 @@ bool DobotStates::setEStop()
     stopAllIO();
 
     // Reset EMotors
-    dobot_serial_->setEMotor(0,false,0);
-    dobot_serial_->setEMotor(1,false,0);
+    dobot_serial_->setEMotor(0,false,1);
+    dobot_serial_->setEMotor(1,false,1);
 
     if(stop_pump && stop_queued_cmd)
     {
