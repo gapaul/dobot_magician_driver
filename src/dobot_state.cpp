@@ -431,7 +431,8 @@ bool DobotStates::initialiseRobot()
 
 void DobotStates::setOnRail(bool on_rail)
 {
-    dobot_serial_->setLinearRailStatus(on_rail,0,false);
+    // std::cout<<on_rail<<std::endl;
+    dobot_serial_->setLinearRailStatus(on_rail,0,true);
 }
 
 bool DobotStates::getRailStatus()

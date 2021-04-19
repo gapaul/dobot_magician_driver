@@ -116,8 +116,8 @@ classdef DobotMagician < handle
        function [ioMux, ioData] = GetCurrentIOStatus(self)
            latestIODataMsg = self.ioStatusSub.LatestMessage;
            ioStatus = latestIODataMsg.Data;
-           ioMux = ioStatus(1:20);
-           ioData = ioStatus(21:40);
+           ioMux = ioStatus(2:21);
+           ioData = ioStatus(23:42);
        end
        
        function SetIOData(self,address,ioMux,data)

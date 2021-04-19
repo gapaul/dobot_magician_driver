@@ -45,7 +45,7 @@ dobot.SetRobotOnRail(true);
 dobot.InitaliseRobot();
 
 %% Move the rail to the position of 0.5
-dobot.MoveRailToPosition(0.5);
+dobot.MoveRailToPosition(0.0);
 
 %% Set Rail status to false
 dobot.SetRobotOnRail(false);

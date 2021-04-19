@@ -87,7 +87,7 @@ void DobotRosWrapper::init()
 
     // Initialise robot
     ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
-    // dobot_driver_->initialiseRobot();
+    dobot_driver_->initialiseRobot();
     ROS_INFO("DobotRosWrapper: this thread will now wake up");
 }
 
@@ -190,15 +190,15 @@ void DobotRosWrapper::updateStateThread()
         // TODO: Find a better way to store these io data
         dobot_driver_->getIOState(io_mux,io_data);
         
-        for(int i = 0; i < 40; i++)
+        for(int i = 0; i < 42; i++)
         {
-            if(i < 20)
+            if(i < 21)
             {
                 io_state_msg.data.push_back(io_mux.at(i));  
             }
             else
             {
-                io_state_msg.data.push_back(io_data.at(i-20));  
+                io_state_msg.data.push_back(io_data.at(i-21));  
             } 
         }
 
