@@ -59,6 +59,8 @@ classdef DobotMagician < handle
           [self.railPosPub,self.railPosMsg] = rospublisher('/dobot_magician/target_rail_position');
           
           [self.ioDataPub,self.ioDataMsg] = rospublisher('/dobot_magician/target_io_state');
+
+          [self.eMotorPub,self.eMotorMsg] = rospublisher('/dobot_magician/target_e_motor_state');
        end
        
        function PublishTargetJoint(self, jointTarget)
@@ -123,6 +125,11 @@ classdef DobotMagician < handle
        function SetIOData(self,address,ioMux,data)
            self.ioDataMsg.Data = [address,ioMux,data];
            send(self.ioDataPub,self.ioDataMsg);
+       end
+
+       function SetConveyorBeltVelocity(self,index,enabled,velocity)
+            self.eMotorMsg.Data = [index,enabled,velocity];
+            send(self,eMotorPub,self.eMotorMsg);
        end
    end
    
