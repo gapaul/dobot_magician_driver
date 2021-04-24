@@ -1,5 +1,0 @@
-#request
-bool set_linear_rail
----
-#response
-bool success

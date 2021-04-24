@@ -1,375 +1,236 @@
 #include "dobot_magician_driver/dobot_driver.h"
-#include <iostream>
-#include <thread>
 
-// DobotDriver
-DobotDriver::DobotDriver(std::string port)
+DobotDriver::DobotDriver()
 {
-    _dobot_serial = new DobotCommunication(port);
-    _dobot_states = new DobotStates();
-
-    _is_on_linear_rail = false;
-
+    is_on_rail_ = false;
 }
 
-bool DobotDriver::getCurrentConfiguration(std::vector<double> &cart_pos, std::vector<double> &joint_angles)
+DobotDriver::~DobotDriver()
 {
-    std::vector<uint8_t> data;
-    std::vector<double> pose_data;
+    driver_update_thread_->join();
+    delete driver_update_thread_;
+}
 
-    if(_dobot_serial->getPose(data))
+void DobotDriver::init(std::shared_ptr<DobotStates> dobot_state_ptr, std::shared_ptr<DobotController> dobot_controller_ptr)
+{
+    dobot_state_ = dobot_state_ptr;
+    dobot_controller_ = dobot_controller_ptr;
+}
+
+void DobotDriver::run()
+{
+    driver_update_thread_ = new std::thread(&DobotDriver::driverUpdateThread,this);
+}
+
+void DobotDriver::setStateManager(std::shared_ptr<DobotStates> dobot_state_ptr)
+{
+    dobot_state_ = dobot_state_ptr;
+}
+
+void DobotDriver::setController(std::shared_ptr<DobotController> dobot_controller_ptr)
+{
+    dobot_controller_ = dobot_controller_ptr;
+}
+
+void DobotDriver::initialiseRobot()
+{
+    dobot_controller_->setToolState(false);
+    dobot_state_->initialiseRobot();
+}
+
+// not a very good way to do this
+bool DobotDriver::isRobotAtTarget()
+{      
+    return at_target_;
+}
+
+bool DobotDriver::isRobotInMotion()
+{
+    return in_motion_;
+}
+
+void DobotDriver::isRobotOnLinearRail(bool is_on_rail)
+{
+    is_on_rail_ = is_on_rail;
+
+    dobot_state_->setOnRail(is_on_rail_);
+}
+
+JointConfiguration DobotDriver::getCurrentJointConfiguration()
+{
+    return dobot_state_->getRobotCurrentJointConfiguration();
+}
+
+Pose DobotDriver::getCurrentEndEffectorPose()
+{
+    return dobot_state_->getRobotCurrentEndEffectorPose();
+}
+
+Pose DobotDriver::getCurrentRailPosition()
+{
+    Pose rail_position = dobot_state_->getCurrentRailPosition();
+    rail_position.y = rail_position.y / 1000;
+    return rail_position;
+}
+
+void DobotDriver::setTargetJointConfiguration(JointConfiguration target_joint_config)
+{
+    dobot_controller_->setTargetJointConfiguration(target_joint_config);
+}
+
+void DobotDriver::setTargetEndEffectorPose(Pose target_end_effector_pose)
+{
+    dobot_controller_->setTargetEndEffectorPose(target_end_effector_pose);
+}
+
+void DobotDriver::setTargetJointConfiguration(std::vector<double> target_joint_config_vec)
+{
+    JointConfiguration joint_config;
+    joint_config.position = target_joint_config_vec;
+
+    dobot_controller_->setTargetJointConfiguration(joint_config);
+}
+
+void DobotDriver::setTargetEndEffectorPose(std::vector<double> target_end_effector_pose_vec)
+{
+    Pose end_effector_pose ;
+    end_effector_pose.convert(target_end_effector_pose_vec);
+    dobot_controller_->setTargetEndEffectorPose(end_effector_pose);
+}
+
+bool DobotDriver::moveToTargetJointConfiguration()
+{
+    bool result = dobot_controller_->moveToTargetJoint();
+    return result;
+}
+
+bool DobotDriver::moveToTargetEndEffectorPose()
+{
+    bool result = dobot_controller_->moveToTargetPose();
+    return result;
+}
+
+void DobotDriver::driverUpdateThread()
+{
+    JointConfiguration current_config;
+    int check_config = 0;
+    
+    while(true)
     {
-        if(_dobot_states->unpackPose(data, pose_data)){
-            cart_pos = std::vector<double>(pose_data.begin(), pose_data.begin()+4);
-            joint_angles = std::vector<double>(pose_data.begin()+4, pose_data.end());
-            return true;
-        }
-    }
+        current_config = dobot_state_->getRobotCurrentJointConfiguration();
 
-    return false;
-}
-
-bool DobotDriver::getJointAngles(std::vector<double> &joint_angles)
-{
-    std::vector<uint8_t> data;
-    std::vector<double> pose_data;
-
-    if(_dobot_serial->getPose(data))
-    {
-        if(_dobot_states->unpackPose(data, pose_data)){
-            joint_angles = std::vector<double>(pose_data.begin()+4, pose_data.end());
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool DobotDriver::getCartesianPos(std::vector<double> &cart_pos)
-{
-    std::vector<uint8_t> data;
-    std::vector<double> pose_data;
-
-    if(_dobot_serial->getPose(data))
-    {
-        if(_dobot_states->unpackPose(data, pose_data)){
-            cart_pos = std::vector<double>(pose_data.begin(), pose_data.begin()+4);
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool DobotDriver::setJointAngles(std::vector<float> &joint_angles)
-{
-    if(_dobot_serial->setPTPCmd(4,joint_angles))
-    {
-        return true;
-
-    }
-    return false;
-}
-
-bool DobotDriver::setCartesianPos(std::vector<float> &cart_pos)
-{
-    if(_dobot_serial->setPTPCmd(2,cart_pos))
-    {
-        return true;
-    }
-    return false;
-}
-
-bool DobotDriver::setGripper(bool is_ctrl_enabled, bool is_gripped)
-{
-    if(_dobot_serial->setEndEffectorGripper(is_ctrl_enabled, is_gripped))
-    {
-        return true;
-    }
-    return false;
-}
-
-bool DobotDriver::setSuctionCup(bool is_ctrl_enabled, bool is_sucked)
-{
-    if(_dobot_serial->setEndEffectorSuctionCup(is_ctrl_enabled, is_sucked))
-    {
-        return true;
-    }
-    return false;
-}
-
-/*
- *  CP COMMANDS
- */
-
-bool DobotDriver::setCPParams(std::vector<float> &cp_params, bool real_time_track)
-{
-    if (_dobot_serial->setCPParams(cp_params, real_time_track,0))
-	{
-		return true;
-	}
-	return false;
-}
-
-bool DobotDriver::getCPParams(std::vector<float> &cp_params, uint8_t &real_time_track)
-{
-    std::vector<uint8_t> data;
-
-    if(_dobot_serial->getCPParams(data))
-    {
-        if(_dobot_states->unpackCPParams(data, cp_params, real_time_track))
+        if(current_target_config_.position.size() != current_config.position.size())
         {
-            return true;
+            at_target_ = true;
+            in_motion_ = false;
+
+            continue;
         }
-    }
-    return false;
-}
 
-bool DobotDriver::setCPCmd(std::vector<float> &cp_cmd, bool cp_mode)
-{
-	uint64_t queue_command_index;
-    if (_dobot_serial->setCPCmd(cp_cmd, cp_mode,queue_command_index,1))
-	{
-		return true;
-	}
-	return false;
-}
-
-/*
- *  I/O COMMANDS
- */
-
-bool DobotDriver::setIOMultiplexing(int address, int multiplex)
-{
-    if(_dobot_serial->setIOMultiplexing(address,multiplex))
-    {
-        return true;
-    }
-    return false;
-}
-
-bool DobotDriver::getIOMultiplexing(int address, int &multiplex)
-{
-    std::vector<uint8_t> data;
-
-    if(_dobot_serial->getIOMultiplexing(address,data))
-    {
-        multiplex = (int) data.at(3);
-        return true;
-    }
-
-    return false;
-}
-
-bool DobotDriver::setIODigitalOutput(int address, bool level)
-{
-    if(_dobot_serial->setIODO(address,level))
-    {
-        return true;
-    }
-    return false;
-}
-
-bool DobotDriver::getIODigitalOutput(int address, bool &level)
-{
-    std::vector<uint8_t> data;
-
-    if(_dobot_serial->getIODO(address,data))
-    {
-        level = (bool) data.at(3);
-        return true;
-    }
-
-    return false;
-}
-
-bool DobotDriver::setIOPWM(int address, float frequency, float duty_cycle)
-{
-    if(_dobot_serial->setIOPWM(address,frequency,duty_cycle))
-    {
-        return true;
-    }
-    return false;
-}
-
-bool DobotDriver::getIODigitalInput(int address, bool &level)
-{
-    std::vector<uint8_t> data;
-
-    if(_dobot_serial->getIODI(address,data))
-    {
-        level = (bool) data.at(3);
-        return true;
-    }
-
-    return false;
-}
-
-bool DobotDriver::getIOAnalogInput(int address, int &value)
-{
-    std::vector<uint8_t> data;
-
-    if(_dobot_serial->getIOADC(address,data))
-    {
-        value = (data.at(4)<<8) | data.at(3);
-        return true;
-    }
-
-    return false;
-}
-
-bool DobotDriver::setEMotor(int index,bool is_enabled,int32_t speed)
-{
-    if(_dobot_serial->setEMotor(index,is_enabled,speed))
-
-    {
-        return true;
-    }
-
-    return false;
-}
-
-/* QUEUED EXECUTION CONTROL COMMANDS */
-
-bool DobotDriver::setQueuedCmdStartExec(void)
-{
-    if (_dobot_serial->setQueuedCmdStartExec())
-    {
-        return true;
-    }
-    return false;
-}
-
-bool DobotDriver::setQueuedCmdStopExec(void)
-{
-    if (_dobot_serial->setQueuedCmdStopExec())
-    {
-        return true;
-    }
-    return false;
-}
-
-bool DobotDriver::setQueuedCmdForceStopExec(void)
-{
-    if (_dobot_serial->setQueuedCmdForceStopExec())
-    {
-        return true;
-    }
-    return false;
-}
-
-bool DobotDriver::setQueuedCmdClear(void)
-{
-    if (_dobot_serial->setQueuedCmdClear())
-    {
-        return true;
-    }
-    return false;
-}
-
-/* E-STOP */
-
-bool DobotDriver::stopAllIO(void)
-{
-    int check_IO = 0;
-
-    for (int i = 1; i<=20;i++)
-    {
-        if (_dobot_serial->setIOMultiplexing(i,0,0))
+        for(int i = 0; i < current_config.position.size(); i++)
         {
-            check_IO++;
+            
+            if(abs(current_config.position.at(i) - current_target_config_.position.at(i)) >= JOINT_ERROR)
+            {
+                at_target_ = false;
+                in_motion_ = true;
+            }
+            else
+            {
+                check_config++;
+            }
         }
-    }
 
-    if (check_IO != 20)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-bool DobotDriver::setEStop(void)
-{
-    bool stop_pump;
-
-    bool stop_queued = setQueuedCmdForceStopExec();
-    setQueuedCmdClear();
-
-    if (!_dobot_serial->setEndEffectorSuctionCup(0,0,0) || !_dobot_serial->setEndEffectorGripper(0,0,0))
-    {
-        stop_pump = false;
-        return false;
-    }
-    else stop_pump = true;
-
-    bool stop_IO = stopAllIO();
-
-    _dobot_serial->setEMotor(0,false,0);//turn off stepper 1
-    _dobot_serial->setEMotor(1,false,0);//turn off stepper 2
-
-    if (stop_queued && stop_pump && stop_IO)
-    {
-        _is_e_stopped = true;
-        return true;
-    }
-    return false;
-}
-
-bool DobotDriver::isEStopped(void)
-{
-    return _is_e_stopped;
-}
-
-/* LINEAR RAIL */
-
-bool DobotDriver::setLinearRailStatus(bool is_enabled)
-{
-    if (_dobot_serial->setLinearRailStatus(is_enabled,0,0))
-    {
-        if(is_enabled)
+        if(check_config == 4)
         {
-            _is_on_linear_rail = true;
+            at_target_ = true;
+            in_motion_ = false;
+
+            check_config = 0;
         }
-        else _is_on_linear_rail = false;
-
-        return true;
+        
     }
-    return false;
 }
 
-bool DobotDriver::setCartesianPosWithRail(std::vector<float> &cart_pos)
+void DobotDriver::setToolState(bool state)
 {
-    if (!isOnLinearRail())
-    {
-        return false;
-    }
-
-    if(_dobot_serial->setPTPWithRailCmd(2,cart_pos))
-    {
-        return true;
-    }
-    return false;
+    dobot_controller_->setToolState(state);
 }
 
-bool DobotDriver::isOnLinearRail(void)
+bool DobotDriver::getToolState()
 {
-    return _is_on_linear_rail;
+    return dobot_controller_->getToolState();
 }
 
-void DobotDriver::initialiseDobot()
+void DobotDriver::setEStop()
 {
-    _is_e_stopped = false;
-    _dobot_serial->setQueuedCmdClear();
-    _dobot_serial->setQueuedCmdStartExec();
+    dobot_state_->setEStop();
+}
 
-    _dobot_serial->setEMotor(0,false,0);//turn off stepper 1
-    _dobot_serial->setEMotor(1,false,0);//turn off stepper 2
+void DobotDriver::setOperate()
+{
+    dobot_state_->setOperate();
+}
 
-    stopAllIO();
-    std::vector<float> start_joint_angles={0,0.4,0.3,0};
-    setJointAngles(start_joint_angles);
-    setLinearRailStatus(isOnLinearRail());
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    _dobot_serial->setHOMECmd(); //create setter for this to access from ros wrapper
+void DobotDriver::setStop()
+{
+    dobot_state_->setStop();
+}
+
+SafetyState DobotDriver::getRobotSafetyState()
+{
+    return dobot_state_->getRobotSafetyState();
+}
+
+void DobotDriver::setEMotor(int index, bool is_enabled, int speed)
+{
+    dobot_controller_->setEMotorSpeed(index,is_enabled,speed);
+}
+
+void DobotDriver::setIOState(int address, int multiplex, std::vector<double> data)
+{
+    dobot_controller_->setIOState(address,multiplex,data);
+}
+
+void DobotDriver::getIOState(std::vector<double> &io_mux, std::vector<double> &data)
+{
+    std::vector<int> out_io;
+    std::vector<float> out_data;
+
+    dobot_state_->getIOState(out_io, out_data);
+
+    io_mux = std::vector<double>(out_io.begin(),out_io.end());
+    data = std::vector<double>(out_data.begin(),out_data.end());
+}
+
+void DobotDriver::setTargetRailPosition(double position)
+{
+    Pose current_ee_pose = getCurrentEndEffectorPose();
+
+    std::vector<double> pose_with_rail;
+    pose_with_rail.push_back(current_ee_pose.x);
+    pose_with_rail.push_back(current_ee_pose.y);
+    pose_with_rail.push_back(current_ee_pose.z);
+    pose_with_rail.push_back(current_ee_pose.theta);
+
+    pose_with_rail.push_back(position);
+
+    dobot_controller_->setTargetRailWithEEPoses(pose_with_rail);
+}
+
+bool DobotDriver::moveToTargetRailPosition()
+{
+    bool result = dobot_controller_->moveToTargetRailPosition();
+    return result;
+}
+
+bool DobotDriver::moveWithTargetJointVelocity(std::vector<double> velocity)
+{
+    JointConfiguration joint_vel_accel;
+    joint_vel_accel.acceleration = {1,1,1,1};
+    joint_vel_accel.velocity = velocity;
+
+    dobot_controller_->setTargetJointVelocity(joint_vel_accel);
+    return dobot_controller_->moveWithTargetVelocity();
+
 }

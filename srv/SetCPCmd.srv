@@ -1,6 +1,0 @@
-#request
-float64[] cp_cmd
-int8 cp_mode
----
-#response
-bool success

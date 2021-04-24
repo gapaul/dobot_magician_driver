@@ -18,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+# find_package(Boost REQUIRED COMPONENTS system signals)
+
 find_package(PkgConfig)
 pkg_check_modules(SERIAL libserial)
 
@@ -58,28 +60,29 @@ pkg_check_modules(SERIAL libserial)
 # )
 
 ## Generate services in the 'srv' folder
- add_service_files(
-   FILES
-   SetEndEffector.srv
-   SetTargetPoints.srv
-   SetEMotor.srv
-   SetIOMultiplexing.srv
-   SetIODigitalOutput.srv
-   GetIODigitalInput.srv
-   SetIOPWMOutput.srv
-   GetIOAnalogInput.srv 
-   SetCPParams.srv
-   GetCPParams.srv
-   SetCPCmd.srv
-   SetQueuedCmd.srv
-   SetEStop.srv
-   SetInitialise.srv
-   SetLinearRail.srv
-   SetTargetPointsWithRail.srv
+# LEGACY STUFF
+#  add_service_files(
+#    FILES
+#    SetEndEffector.srv
+#    SetTargetPoints.srv
+#    SetEMotor.srv
+#    SetIOMultiplexing.srv
+#    SetIODigitalOutput.srv
+#    GetIODigitalInput.srv
+#    SetIOPWMOutput.srv
+#    GetIOAnalogInput.srv 
+#    SetCPParams.srv
+#    GetCPParams.srv
+#    SetCPCmd.srv
+#    SetQueuedCmd.srv
+#    SetEStop.srv
+#    SetInitialise.srv
+#    SetLinearRail.srv
+#    SetTargetPointsWithRail.srv
 
 #   Service1.srv
 #   Service2.srv
- )
+#  )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -158,6 +161,7 @@ include_directories(
     src/dobot_ros_wrapper.cpp
     src/dobot_communication.cpp
     src/dobot_state.cpp
+    src/dobot_controller.cpp
     src/dobot_driver.cpp)
  add_executable(dobot_magician_driver ${${PROJECT_NAME}_SOURCES})
 
