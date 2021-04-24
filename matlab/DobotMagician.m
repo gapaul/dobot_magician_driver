@@ -30,6 +30,8 @@ classdef DobotMagician < handle
        ioDataPub;
        ioDataMsg;
         
+       eMotorPub;
+       eMotorMsg;
    end
    
    properties(Access = private)
@@ -127,9 +129,9 @@ classdef DobotMagician < handle
            send(self.ioDataPub,self.ioDataMsg);
        end
 
-       function SetConveyorBeltVelocity(self,index,enabled,velocity)
-            self.eMotorMsg.Data = [index,enabled,velocity];
-            send(self,eMotorPub,self.eMotorMsg);
+       function SetConveyorBeltVelocity(self,enabled,velocity)
+            self.eMotorMsg.Data = [enabled,velocity];
+            send(self.eMotorPub,self.eMotorMsg);
        end
    end
    

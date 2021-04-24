@@ -70,13 +70,11 @@ data = 0;
 dobot.SetIOData(address,ioMux,data);
 
 %% Set a velocity to the conveyor belt
-conveyorIdx = 1;
 enableConveyor = true;
-conveyorVelocity = 10000 % Note: this is ticks per second
-dobot.SetConveyorBeltVelocity(conveyorIdx,enableConveyor,conveyorVelocity);
+conveyorVelocity = 15000; % Note: this is ticks per second
+dobot.SetConveyorBeltVelocity(enableConveyor,conveyorVelocity);
 
 %% Turn off conveyor belt
-conveyorIdx = 1;
 enableConveyor = false;
-conveyorVelocity = 0 % Note: this is ticks per second
-dobot.SetConveyorBeltVelocity(conveyorIdx,enableConveyor,conveyorVelocity);
+conveyorVelocity = 0; % Note: this is ticks per second
+dobot.SetConveyorBeltVelocity(enableConveyor,conveyorVelocity);

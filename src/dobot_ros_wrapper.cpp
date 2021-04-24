@@ -351,12 +351,12 @@ void DobotRosWrapper::eMotorCallback(const std_msgs::Float64MultiArrayConstPtr& 
     // TODO: Convert to position control
 
     std::vector<double> data = msg->data;
-    if(msg->data.size() < 3)
+    if(msg->data.size() < 2)
     {
-        dobot_driver_->setEMotor(1,false,0);
+        dobot_driver_->setEMotor(0,false,0);
         return;
     }
-    dobot_driver_->setEMotor((int)msg->data.at(0),(bool)msg->data.at(1),(int)msg->data.at(2));
+    dobot_driver_->setEMotor(0,(bool)msg->data.at(0),(int)msg->data.at(1));
 }
 
 void DobotRosWrapper::ioStateCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
