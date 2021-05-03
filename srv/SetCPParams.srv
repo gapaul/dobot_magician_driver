@@ -1,6 +1,0 @@
-#request
-float64[] cp_params
-int8 real_time_track
----
-#response
-bool success
