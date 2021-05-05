@@ -235,6 +235,10 @@ void DobotRosWrapper::robotControlThread()
 
     while(ros::ok())
     {
+        if(!dobot_states_manager_ ->isConnected())
+        {
+            continue;
+        }
         // Control loop
         // If receives target joints and robot is not moving, move joints
         if(target_joint_data_.received)

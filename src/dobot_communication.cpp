@@ -31,13 +31,42 @@ bool DobotCommunication::startConnection()
     serial_port_->SetStopBits(stop_bit_);
     serial_port_->SetParity(parity_);
     serial_port_->SetCharacterSize(character_size_);  
-    
     return serial_port_->IsOpen();
 }
 
 bool DobotCommunication::isConnected()
 {
-    return serial_port_->IsOpen();
+    bool serial_state = false;
+
+    try
+    {
+        serial_state = serial_port_->IsOpen();
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << "Failed to query serial state" << std::endl;
+        serial_state = false;
+    }
+
+    return serial_state;
+}
+
+bool DobotCommunication::closeConnection()
+{
+    bool serial_state = false;
+
+    try
+    {
+        serial_port_->Close();
+        serial_state = serial_port_->IsOpen();
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << "Failed to query serial state" << std::endl;
+        serial_state = false;
+    }
+
+    return serial_state;
 }
 
 uint8_t DobotCommunication::checksumCalc(std::vector<uint8_t> &ctrl_cmd)
