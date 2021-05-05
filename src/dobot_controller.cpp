@@ -57,6 +57,7 @@ bool DobotController::moveToTargetJoint()
     {
         return false;
     }
+
     std::vector<float> target_joint_config;
     
     target_joint_config_buffer_.mtx.lock();
@@ -97,6 +98,11 @@ bool DobotController::moveToTargetPose()
 // Tool control
 void DobotController::setToolState(bool state)
 {
+    if(!dobot_serial_->isConnected())
+    {
+        return;
+    }
+
     tool_state_ = state;
 
     dobot_serial_->setEndEffectorSuctionCup(state,state);
@@ -104,6 +110,11 @@ void DobotController::setToolState(bool state)
 
 bool DobotController::getToolState()
 {
+    if(!dobot_serial_->isConnected())
+    {
+        return false;
+    }
+
     std::vector<uint8_t> return_data;
 
     bool result = dobot_serial_->getEndEffectorSuctionCup(return_data);
@@ -119,6 +130,11 @@ bool DobotController::getToolState()
 // IO control
 void DobotController::setIOState(int address, int multiplex, std::vector<double> data)
 {
+    if(!dobot_serial_->isConnected())
+    {
+        return;
+    }
+
     dobot_serial_->setIOMultiplexing(address, multiplex);
 
     switch (multiplex)
@@ -154,18 +170,33 @@ void DobotController::setIOState(int address, int multiplex, std::vector<double>
 // EMotor Control
 void DobotController::setEMotorSpeed(int index, bool is_enabled, int speed)
 {
+    if(!dobot_serial_->isConnected())
+    {
+        return;
+    }
+
     dobot_serial_->setEMotor(index, is_enabled, speed);
 }
 
 // Linear rail positions
 void DobotController::setTargetRailWithEEPoses(std::vector<double> target_pose)
 {
+    if(!dobot_serial_->isConnected())
+    {
+        return;
+    }
+    
     target_rail_position_buffer_.add(target_pose); 
     target_rail_position_buffer_.received = true;   
 }
 
 bool DobotController::moveToTargetRailPosition()
 {
+    if(!dobot_serial_->isConnected())
+    {
+        return false;
+    }
+
     std::vector<double> target;
 
     target_rail_position_buffer_.mtx.lock();
@@ -212,6 +243,11 @@ void DobotController::setTargetJointVelocity(JointConfiguration joint_vel_config
 
 bool DobotController::moveWithTargetVelocity()
 {
+    if(!dobot_serial_->isConnected())
+    {
+        return false;
+    }
+
     int check = 0;
     bool result = false;
     for(int i = 0; i < direction_.size();i++)

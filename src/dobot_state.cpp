@@ -43,6 +43,11 @@ void DobotStates::run()
     update_state_thread_ = new std::thread(&DobotStates::updateRobotStatesThread, this);
 }
 
+bool DobotStates::isConnected()
+{
+    return is_connected_;
+}
+
 JointConfiguration DobotStates::getRobotCurrentJointConfiguration()
 {
     JointConfiguration current_joint_config;
@@ -167,16 +172,24 @@ void DobotStates::updateRobotStatesThread()
     {
         if(!dobot_serial_->isConnected())
         {
+            is_connected_ = false;
+            std::cout << "Unable to get a connection" << std::endl;
             safety_state_.mtx.lock();
             safety_state_.safety_state = DISCONNECTED;
             safety_state_.mtx.unlock();
             continue;
         }
+        else
+        {
+            is_connected_ = true;
+        }
+        
 
         bool result = dobot_serial_->getPose(raw_serial_data);
 
         if(result)
         {
+            // std::cout << unpackPose(raw_serial_data,config_data) << std::endl;
             if(unpackPose(raw_serial_data,config_data))
             {
                 // #### UPDATE END EFFECTOR STATE ####
@@ -238,6 +251,46 @@ void DobotStates::updateRobotStatesThread()
                 // std::cout<<current_joint_config_buffer_.joint_data.back().position.at(0)<<std::endl;
                 current_joint_config_buffer_.mtx.unlock();
             }
+            else
+            {
+                std::cout << "Failed to extract pose data" << std::endl; 
+                is_connected_ = false;
+                // Wait for other threads to halt
+                std::this_thread::sleep_for(std::chrono::milliseconds(END_OF_HOME_DELAY));
+                std::cout << "Closing serial connection" << std::endl; 
+                dobot_serial_->closeConnection();
+                std::this_thread::sleep_for(std::chrono::milliseconds(SERIAL_RESET_DELAY));
+                std::cout << "Starting serial connection" << std::endl; 
+                dobot_serial_->startConnection();
+                std::this_thread::sleep_for(std::chrono::milliseconds(SERIAL_RESET_DELAY));  
+                while(!dobot_serial_->isConnected())
+                {
+                    std::cout <<  dobot_serial_->isConnected() << std::endl;
+                }
+                is_connected_ = true;
+                std::cout << "Robot is now ready to receive commands." << std::endl; 
+                continue;
+            }
+        }
+        else
+        {
+            std::cout << "Failed to read pose data" << std::endl;
+            is_connected_ = false;
+            // Wait for other threads to halt
+            std::this_thread::sleep_for(std::chrono::milliseconds(END_OF_HOME_DELAY));
+            std::cout << "Closing serial connection" << std::endl; 
+            dobot_serial_->closeConnection();
+            std::this_thread::sleep_for(std::chrono::milliseconds(SERIAL_RESET_DELAY));
+            std::cout << "Starting serial connection" << std::endl; 
+            dobot_serial_->startConnection();
+            std::this_thread::sleep_for(std::chrono::milliseconds(SERIAL_RESET_DELAY));  
+            while(!dobot_serial_->isConnected())
+            {
+                std::cout <<  dobot_serial_->isConnected() << std::endl;
+            }
+            is_connected_ = true;
+            std::cout << "Robot is now ready to receive commands." << std::endl; 
+            continue;
         }
 
         // #### UPDATE ROBOT IO STATES #####
@@ -321,7 +374,6 @@ void DobotStates::updateRobotStatesThread()
 
         io_state_.mtx.unlock();
         
-
         // #### UPDATE LINEAR RAIL STATUS ####
         raw_serial_data.clear();
         result = dobot_serial_->getLinearRailStatus(raw_serial_data);
@@ -413,7 +465,7 @@ bool DobotStates::initialiseRobot()
 
     dobot_serial_->setPTPCmd(4,start_joint_angle_); 
 
-    std::cout<<is_on_rail_<<std::endl;
+    // std::cout<<is_on_rail_<<std::endl;
 
     dobot_serial_->setLinearRailStatus(is_on_rail_,0,0);  
     dobot_serial_->setHOMECmd();

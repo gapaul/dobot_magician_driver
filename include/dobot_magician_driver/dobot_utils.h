@@ -32,7 +32,9 @@ struct CustomCommand
 
 // dobot_state.h
 
-#define UPDATE_THREAD_DELAY_MS 50 
+#define UPDATE_THREAD_DELAY_MS 25
+#define SERIAL_RESET_DELAY 500
+#define END_OF_HOME_DELAY 10000
 
 // Robot state
 
