@@ -14,6 +14,7 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "trajectory_msgs/JointTrajectory.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/UInt8MultiArray.h"
 #include "std_msgs/UInt8.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
@@ -108,7 +109,7 @@ class DobotRosWrapper
         void endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg);
         void jointTargetCallback(const trajectory_msgs::JointTrajectoryConstPtr& msg);
 
-        void toolStateCallback(const std_msgs::BoolConstPtr& msg);
+        void toolStateCallback(const std_msgs::UInt8MultiArrayConstPtr& msg);
 
         void safetyStateCallback(const std_msgs::UInt8ConstPtr& msg);
 

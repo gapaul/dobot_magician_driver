@@ -26,6 +26,7 @@ class DobotController
         bool moveToTargetPose();
 
         void setToolState(bool state);
+        void setToolState(bool state, bool enable);
         bool getToolState();
 
         void setIOState(int address, int multiplex, std::vector<double> data);

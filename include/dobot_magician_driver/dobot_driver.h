@@ -53,8 +53,10 @@ class DobotDriver
         // #TODO: Trajectory
 
         // Tool state
-        void setToolState(bool state);
+        void setSuctionCupState(bool state);
         bool getToolState();
+
+        void setGripperState(bool state, bool enable);
 
         // Safety State
         SafetyState getRobotSafetyState();

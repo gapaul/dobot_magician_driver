@@ -108,6 +108,18 @@ void DobotController::setToolState(bool state)
     dobot_serial_->setEndEffectorSuctionCup(state,state);
 }
 
+void DobotController::setToolState(bool state, bool enable)
+{
+    if(!dobot_serial_->isConnected())
+    {
+        return;
+    }
+
+    tool_state_ = state;
+
+    dobot_serial_->setEndEffectorGripper(state,enable);
+}
+
 bool DobotController::getToolState()
 {
     if(!dobot_serial_->isConnected())
