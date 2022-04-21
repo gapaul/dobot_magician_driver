@@ -2,21 +2,10 @@
 The dobot_magician_driver provides a ROS interface to communicate with the Dobot Magician.
 Please refer to wiki for more detailed instructions on how to install dobot_magician_driver to raspberry pi and interface with Matlab. 
 ## Dependencies
-This package requires lib serial 
-
-```
-sudo apt install libserial-dev
-```
+This package requires lib serial. Please refer to the wiki for installation instruction.
 
 ## Installation
-To build from source
-```
-mkdir -p ~/catkin_ws/src 
-cd ~/catkin_ws/src
-git clone https://github.com/gapaul/dobot_magician_driver.git
-cd ..
-catkin_make
-```
+Please refer to the wiki for installation instruction.
 
 Configuring udev rules
 

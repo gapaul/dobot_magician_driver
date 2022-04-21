@@ -152,7 +152,7 @@ void DobotDriver::driverUpdateThread()
     }
 }
 
-void DobotDriver::setToolState(bool state)
+void DobotDriver::setSuctionCupState(bool state)
 {
     dobot_controller_->setToolState(state);
 }
@@ -160,6 +160,11 @@ void DobotDriver::setToolState(bool state)
 bool DobotDriver::getToolState()
 {
     return dobot_controller_->getToolState();
+}
+
+void DobotDriver::setGripperState(bool state, bool enable)
+{
+    return dobot_controller_->setToolState(state, enable);
 }
 
 void DobotDriver::setEStop()

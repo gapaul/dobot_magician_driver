@@ -36,6 +36,8 @@ class DobotStates
         void setOnRail(bool on_rail);
         bool getRailStatus();
 
+        bool isConnected();
+
         // Safety status
         bool setEStop();
         bool setOperate();
@@ -51,6 +53,7 @@ class DobotStates
 
         // Robot connection
         bool is_connected_;
+        
 
         std::shared_ptr<DobotCommunication> dobot_serial_;
 

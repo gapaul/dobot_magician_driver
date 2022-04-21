@@ -235,6 +235,10 @@ void DobotRosWrapper::robotControlThread()
 
     while(ros::ok())
     {
+        if(!dobot_states_manager_ ->isConnected())
+        {
+            continue;
+        }
         // Control loop
         // If receives target joints and robot is not moving, move joints
         if(target_joint_data_.received)
@@ -303,9 +307,16 @@ void DobotRosWrapper::endEffectorTargetPoseCallback(const geometry_msgs::PoseCon
     target_end_effector_pose_data_.received = true;
 }
 
-void DobotRosWrapper::toolStateCallback(const std_msgs::BoolConstPtr& msg)
+void DobotRosWrapper::toolStateCallback(const std_msgs::UInt8MultiArrayConstPtr& msg)
 {
-    dobot_driver_->setToolState(msg->data);
+    if(msg->data.size() > 1)
+    {
+        dobot_driver_->setGripperState((bool)msg->data.at(0),(bool)msg->data.at(1));
+    }
+    else
+    {
+        dobot_driver_->setSuctionCupState((bool)msg->data.at(0));
+    }
 }
 
 void DobotRosWrapper::safetyStateCallback(const std_msgs::UInt8ConstPtr& msg)

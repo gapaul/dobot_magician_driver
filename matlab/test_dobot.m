@@ -44,8 +44,8 @@ dobot.SetRobotOnRail(true);
 %% Reinitialise robot. It should perform homing with the linear rail
 dobot.InitaliseRobot();
 
-%% Move the rail to the position of 0.5
-dobot.MoveRailToPosition(0.0);
+%% Move the rail to the position of 0.1
+dobot.MoveRailToPosition(0.1);
 
 %% Set Rail status to false
 dobot.SetRobotOnRail(false);
