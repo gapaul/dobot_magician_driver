@@ -17,3 +17,7 @@ Run the following command
 ```
 roslaunch dobot_magician_driver dobot_magician.launch
 ```
+
+## TODO
+- Remove the need of using udev to support multiple dobots
+- Allow the node to keep running in cases where the robot is not connected
