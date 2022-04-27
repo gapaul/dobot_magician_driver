@@ -9,7 +9,8 @@
 #include <limits>
 #include <cmath>
 
-
+#include <libusb.h>
+#include <signal.h>
 #include <libserial/SerialPort.h>
 #include <libserial/SerialStream.h>
 #include <libserial/SerialStreamBuf.h>
@@ -375,6 +376,9 @@ class DobotCommunication
 
     private:
 
+        // Usb related
+        uint16_t product_id_;
+        uint16_t vendor_id_;
         std::string port_;
 
         LibSerial::BaudRate baud_;
@@ -437,6 +441,13 @@ class DobotCommunication
          * @return bool: indicates whether data was read from the port
          */
         bool tryReadByte(uint8_t &next_char);
+        /**
+         * @brief 
+         * 
+         * @return true 
+         * @return false 
+         */
+        bool portReady();
 };
 
 #endif /* DOBOT_COMMUNICATION_H_ */

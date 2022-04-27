@@ -63,6 +63,9 @@ void DobotRosWrapper::init()
 {
     // Establish communication with hardware
     dobot_serial_ = std::shared_ptr<DobotCommunication>(new DobotCommunication());
+    // Blocking function
+    // If the dobot usb cable is not connected, it should wait until the dobot is connected.
+    // We can add a timeout here to force a shutdown if it takes the robot too long to connect.
     dobot_serial_->init(port_);
     dobot_serial_->startConnection();
 
@@ -430,7 +433,8 @@ int main(int argc, char** argv)
 
     DobotRosWrapper db_ros(nh,pn,port);
     
-    ROS_INFO("Initialising Wrapper.");
+    ROS_INFO("Initialising Wrapper. This should block the node until the dobot \
+    is ready to receive commands.");
     db_ros.init();
 
     ROS_INFO("Starting Wrapper.");
