@@ -247,14 +247,12 @@ void DobotRosWrapper::robotControlThread()
         if(target_joint_data_.received)
         {
             bool result = moveToTargetJoints();
-            // std::cout<<"Result: " << result << std::endl;
             target_joint_data_.received = false;
         }
         // If receives target pose and robot is not moving, move to pose
         if(target_end_effector_pose_data_.received)
         {
             bool result = moveToTargetEndEffectorPose();
-            // std::cout<<"Result: " << result << std::endl;
             target_end_effector_pose_data_.received = false;
         }
 

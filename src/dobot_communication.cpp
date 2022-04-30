@@ -63,7 +63,6 @@ bool DobotCommunication::isConnected()
     }
     catch (const std::exception &e)
     {
-        std::cout << "Failed to query serial state" << std::endl;
         serial_state = false;
     }
 
@@ -81,7 +80,6 @@ bool DobotCommunication::closeConnection()
     }
     catch (const std::exception &e)
     {
-        std::cout << "Failed to query serial state" << std::endl;
         serial_state = false;
     }
 
@@ -186,7 +184,6 @@ void DobotCommunication::packFromFloat(std::vector<float> &value_to_pack, std::v
         for (int j = 0; j < 4; ++j)
         {
             packed_floats.push_back(bytes_temp[j]);
-            //            std::cout << "byte " << j << ": " << std::hex << (int)(bytes_temp[j]) << std::endl;
         }
     }
 }
@@ -967,7 +964,7 @@ bool DobotCommunication::portReady()
     ssize_t cnt = libusb_get_device_list(ctx, &usb_devices); //get the list of devices
     if (cnt < 0)
     {
-        std::cout << "Get Device Error" << std::endl; //there was an error
+        
     }
     for (ssize_t i = 0; i < cnt; i++)
     {
@@ -979,8 +976,6 @@ bool DobotCommunication::portReady()
         }
         if(desc.idVendor == vendor_id_ && desc.idProduct == product_id_)
         {
-            std::cout << "VendorID: " << desc.idVendor << "  ";
-            std::cout << "ProductID: " << desc.idProduct << std::endl;
             // Found the device. Exit the loop
             ready = true;
             break;
