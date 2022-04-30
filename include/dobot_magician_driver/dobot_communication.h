@@ -24,7 +24,7 @@ class DobotCommunication
         DobotCommunication();
         ~DobotCommunication();
 
-        void init(std::string port);
+        bool init(std::string port);
 
         bool startConnection();
         bool closeConnection();

@@ -62,26 +62,38 @@ DobotRosWrapper::~DobotRosWrapper()
 void DobotRosWrapper::init()
 {
     // Establish communication with hardware
+    ROS_DEBUG("DobotRosWrapper: Initialising serial comms module");
     dobot_serial_ = std::shared_ptr<DobotCommunication>(new DobotCommunication());
     // Blocking function
     // If the dobot usb cable is not connected, it should wait until the dobot is connected.
     // We can add a timeout here to force a shutdown if it takes the robot too long to connect.
-    dobot_serial_->init(port_);
+    
+    ROS_INFO("DobotRosWrapper: Serial comms initialised. Looking for usb port now (60s timeout)...");
+    bool found_port = dobot_serial_->init(port_);
+    ROS_INFO_COND(found_port, "DobotRosWrapper: Found usb port. Opening port now...", "DobotRosWrapper: Unable to find usb port. Shutting down...");
+    if(!found_port)
+    {
+        exit(1);
+    }
     dobot_serial_->startConnection();
 
     // Initialise state manager
+    ROS_DEBUG("DobotRosWrapper: Intialising State Manager");
     dobot_states_manager_ = std::shared_ptr<DobotStates>(new DobotStates);
     dobot_states_manager_->init(dobot_serial_);
     dobot_states_manager_->run();
 
     // Initialise controller
+    ROS_DEBUG("DobotRosWrapper: Intialising Controller");
     dobot_controller_ = std::shared_ptr<DobotController>(new DobotController);
     dobot_controller_->init(dobot_serial_);
 
     // Wait for hardware controller and state manager to start updating data
+    ROS_DEBUG("DobotRosWrapper: Allowing State Manager and Controller some time to update data...");
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     // Initialise driver
+    ROS_INFO("DobotRosWrapper: Intialising dobot magician driver");
     dobot_driver_ = std::shared_ptr<DobotDriver>(new DobotDriver);
     dobot_driver_->init(dobot_states_manager_, dobot_controller_);
 
@@ -89,15 +101,20 @@ void DobotRosWrapper::init()
     dobot_driver_->run();
 
     // Initialise robot
-    ROS_INFO("DobotRosWrapper: this thread will sleep for Dobot initialise sequence");
+    ROS_INFO("DobotRosWrapper: Intialising ROS wrapper for dobot magician driver");
+    ROS_INFO("DobotRosWrapper: This thread will sleep for Dobot initialise sequence");
     dobot_driver_->initialiseRobot();
-    ROS_INFO("DobotRosWrapper: this thread will now wake up");
+    ROS_INFO("DobotRosWrapper: This thread will now wake up");
 }
 
 void DobotRosWrapper::run()
 {
+    ROS_INFO("DobotRosWrapper: Starting state updater thread...");
     update_state_thread_ = new std::thread(&DobotRosWrapper::updateStateThread, this);
+    ROS_INFO("DobotRosWrapper: Starting controller thread...");
     robot_control_thread_ = new std::thread(&DobotRosWrapper::robotControlThread, this);
+
+    ROS_INFO("DobotRosWrapper: Robot is ready to receive commands.");
 }
 
 void DobotRosWrapper::updateStateThread()
@@ -268,7 +285,7 @@ void DobotRosWrapper::robotControlThread()
 
 void DobotRosWrapper::jointTargetCallback(const trajectory_msgs::JointTrajectoryConstPtr& msg)
 {
-    ROS_INFO("New target joint configurations received !!");
+    ROS_INFO("DobotRosWrapper: New target joint configurations received !!");
 
     JointConfiguration target_joint;
 
@@ -289,7 +306,7 @@ void DobotRosWrapper::jointTargetCallback(const trajectory_msgs::JointTrajectory
 
 void DobotRosWrapper::endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg)
 {
-    ROS_INFO("New target end effector pose received !!");
+    ROS_INFO("DobotRosWrapper: New target end effector pose received !!");
 
     Pose target_pose;
     
@@ -310,6 +327,7 @@ void DobotRosWrapper::endEffectorTargetPoseCallback(const geometry_msgs::PoseCon
 
 void DobotRosWrapper::toolStateCallback(const std_msgs::UInt8MultiArrayConstPtr& msg)
 {
+    ROS_INFO("DobotRosWrapper: New tool state received !!");
     if(msg->data.size() > 1)
     {
         dobot_driver_->setGripperState((bool)msg->data.at(0),(bool)msg->data.at(1));
@@ -322,6 +340,7 @@ void DobotRosWrapper::toolStateCallback(const std_msgs::UInt8MultiArrayConstPtr&
 
 void DobotRosWrapper::safetyStateCallback(const std_msgs::UInt8ConstPtr& msg)
 {
+    ROS_INFO("DobotRosWrapper: New safety state received !!");
     switch(msg->data)
     {
         case INITIALISING:
@@ -347,11 +366,13 @@ void DobotRosWrapper::safetyStateCallback(const std_msgs::UInt8ConstPtr& msg)
 
 void DobotRosWrapper::linearRailStateCallback(const std_msgs::BoolConstPtr& msg)
 {
+    ROS_INFO("DobotRosWrapper: New linear rail state received !!");
     dobot_driver_->isRobotOnLinearRail(msg->data);
 }
 
 void DobotRosWrapper::targetRailPositionCallback(const std_msgs::Float64ConstPtr& msg)
 {
+    ROS_INFO("DobotRosWrapper: New linear rail position received !!");
     double target_position = msg->data;
 
     dobot_driver_->setTargetRailPosition(target_position * 1000);
@@ -361,7 +382,7 @@ void DobotRosWrapper::targetRailPositionCallback(const std_msgs::Float64ConstPtr
 void DobotRosWrapper::eMotorCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
 {
     // TODO: Convert to position control
-
+    ROS_INFO("DobotRosWrapper: New e Motor state received !!");
     std::vector<double> data = msg->data;
     if(msg->data.size() < 2)
     {
@@ -373,6 +394,7 @@ void DobotRosWrapper::eMotorCallback(const std_msgs::Float64MultiArrayConstPtr& 
 
 void DobotRosWrapper::ioStateCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
 {
+    ROS_INFO("DobotRosWrapper: New IO state received !!");
     if(msg->data.size() < 3)
     {
         return;
@@ -392,6 +414,7 @@ void DobotRosWrapper::ioStateCallback(const std_msgs::Float64MultiArrayConstPtr&
 
 void DobotRosWrapper::customCommandCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
 {
+    ROS_INFO("DobotRosWrapper: New custom command received !!");
     mtx_.lock();
     custom_command_ = msg->data;
 
@@ -417,6 +440,10 @@ bool DobotRosWrapper::moveToTargetEndEffectorPose()
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "dobot_magician_node");
+
+    // Set verbosity level to Info
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
+
     std::string port;
     ros::AsyncSpinner spinner(3);
     
@@ -431,11 +458,10 @@ int main(int argc, char** argv)
 
     DobotRosWrapper db_ros(nh,pn,port);
     
-    ROS_INFO("Initialising Wrapper. This should block the node until the dobot \
-    is ready to receive commands.");
+    ROS_INFO("DobotRosWrapper: Initialising Wrapper. This should block the node until the dobot is ready to receive commands.");
     db_ros.init();
 
-    ROS_INFO("Starting Wrapper.");
+    ROS_INFO("DobotRosWrapper: Starting Wrapper.");
     db_ros.run();
 
     spinner.start();
@@ -444,6 +470,8 @@ int main(int argc, char** argv)
     {
         rate.sleep();
     }
+
+    ROS_INFO("DobotRosWrapper: Shutting down...");
     spinner.stop();
     ros::waitForShutdown();
     return 0;

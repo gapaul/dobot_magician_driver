@@ -17,30 +17,26 @@ DobotCommunication::~DobotCommunication()
     serial_port_->Close();
 }
 
-void DobotCommunication::init(std::string port)
+bool DobotCommunication::init(std::string port)
 {
     // Evaluate the port first
     // Wait until port is ready or until timeout
     unsigned long start_time = std::chrono::duration_cast<std::chrono::seconds>(
-                            std::chrono::system_clock::now().time_since_epoch()).count();
-    while (true)
+                                   std::chrono::system_clock::now().time_since_epoch())
+                                   .count();
+    while (!portReady())
     {
         unsigned long current_time = std::chrono::duration_cast<std::chrono::seconds>(
-                                    std::chrono::system_clock::now().time_since_epoch()).count();
-        // If the dobot usb port is detected then we resume with operation
-        if(portReady())
+                                         std::chrono::system_clock::now().time_since_epoch())
+                                         .count();
+        if(current_time > start_time + 60)
         {
-            break;
-        }
-        // If this has waited for 60s => exit immediately
-        if(current_time - start_time > 60)
-        {
-            exit(0);
+            return false;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-
     port_ = port;
+    return true;
 }
 
 bool DobotCommunication::startConnection()
@@ -964,7 +960,6 @@ bool DobotCommunication::portReady()
     ssize_t cnt = libusb_get_device_list(ctx, &usb_devices); //get the list of devices
     if (cnt < 0)
     {
-        
     }
     for (ssize_t i = 0; i < cnt; i++)
     {
@@ -974,13 +969,12 @@ bool DobotCommunication::portReady()
         {
             // We should raise error here
         }
-        if(desc.idVendor == vendor_id_ && desc.idProduct == product_id_)
+        if (desc.idVendor == vendor_id_ && desc.idProduct == product_id_)
         {
             // Found the device. Exit the loop
             ready = true;
             break;
         }
-        
     }
     libusb_free_device_list(usb_devices, 1); //free the list, unref the devices in it
     libusb_exit(ctx);                        //close the session
