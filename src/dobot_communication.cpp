@@ -29,7 +29,7 @@ bool DobotCommunication::init(std::string port)
         unsigned long current_time = std::chrono::duration_cast<std::chrono::seconds>(
                                          std::chrono::system_clock::now().time_since_epoch())
                                          .count();
-        if(current_time > start_time + 60)
+        if(current_time > start_time + 360)
         {
             return false;
         }
