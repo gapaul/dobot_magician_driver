@@ -1,2 +1,0 @@
-KERNEL=="ttyUSB?" ATTRS{idProduct}=="7523" ATTRS{bDeviceClass}=="ff" ATTRS{product}=="USB2.0-Serial" SYMLINK+="dobot_magician"
-#KERNEL=="ttyACM?", ATTRS{manufacturer}=="Arduino (www.arduino.cc)", ATTRS{serial}=="7533531323735140D032", SYMLINK+="dobot_magician_uno"

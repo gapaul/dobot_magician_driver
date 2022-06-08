@@ -9,7 +9,6 @@ project(dobot_magician_driver)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
-  message_generation
   roscpp
   sensor_msgs
   std_msgs
@@ -21,7 +20,8 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system signals)
 
 find_package(PkgConfig)
-pkg_check_modules(SERIAL libserial)
+pkg_check_modules(SERIAL REQUIRED libserial)
+pkg_search_module(LIBUSB1 REQUIRED libusb-1.0)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -79,7 +79,6 @@ pkg_check_modules(SERIAL libserial)
 #    SetInitialise.srv
 #    SetLinearRail.srv
 #    SetTargetPointsWithRail.srv
-
 #   Service1.srv
 #   Service2.srv
 #  )
@@ -92,10 +91,10 @@ pkg_check_modules(SERIAL libserial)
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-#   geometry_msgs#   sensor_msgs#   std_msgs
- )
+#  generate_messages(
+#    DEPENDENCIES
+# #   geometry_msgs#   sensor_msgs#   std_msgs
+#  )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -142,6 +141,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  SYSTEM ${LIBUSB1_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -178,6 +178,7 @@ include_directories(
 ## Specify libraries to link a library or executable target against
  target_link_libraries(dobot_magician_driver
    PRIVATE ${SERIAL_LDFLAGS}
+   PRIVATE ${LIBUSB1_LDFLAGS}
    ${catkin_LIBRARIES}
  )
 
