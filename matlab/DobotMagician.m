@@ -87,8 +87,8 @@ classdef DobotMagician < handle
            send(self.targetEndEffectorPub,self.targetEndEffectorMsg);
        end
        
-       function PublishToolState(self,state)
-           self.toolStateMsg.Data = state;
+       function PublishToolState(self,onOff,openClose)
+           self.toolStateMsg.Data = [onOff,openClose];
            send(self.toolStatePub,self.toolStateMsg);
        end
 
