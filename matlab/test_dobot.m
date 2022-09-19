@@ -19,10 +19,20 @@ end_effector_rotation = [0,0,0];
 dobot.PublishEndEffectorPose(end_effector_position,end_effector_rotation);
 
 %% Turn on tool
-dobot.PublishToolState(true);
+% Open tool
+onOff = 1;
+openClose = 1;
+dobot.PublishToolState(onOff,openClose);
+%%
+% Close tool
+onOff = 1;
+openClose = 0;
+dobot.PublishToolState(onOff,openClose);
 
 %% Turn off tool
-dobot.PublishToolState(false);
+onOff = 0;
+openClose = 0;
+dobot.PublishToolState(onOff,openClose);
 
 %% Test ESTOP 
 %% Send this first
