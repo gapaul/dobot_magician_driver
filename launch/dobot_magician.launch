@@ -6,7 +6,7 @@
 -->
 
   <arg name="port_name" default="ttyUSB0"/>
-  <node pkg="dobot_magician_driver" type="dobot_magician_driver" ns="$(arg port_name)" name="dobot_magician_node" output="screen">
+  <node pkg="dobot_magician_driver" type="dobot_magician_driver" ns="dobot_magician" name="dobot_magician_node" output="screen">
     <param name="port" value="/dev/$(arg port_name)"/>
   </node>
 
