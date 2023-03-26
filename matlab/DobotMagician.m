@@ -40,17 +40,16 @@ classdef DobotMagician < handle
    methods(Access = public)
        function self = DobotMagician()
            % Initialise subs and pubs as object starts
-
            self.jointStateSub = rossubscriber('/dobot_magician/joint_states');
            self.endEffectorStateSub = rossubscriber('/dobot_magician/end_effector_poses');
            
            self.ioStatusSub = rossubscriber('/dobot_magician/io_data');
            
-           % Publisher for joint traj traj control (WIP) For now it can
+           % Publisher for joint traj traj control (WIP). For now it can
            % only receive one configuration
           [self.targetJointTrajPub,self.targetJointTrajMsg] = rospublisher('/dobot_magician/target_joint_states');
           
-          % Publisher for end effector control (WIP) For now it can only
+          % Publisher for end effector control (WIP). For now it can only
           % receive one target pose
           [self.targetEndEffectorPub,self.targetEndEffectorMsg] = rospublisher('/dobot_magician/target_end_effector_pose');
           
