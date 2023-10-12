@@ -44,6 +44,8 @@ class DobotController
         void setTargetJointVelocity(JointConfiguration joint_vel_config);
         bool moveWithTargetVelocity();
 
+        bool setServoJ(const std::vector<double> &vel, const std::vector<double> &accel);
+
     private:
 
         std::shared_ptr<DobotCommunication> dobot_serial_;

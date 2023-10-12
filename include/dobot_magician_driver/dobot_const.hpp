@@ -1,0 +1,91 @@
+#ifndef DOBOT_MAGICIAN_DRIVER__DOBOT_CONST_HPP_
+#define DOBOT_MAGICIAN_DRIVER__DOBOT_CONST_HPP_
+
+namespace DobotMagician
+{
+  enum class ProtocolID
+  {
+    DEVICE_SN = 0,
+    DEVICE_NAME = 1,
+    DEVICE_VERSION = 2,
+    DEVICE_WITH_L = 3,
+    DEVICE_TIME = 4,
+    DEVICE_ID = 5,
+    GET_POSE = 10,
+    RESET_POSE = 11,
+    GET_POSE_L = 13,
+    ALARM_STATE = 20,
+    CLEAR_ALARM_STATE = 21,
+    HOME_PARAMS = 30,
+    HOME_CMD = 21,
+    END_EFFECTOR_POSE = 60,
+    END_EFFECTOR_LASER = 61,
+    END_EFFECTOR_SUCTION_CUP = 62,
+    END_EFFECTOR_GRIPPER = 63,
+    JOG_JOINT_PARAMS = 70,
+    JOG_COORDINATE_PARAMS = 71,
+    JOG_COMMON_PARAMS = 72,
+    JOG_CMD = 73,
+    JOG_L_PARAMS = 74,
+    PTP_JOINT_PARAMS = 80,
+    PTP_COORDINATE_PARAMS = 81,
+    PTP_JUMP_PARAMS = 82,
+    PTP_COMMON_PARAMS = 83,
+    PTP_CMD = 84,
+    PTP_L_PARAMS = 85,
+    PTP_WITH_L_CMD = 86,
+    PTP_JUMP2_PARAMS = 87,
+    PTP_PO_CMD = 88,
+    PTP_PO_WITH_L_CMD = 89,
+    CP_PARAMS = 90,
+    CP_CMD = 91,
+    CPE_COMD = 92,
+    IO_MULTIPLEX = 130,
+    IODO = 131,
+    IOPWM = 132,
+    IODI = 133,
+    IOADC = 134,
+    EMOTOR = 135,
+    COLOR_SENSOR = 137,
+    IR_SWITCH = 138,
+    QUEUE_CMD_START = 240,
+    QUEUE_CMD_STOP = 241,
+    QUEUE_CMD_FORCE_STOP = 242,
+    QUEUE_CMD_CLEAR = 245
+  };
+
+  enum class INSTRUCTION
+  {
+    READ = 0,
+    WRITE = 1
+  };
+
+  enum class ErrorCode
+  {
+    INSTRUCTION_ERROR = 64,
+    OVERLOAD_ERROR = 32,
+    CHECKSUM_ERROR = 16,
+    RANGE_ERROR = 8,
+    OVERHEATING_ERROR = 4,
+    ANGLE_LIMIT_ERROR = 2,
+    INPUT_VOLTAGE_ERROR = 1,
+    NO_ERROR = 0,
+  };
+
+  enum class PTPMode
+  {
+    JUMP_XYZ = 0,
+    MOVEJ_XYZ = 1,
+    MOVEL_XYZ = 2,
+    JUMP_ANGLE = 3,
+    MOVEJ_ANGLE = 4,
+    MOVEL_ANGLE = 5,
+    MOVEJ_INC = 6,
+    MOVEL_INC = 7,
+    MOVEJ_XYZ_INC = 8,
+    JUMP_MOVEL_XYZ = 9,
+  };
+
+};
+
+#endif

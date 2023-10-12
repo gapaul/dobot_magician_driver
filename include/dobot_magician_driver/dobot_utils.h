@@ -349,7 +349,7 @@ enum JOGCmd
     ELBOW_UP,
     ELBOW_DOWN,
     WRIST_UP,
-    WRISR_DOWN
+    WRIST_DOWN
 };
 
 // dobot_alert.h ### TODO

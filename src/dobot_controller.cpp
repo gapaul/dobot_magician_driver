@@ -223,6 +223,22 @@ bool DobotController::moveToTargetRailPosition()
 }
 
 // Velocity Control 
+bool DobotController::setServoJ(const std::vector<double> &vel, const std::vector<double> &accel)
+{
+  std::vector<float> input;
+  std::vector<uint8_t> jog_cmd;
+  for(int i = 0; i < vel.size(); i++)
+  {
+    input.push_back((float)vel.at(i));
+  }
+  for(int i = 0; i < accel.size(); i++)
+  {
+    input.push_back((float)accel.at(i));
+  }
+  jog_cmd.push_back(JOGCmd::SHOULDER_PAN_UP)
+
+}
+
 
 void DobotController::setTargetJointVelocity(JointConfiguration joint_vel_config)
 {
