@@ -14,7 +14,7 @@ joint_target = [0.0,0.4,0.3,0.0];
 dobot.PublishTargetJoint(joint_target);
 
 %% Publish custom end effector pose
-end_effector_position = [0.2,0,0.1];
+end_effector_position = [0.2,0,0.05];
 end_effector_rotation = [0,0,0];
 dobot.PublishEndEffectorPose(end_effector_position,end_effector_rotation);
 
