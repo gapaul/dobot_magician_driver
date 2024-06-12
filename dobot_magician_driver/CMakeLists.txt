@@ -13,6 +13,11 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   tf2
+  hardware_interface
+  controller_manager
+  controller_interface
+  velocity_controllers
+  joint_limits_interface
 )
 
 ## System dependencies are found with CMake's conventions
@@ -165,6 +170,15 @@ include_directories(
     src/dobot_driver.cpp)
  add_executable(dobot_magician_driver ${${PROJECT_NAME}_SOURCES})
 
+set(${PROJECT_NAME}_SOURCES_ROS_CONTROL
+  src/dobot_ros_control.cpp
+  src/dobot_hardware_interface.cpp
+  src/dobot_communication.cpp
+  src/dobot_state.cpp
+  src/dobot_controller.cpp
+  src/dobot_driver.cpp)
+add_executable(dobot_magician_ros_control ${${PROJECT_NAME}_SOURCES_ROS_CONTROL})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -173,14 +187,21 @@ include_directories(
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
- add_dependencies(dobot_magician_driver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(dobot_magician_driver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(dobot_magician_ros_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(dobot_magician_driver
-   PRIVATE ${SERIAL_LDFLAGS}
-   PRIVATE ${LIBUSB1_LDFLAGS}
-   ${catkin_LIBRARIES}
- )
+target_link_libraries(dobot_magician_driver
+  PRIVATE ${SERIAL_LDFLAGS}
+  PRIVATE ${LIBUSB1_LDFLAGS}
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(dobot_magician_ros_control
+  PRIVATE ${SERIAL_LDFLAGS}
+  PRIVATE ${LIBUSB1_LDFLAGS}
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

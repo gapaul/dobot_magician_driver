@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Define arguments with default values -->
+  <arg name="dof" default="4" />
+  <arg name="tool" default="suction_cup" />
+  <arg name="use_camera" default="false" />
+
+  <!-- Load the robot description parameter using xacro -->
+  <param name="robot_description" command="$(find xacro)/xacro '$(find dobot_magician_description)/model/magician_standalone.urdf.xacro'
+    DOF:=$(arg dof)
+    tool:=$(arg tool)
+    use_camera:=$(arg use_camera)" />
+</launch>

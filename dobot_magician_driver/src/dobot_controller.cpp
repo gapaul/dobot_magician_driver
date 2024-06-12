@@ -67,7 +67,7 @@ bool DobotController::moveToTargetJoint()
     
     target_joint_config_buffer_.mtx.unlock();
 
-    bool result = dobot_serial_->setPTPCmd(4,target_joint_config,1);
+    bool result = dobot_serial_->setPTPCmd(4,target_joint_config,0);
 
     return result;
 }

@@ -1,0 +1,11 @@
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 10
+
+joint_group_position_controller:
+  type: position_controllers/JointGroupPositionController
+  joints:
+    - magician_joint_1
+    - magician_joint_2
+    - magician_joint_3
+    - magician_joint_4
