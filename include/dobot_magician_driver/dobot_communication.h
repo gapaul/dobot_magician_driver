@@ -377,8 +377,10 @@ class DobotCommunication
     private:
 
         // Usb related
-        uint16_t product_id_;
-        uint16_t vendor_id_;
+        uint16_t product_id_1;
+        uint16_t vendor_id_1;
+        uint16_t product_id_2;
+        uint16_t vendor_id_2;
         std::string port_;
 
         LibSerial::BaudRate baud_;

@@ -8,8 +8,14 @@ DobotCommunication::DobotCommunication() : baud_(LibSerial::BaudRate::BAUD_11520
                                            try_limit_(TRY_LIMIT)
 {
     serial_port_ = new LibSerial::SerialPort();
-    product_id_ = 0x7523;
-    vendor_id_ = 0x1a86;
+
+    // New motherboard ID
+    product_id_1 = 0x55d4;
+    vendor_id_1 = 0x1a86;
+
+    // Old motherboard ID
+    product_id_2 = 0x7523;
+    vendor_id_2 = 0x1a86;
 }
 
 DobotCommunication::~DobotCommunication()
@@ -29,7 +35,7 @@ bool DobotCommunication::init(std::string port)
         unsigned long current_time = std::chrono::duration_cast<std::chrono::seconds>(
                                          std::chrono::system_clock::now().time_since_epoch())
                                          .count();
-        if(current_time > start_time + 360)
+        if(current_time > start_time + 10)
         {
             return false;
         }
@@ -969,9 +975,15 @@ bool DobotCommunication::portReady()
         {
             // We should raise error here
         }
-        if (desc.idVendor == vendor_id_ && desc.idProduct == product_id_)
+        if (desc.idVendor == vendor_id_1 && desc.idProduct == product_id_1)
         {
-            // Found the device. Exit the loop
+            // Found the device with new motherboard. Exit the loop
+            ready = true;
+            break;
+        }
+        if (desc.idVendor == vendor_id_2 && desc.idProduct == product_id_2)
+        {
+            // Found the device with old motherboard. Exit the loop
             ready = true;
             break;
         }
