@@ -44,6 +44,35 @@ void initialiseDobotHardware(std::shared_ptr<DobotDriver> dobot_driver, std::str
     ROS_INFO("DobotROSControl: This thread will now wake up");
 }
 
+void switchControllers(const std::vector<std::string>& controllers)
+{
+    ros::NodeHandle nh;
+    if (!ros::service::waitForService("/controller_manager/switch_controller", ros::Duration(10.0)))
+    {
+        ROS_ERROR("DobotROSControl: Controller manager switch service not available.");
+        return;
+    }
+
+    for (const auto& controller : controllers)
+    {
+        controller_manager_msgs::SwitchController switch_srv;
+        switch_srv.request.start_controllers.push_back(controller);
+        switch_srv.request.strictness = controller_manager_msgs::SwitchController::Request::BEST_EFFORT;
+        switch_srv.request.start_asap = true;
+        switch_srv.request.timeout = 3.0;
+
+        if (!ros::service::call("/controller_manager/switch_controller", switch_srv))
+        {
+            ROS_ERROR("Failed to start %s", controller.c_str());
+        }
+        else
+        {
+            ROS_INFO("Started %s", controller.c_str());
+        }
+    }
+}
+
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "dobot_magician_ros_control");
@@ -72,7 +101,25 @@ int main(int argc, char** argv)
     DobotHardwareInterface dobot_hw_interface(nh, dobot_driver);
     controller_manager::ControllerManager controller_manager(&dobot_hw_interface, nh);
 
-    ros::Rate rate(10); // 50 Hz control loop
+    std::vector<std::string> controllers = {"joint_state_controller", "joint_group_position_controller"};
+
+    // Load the ros_controllers
+    for (const auto& controller : controllers)
+    {
+        if (!controller_manager.loadController(controller))
+        {
+            ROS_ERROR("Failed to load %s", controller.c_str());
+        }
+        else
+        {
+            ROS_INFO("Loaded %s", controller.c_str());
+        }
+    }
+
+    // Start controllers in a separate thread
+    std::thread switch_thread(switchControllers, controllers);
+
+    ros::Rate rate(30); // 30 Hz control loop
     spinner.start();
 
     while (ros::ok())
@@ -85,6 +132,7 @@ int main(int argc, char** argv)
 
     ROS_INFO("DobotROSControl: Shutting down...");
     spinner.stop();
+    switch_thread.join();
     ros::waitForShutdown();
     return 0;
 }

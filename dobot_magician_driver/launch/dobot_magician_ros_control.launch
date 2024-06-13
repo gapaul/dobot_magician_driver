@@ -4,19 +4,15 @@
 	- ensure you have the correct permissions to access the serial port. If you find that you don't have permissions use this command
 		sudo chmod o+rw /dev/dobot_magician 
 -->
+  <!-- Load joint controller configurations from YAML file to parameter server -->
+  <rosparam file="$(find dobot_magician_driver)/config/ros_controllers.yaml" command="load"/>
+
+  <!-- Load the robot description parameter using xacro -->
+  <param name="robot_description" command="$(find xacro)/xacro '$(find dobot_magician_description)/model/magician_standalone.urdf.xacro'" />
 
   <arg name="port_name" default="ttyUSB0"/>
   <node pkg="dobot_magician_driver" type="dobot_magician_ros_control" name="dobot_magician_ros_control" output="screen">
     <param name="port" value="/dev/$(arg port_name)"/>
   </node>
 
-  <param name="robot_description" command="$(find xacro)/xacro '$(find dobot_magician_description)/model/magician_standalone.urdf.xacro'" />
-
-  <!-- Load joint controller configurations from YAML file to parameter server -->
-  <rosparam file="$(find dobot_magician_driver)/config/ros_controllers.yaml" command="load"/>
-
-  <!-- <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
-        args="joint_state_controller joint_group_position_controller" /> -->
-
 </launch>
-

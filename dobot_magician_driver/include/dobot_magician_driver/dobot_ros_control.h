@@ -2,6 +2,7 @@
 #define DOBOT_CONTROL_NODE_H
 
 #include <ros/ros.h>
+#include <thread>
 #include <controller_manager/controller_manager.h>
 #include "dobot_magician_driver/dobot_hardware_interface.h"
 #include "dobot_magician_driver/dobot_driver.h"
