@@ -1,6 +1,6 @@
 # DOBOT Magician Driver
-The dobot_magician_driver provides a ROS interface to communicate with the Dobot Magician.
-Please refer to wiki for more detailed instructions on how to install dobot_magician_driver to raspberry pi and interface with Matlab. 
+The dobot_magician_driver provides a ROS 2 interface to communicate with the Dobot Magician.
+Please refer to [wiki](https://github.com/gapaul/dobot_magician_driver/wiki/) for more detailed instructions on how to install dobot_magician_driver to raspberry pi and interface with Matlab. 
 
 ## Features
 Current supported features are listed below:
@@ -19,7 +19,7 @@ This repository contains the dobot_magician_driver and a couple of example scrip
 - MATLAB example: A quick and easy way to communicate with the driver to control the robot, providing that the driver is already running. This example should only be used as a reference for using the driver with MATLAB. 
 
 ## Dependencies
-This package requires libserial and lubusb-1.0. Please refer to the wiki for installation instruction.
+This package requires libserial and lubusb-1.0, as well as ROS 2. Please refer to the wiki for installation instruction.
 
 ## Installation
 Please refer to the wiki for installation instruction.

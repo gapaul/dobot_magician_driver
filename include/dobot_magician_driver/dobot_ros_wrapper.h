@@ -5,19 +5,19 @@
 #include <deque>
 #include <thread>
 
-#include "ros/ros.h"
-#include "ros/console.h"
-#include "tf/tf.h"
+#include "rclcpp/rclcpp.hpp"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Matrix3x3.h"
 
-#include "sensor_msgs/JointState.h"
-#include "geometry_msgs/Pose.h"
-#include "geometry_msgs/PoseStamped.h"
-#include "trajectory_msgs/JointTrajectory.h"
-#include "std_msgs/Bool.h"
-#include "std_msgs/UInt8MultiArray.h"
-#include "std_msgs/UInt8.h"
-#include "std_msgs/Float64.h"
-#include "std_msgs/Float64MultiArray.h"
+#include "sensor_msgs/msg/joint_state.hpp"
+#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "trajectory_msgs/msg/joint_trajectory.hpp"
+#include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
+#include "std_msgs/msg/u_int8.hpp"
+#include "std_msgs/msg/float64.hpp"
+#include "std_msgs/msg/float64_multi_array.hpp"
 
 #include "dobot_driver.h"
 #include "dobot_state.h"
@@ -27,37 +27,37 @@
 
 struct PoseDataBuffer
 {
-    std::deque<geometry_msgs::Pose> pose_deq;
+    std::deque<geometry_msgs::msg::Pose> pose_deq;
     std::mutex mtx;
     std::atomic<bool> received;
 };
 
 struct JointDataBuffer
 {
-    std::deque<sensor_msgs::JointState> joint_deq;
+    std::deque<sensor_msgs::msg::JointState> joint_deq;
     std::mutex mtx;
     std::atomic<bool> received;
 };
 
 struct PoseData
 {
-    geometry_msgs::Pose pose_data;
+    geometry_msgs::msg::Pose pose_data;
     std::mutex mtx;
     std::atomic<bool> received;
 };
 
 struct JointData
 {
-    trajectory_msgs::JointTrajectoryPoint joint_data;
+    trajectory_msgs::msg::JointTrajectoryPoint joint_data;
     std::mutex mtx;
     std::atomic<bool> received;
 };
 
-class DobotRosWrapper
+class DobotRosWrapper : public rclcpp::Node
 {
     public:
 
-        DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port);
+        DobotRosWrapper(std::string node_name, std::string port);
         ~DobotRosWrapper();
 
         void init();
@@ -71,58 +71,39 @@ class DobotRosWrapper
     private: 
         
         // Private Ros stuff
-        // Node handle
-        ros::NodeHandle nh_;
-        ros::NodeHandle ph_;
-        ros::Rate rate_;
+        rclcpp::Rate rate_;
 
-        // Publisher
-        ros::Publisher joint_state_pub_;
-        ros::Publisher end_effector_state_pub_;
+        // Publishers
+        rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
+        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr end_effector_state_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr rail_position_pub_;
+        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr tool_state_pub_;
+        rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr safety_state_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr io_data_pub_;
 
-        ros::Publisher rail_position_pub_;
-
-        ros::Publisher tool_state_pub_;
-
-        ros::Publisher safety_state_pub_;
-
-        ros::Publisher io_data_pub_;
-
-        // Subscriber 
-        ros::Subscriber target_joint_traj_sub_;
-        ros::Subscriber target_end_effector_sub_;
-
-        ros::Subscriber tool_state_sub_;
-
-        ros::Subscriber safety_state_sub_;
-
-        ros::Subscriber use_linear_rail_sub_;
-        ros::Subscriber target_rail_sub_;
-
-        ros::Subscriber e_motor_sub_;
-
-        ros::Subscriber io_control_sub_;
-
-        ros::Subscriber custom_command_sub_;
+        // Subscribers 
+        rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr target_joint_traj_sub_;
+        rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr target_end_effector_sub_;
+        rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr tool_state_sub_;
+        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr safety_state_sub_;
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr use_linear_rail_sub_;
+        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr target_rail_sub_;
+        rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr e_motor_sub_;
+        rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr io_control_sub_;
+        rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr custom_command_sub_;
 
         // Callback functions
-        void endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg);
-        void jointTargetCallback(const trajectory_msgs::JointTrajectoryConstPtr& msg);
-
-        void toolStateCallback(const std_msgs::UInt8MultiArrayConstPtr& msg);
-
-        void safetyStateCallback(const std_msgs::UInt8ConstPtr& msg);
-
-        void linearRailStateCallback(const std_msgs::BoolConstPtr& msg);
-
-        void targetRailPositionCallback(const std_msgs::Float64ConstPtr& msg);
-        
-        void eMotorCallback(const std_msgs::Float64MultiArrayConstPtr& msg);
-
-        void ioStateCallback(const std_msgs::Float64MultiArrayConstPtr& msg);
+        void endEffectorTargetPoseCallback(const geometry_msgs::msg::Pose::SharedPtr msg);
+        void jointTargetCallback(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg);
+        void toolStateCallback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg);
+        void safetyStateCallback(const std_msgs::msg::UInt8::SharedPtr msg);
+        void linearRailStateCallback(const std_msgs::msg::Bool::SharedPtr msg);
+        void targetRailPositionCallback(const std_msgs::msg::Float64::SharedPtr msg);
+        void eMotorCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
+        void ioStateCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
 
         // Use this at your own risk - for development and debugging only
-        void customCommandCallback(const std_msgs::Float64MultiArrayConstPtr& msg);
+        void customCommandCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
 
     private:
 

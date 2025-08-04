@@ -1,8 +1,8 @@
 #include "dobot_magician_driver/dobot_communication.h"
 
 DobotCommunication::DobotCommunication() : baud_(LibSerial::BaudRate::BAUD_115200),
-                                           stop_bit_(LibSerial::StopBits::STOP_BITS_1),
                                            parity_(LibSerial::Parity::PARITY_NONE),
+                                           stop_bit_(LibSerial::StopBits::STOP_BITS_1),
                                            character_size_(LibSerial::CharacterSize::CHAR_SIZE_8),
                                            serial_timeout_(SERIAL_TIMEOUT),
                                            try_limit_(TRY_LIMIT)
@@ -86,7 +86,7 @@ uint8_t DobotCommunication::checksumCalc(std::vector<uint8_t> &ctrl_cmd)
 {
     uint8_t checksum = 0;
 
-    for (int i = 0; i < ctrl_cmd.size(); ++i)
+    for (size_t i = 0; i < ctrl_cmd.size(); ++i)
     { //Add the values of the 'payload' only
         checksum += ctrl_cmd.at(i);
     }
@@ -172,8 +172,7 @@ bool DobotCommunication::getResponse(std::vector<uint8_t> &returned_payload)
 
 void DobotCommunication::packFromFloat(std::vector<float> &value_to_pack, std::vector<uint8_t> &packed_floats)
 {
-
-    for (int i = 0; i < value_to_pack.size(); ++i)
+    for (size_t i = 0; i < value_to_pack.size(); ++i)
     {
         uint8_t bytes_temp[4];
         floatToByte(value_to_pack[i], bytes_temp);
@@ -186,7 +185,7 @@ void DobotCommunication::packFromFloat(std::vector<float> &value_to_pack, std::v
 
 void DobotCommunication::packFromDouble(std::vector<double> &value_to_pack, std::vector<uint8_t> &packed_doubles)
 {
-    for (int i = 0; i < value_to_pack.size(); ++i)
+    for (size_t i = 0; i < value_to_pack.size(); ++i)
     {
         uint8_t bytes_temp[8];
         doubleToByte(value_to_pack[i], bytes_temp);

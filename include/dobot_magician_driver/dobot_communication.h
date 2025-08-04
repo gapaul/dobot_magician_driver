@@ -9,7 +9,11 @@
 #include <limits>
 #include <cmath>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <libusb.h>
+#pragma GCC diagnostic pop
+
 #include <signal.h>
 #include <libserial/SerialPort.h>
 #include <libserial/SerialStream.h>

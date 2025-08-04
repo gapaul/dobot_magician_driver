@@ -151,7 +151,6 @@ void DobotStates::updateRobotStatesThread()
     std::vector<double> config_data;
 
     Pose pose_data;
-    Pose pre_pose_data;
 
     Pose rail_pos_data;
     rail_pos_data.x = 0;
@@ -223,7 +222,7 @@ void DobotStates::updateRobotStatesThread()
                 {
                     pre_joint_data = current_joint_config_buffer_.joint_data.back();
 
-                    for (int i = 0; i < pre_joint_data.position.size(); i++)
+                    for (size_t i = 0; i < pre_joint_data.position.size(); i++)
                     {
 
                         end_time = std::chrono::system_clock::now();
@@ -469,7 +468,7 @@ bool DobotStates::getRailStatus()
 {
     std::vector<uint8_t> raw_serial_data;
 
-    bool result = dobot_serial_->getLinearRailStatus(raw_serial_data);
+    dobot_serial_->getLinearRailStatus(raw_serial_data);  // Remove unused result variable
     return is_on_rail_;
 }
 

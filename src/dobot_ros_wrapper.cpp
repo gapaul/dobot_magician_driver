@@ -1,51 +1,70 @@
 #include "dobot_magician_driver/dobot_ros_wrapper.h"
 
-DobotRosWrapper::DobotRosWrapper(ros::NodeHandle &nh, ros::NodeHandle &pn, std::string port)
-    : nh_(nh)
-    , ph_(pn)
+DobotRosWrapper::DobotRosWrapper(std::string node_name, std::string port)
+    : Node(node_name)
     , rate_(10)
 {
     port_ = port;
 
     // Publishers
     // Robot States
-    joint_state_pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
-    end_effector_state_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("end_effector_poses", 1);
+    joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 1);
+    end_effector_state_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("end_effector_poses", 1);
     
     // Tool state
-    tool_state_pub_ = nh_.advertise<std_msgs::Bool>("tool_state",1);
+    tool_state_pub_ = this->create_publisher<std_msgs::msg::Bool>("tool_state", 1);
 
     // Safety state
-    safety_state_pub_ = nh_.advertise<std_msgs::UInt8>("safety_status",1);
+    safety_state_pub_ = this->create_publisher<std_msgs::msg::UInt8>("safety_status", 1);
 
     // Rail Position
-    rail_position_pub_ = nh_.advertise<std_msgs::Float64>("rail_position",1);
+    rail_position_pub_ = this->create_publisher<std_msgs::msg::Float64>("rail_position", 1);
 
-    io_data_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("io_data",1);
+    io_data_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("io_data", 1);
 
     // Subscribers
     // Robot control
-    target_joint_traj_sub_ = nh_.subscribe("target_joint_states",10,&DobotRosWrapper::jointTargetCallback,this);
-    target_end_effector_sub_ = nh_.subscribe("target_end_effector_pose",10,&DobotRosWrapper::endEffectorTargetPoseCallback,this);
+    target_joint_traj_sub_ = this->create_subscription<trajectory_msgs::msg::JointTrajectory>(
+        "target_joint_states", 10, 
+        std::bind(&DobotRosWrapper::jointTargetCallback, this, std::placeholders::_1));
+    
+    target_end_effector_sub_ = this->create_subscription<geometry_msgs::msg::Pose>(
+        "target_end_effector_pose", 10,
+        std::bind(&DobotRosWrapper::endEffectorTargetPoseCallback, this, std::placeholders::_1));
 
     // Tool control
-    tool_state_sub_ = nh_.subscribe("target_tool_state",10,&DobotRosWrapper::toolStateCallback,this);
+    tool_state_sub_ = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
+        "target_tool_state", 10,
+        std::bind(&DobotRosWrapper::toolStateCallback, this, std::placeholders::_1));
 
     // Safety state control
-    safety_state_sub_ = nh_.subscribe("target_safety_status",10,&DobotRosWrapper::safetyStateCallback,this);
+    safety_state_sub_ = this->create_subscription<std_msgs::msg::UInt8>(
+        "target_safety_status", 10,
+        std::bind(&DobotRosWrapper::safetyStateCallback, this, std::placeholders::_1));
 
     // Linear Rail control
-    use_linear_rail_sub_ = nh_.subscribe("target_rail_status",10,&DobotRosWrapper::linearRailStateCallback,this);
-    target_rail_sub_ = nh_.subscribe("target_rail_position",10,&DobotRosWrapper::targetRailPositionCallback,this);
+    use_linear_rail_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+        "target_rail_status", 10,
+        std::bind(&DobotRosWrapper::linearRailStateCallback, this, std::placeholders::_1));
+    
+    target_rail_sub_ = this->create_subscription<std_msgs::msg::Float64>(
+        "target_rail_position", 10,
+        std::bind(&DobotRosWrapper::targetRailPositionCallback, this, std::placeholders::_1));
 
     // EMotor control
-    e_motor_sub_ = nh_.subscribe("target_e_motor_state",10,&DobotRosWrapper::eMotorCallback,this);
+    e_motor_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
+        "target_e_motor_state", 10,
+        std::bind(&DobotRosWrapper::eMotorCallback, this, std::placeholders::_1));
 
     // IO control
-    io_control_sub_ = nh_.subscribe("target_io_state",10,&DobotRosWrapper::ioStateCallback,this);
+    io_control_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
+        "target_io_state", 10,
+        std::bind(&DobotRosWrapper::ioStateCallback, this, std::placeholders::_1));
 
     // Use at own risk
-    custom_command_sub_ = nh_.subscribe("custom_command",10,&DobotRosWrapper::customCommandCallback,this);
+    custom_command_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
+        "custom_command", 10,
+        std::bind(&DobotRosWrapper::customCommandCallback, this, std::placeholders::_1));
 
     target_joint_data_.received = false;
     target_end_effector_pose_data_.received = false;
@@ -62,38 +81,40 @@ DobotRosWrapper::~DobotRosWrapper()
 void DobotRosWrapper::init()
 {
     // Establish communication with hardware
-    ROS_DEBUG("DobotRosWrapper: Initialising serial comms module");
+    RCLCPP_DEBUG(this->get_logger(), "DobotRosWrapper: Initialising serial comms module");
     dobot_serial_ = std::shared_ptr<DobotCommunication>(new DobotCommunication());
     // Blocking function
     // If the dobot usb cable is not connected, it should wait until the dobot is connected.
     // We can add a timeout here to force a shutdown if it takes the robot too long to connect.
     
-    ROS_INFO("DobotRosWrapper: Serial comms initialised. Looking for usb port now (60s timeout)...");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: Serial comms initialised. Looking for usb port now (60s timeout)...");
     bool found_port = dobot_serial_->init(port_);
-    ROS_INFO_COND(found_port, "DobotRosWrapper: Found usb port. Opening port now...", "DobotRosWrapper: Unable to find usb port. Shutting down...");
-    if(!found_port)
-    {
+    if (found_port) {
+        RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: Found usb port. Opening port now...");
+    } else {
+        RCLCPP_ERROR(this->get_logger(), "DobotRosWrapper: Unable to find usb port. Shutting down...");
         exit(1);
     }
+    
     dobot_serial_->startConnection();
 
     // Initialise state manager
-    ROS_DEBUG("DobotRosWrapper: Intialising State Manager");
+    RCLCPP_DEBUG(this->get_logger(), "DobotRosWrapper: Intialising State Manager");
     dobot_states_manager_ = std::shared_ptr<DobotStates>(new DobotStates);
     dobot_states_manager_->init(dobot_serial_);
     dobot_states_manager_->run();
 
     // Initialise controller
-    ROS_DEBUG("DobotRosWrapper: Intialising Controller");
+    RCLCPP_DEBUG(this->get_logger(), "DobotRosWrapper: Intialising Controller");
     dobot_controller_ = std::shared_ptr<DobotController>(new DobotController);
     dobot_controller_->init(dobot_serial_);
 
     // Wait for hardware controller and state manager to start updating data
-    ROS_DEBUG("DobotRosWrapper: Allowing State Manager and Controller some time to update data...");
+    RCLCPP_DEBUG(this->get_logger(), "DobotRosWrapper: Allowing State Manager and Controller some time to update data...");
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     // Initialise driver
-    ROS_INFO("DobotRosWrapper: Intialising dobot magician driver");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: Intialising dobot magician driver");
     dobot_driver_ = std::shared_ptr<DobotDriver>(new DobotDriver);
     dobot_driver_->init(dobot_states_manager_, dobot_controller_);
 
@@ -101,44 +122,44 @@ void DobotRosWrapper::init()
     dobot_driver_->run();
 
     // Initialise robot
-    ROS_INFO("DobotRosWrapper: Intialising ROS wrapper for dobot magician driver");
-    ROS_INFO("DobotRosWrapper: This thread will sleep for Dobot initialise sequence");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: Intialising ROS wrapper for dobot magician driver");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: This thread will sleep for Dobot initialise sequence");
     dobot_driver_->initialiseRobot();
-    ROS_INFO("DobotRosWrapper: This thread will now wake up");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: This thread will now wake up");
 }
 
 void DobotRosWrapper::run()
 {
-    ROS_INFO("DobotRosWrapper: Starting state updater thread...");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: Starting state updater thread...");
     update_state_thread_ = new std::thread(&DobotRosWrapper::updateStateThread, this);
-    ROS_INFO("DobotRosWrapper: Starting controller thread...");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: Starting controller thread...");
     robot_control_thread_ = new std::thread(&DobotRosWrapper::robotControlThread, this);
 
-    ROS_INFO("DobotRosWrapper: Robot is ready to receive commands.");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: Robot is ready to receive commands.");
 }
 
 void DobotRosWrapper::updateStateThread()
 {
-    sensor_msgs::JointState joint_angle_msg;
-    geometry_msgs::PoseStamped cart_pos_msg;
+    sensor_msgs::msg::JointState joint_angle_msg;
+    geometry_msgs::msg::PoseStamped cart_pos_msg;
 
     JointConfiguration current_joint;
     Pose current_ee_pose;
 
     Pose current_rail_position;
 
-    std_msgs::Bool tool_state_msg;
-    std_msgs::UInt8 safety_state_msg;
-    std_msgs::Float64 rail_pos_msg;
-    std_msgs::Float64MultiArray io_state_msg;
+    std_msgs::msg::Bool tool_state_msg;
+    std_msgs::msg::UInt8 safety_state_msg;
+    std_msgs::msg::Float64 rail_pos_msg;
+    std_msgs::msg::Float64MultiArray io_state_msg;
 
     std::vector<double> io_mux;
     std::vector<double> io_data;
 
     joint_angle_msg.name = joint_names_;
 
-    std_msgs::MultiArrayDimension dim;
-    std_msgs::MultiArrayLayout layout;
+    std_msgs::msg::MultiArrayDimension dim;
+    std_msgs::msg::MultiArrayLayout layout;
 
     dim.label = "height";
     dim.size = 2;
@@ -152,15 +173,12 @@ void DobotRosWrapper::updateStateThread()
 
     layout.dim.push_back(dim);
 
-    ROS_INFO("DobotRosWrapper: data from Dobot is now being published");
-    ROS_DEBUG("DobotRosWrapper: update_state_thread started");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: data from Dobot is now being published");
+    RCLCPP_DEBUG(this->get_logger(), "DobotRosWrapper: update_state_thread started");
 
-    ros::Time ros_time;
+    rclcpp::Time ros_time;
 
-    bool robot_joints_at_joint_targets = false;
-    bool robot_end_effector_at_target_pose = false;
-
-    while(ros::ok())
+    while(rclcpp::ok())
     {
         joint_angle_msg.position.clear();
         joint_angle_msg.velocity.clear();
@@ -173,7 +191,7 @@ void DobotRosWrapper::updateStateThread()
         // Joint Configuration
         current_joint = dobot_driver_->getCurrentJointConfiguration();
 
-        for(int i = 0; i < current_joint.position.size(); ++i)
+        for(size_t i = 0; i < current_joint.position.size(); ++i)
         {
             joint_angle_msg.position.push_back(current_joint.position.at(i)*M_PI/180);
             joint_angle_msg.velocity.push_back(current_joint.velocity.at(i)*M_PI/180);
@@ -223,27 +241,27 @@ void DobotRosWrapper::updateStateThread()
         }
 
         // Update robot state to ROS
-        ros_time = ros::Time::now();
+        ros_time = this->now();
         
         // Update joint states
         joint_angle_msg.header.stamp = ros_time;
-        joint_state_pub_.publish(joint_angle_msg);
+        joint_state_pub_->publish(joint_angle_msg);
 
         // Update end effector pose
         cart_pos_msg.header.stamp = ros_time;
-        end_effector_state_pub_.publish(cart_pos_msg);
+        end_effector_state_pub_->publish(cart_pos_msg);
 
         // Update rail position
-        rail_position_pub_.publish(rail_pos_msg);
+        rail_position_pub_->publish(rail_pos_msg);
 
         // Update tool state
-        tool_state_pub_.publish(tool_state_msg);
+        tool_state_pub_->publish(tool_state_msg);
         
         // // Update safety state
-        safety_state_pub_.publish(safety_state_msg);
+        safety_state_pub_->publish(safety_state_msg);
 
         // Update IO state
-        io_data_pub_.publish(io_state_msg);
+        io_data_pub_->publish(io_state_msg);
         
         rate_.sleep();
     }
@@ -251,9 +269,9 @@ void DobotRosWrapper::updateStateThread()
 
 void DobotRosWrapper::robotControlThread()
 {
-    ROS_INFO("DobotRosWrapper: Control thread started.");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: Control thread started.");
 
-    while(ros::ok())
+    while(rclcpp::ok())
     {
         if(!dobot_states_manager_ ->isConnected())
         {
@@ -263,13 +281,13 @@ void DobotRosWrapper::robotControlThread()
         // If receives target joints and robot is not moving, move joints
         if(target_joint_data_.received)
         {
-            bool result = moveToTargetJoints();
+            moveToTargetJoints();
             target_joint_data_.received = false;
         }
         // If receives target pose and robot is not moving, move to pose
         if(target_end_effector_pose_data_.received)
         {
-            bool result = moveToTargetEndEffectorPose();
+            moveToTargetEndEffectorPose();
             target_end_effector_pose_data_.received = false;
         }
 
@@ -283,9 +301,9 @@ void DobotRosWrapper::robotControlThread()
     }
 }
 
-void DobotRosWrapper::jointTargetCallback(const trajectory_msgs::JointTrajectoryConstPtr& msg)
+void DobotRosWrapper::jointTargetCallback(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg)
 {
-    ROS_INFO("DobotRosWrapper: New target joint configurations received !!");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: New target joint configurations received !!");
 
     JointConfiguration target_joint;
 
@@ -304,9 +322,9 @@ void DobotRosWrapper::jointTargetCallback(const trajectory_msgs::JointTrajectory
     target_joint_data_.received = true;
 }
 
-void DobotRosWrapper::endEffectorTargetPoseCallback(const geometry_msgs::PoseConstPtr& msg)
+void DobotRosWrapper::endEffectorTargetPoseCallback(const geometry_msgs::msg::Pose::SharedPtr msg)
 {
-    ROS_INFO("DobotRosWrapper: New target end effector pose received !!");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: New target end effector pose received !!");
 
     Pose target_pose;
     
@@ -316,7 +334,17 @@ void DobotRosWrapper::endEffectorTargetPoseCallback(const geometry_msgs::PoseCon
     target_pose.x = msg->position.x * 1000;
     target_pose.y = msg->position.y * 1000;
     target_pose.z = msg->position.z * 1000;
-    target_pose.theta = tf::getYaw(msg->orientation);
+    
+    // Extract yaw from quaternion
+    tf2::Quaternion q(
+        msg->orientation.x,
+        msg->orientation.y,
+        msg->orientation.z,
+        msg->orientation.w);
+    tf2::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    target_pose.theta = yaw;
 
     target_end_effector_pose_data_.mtx.unlock();
 
@@ -325,9 +353,9 @@ void DobotRosWrapper::endEffectorTargetPoseCallback(const geometry_msgs::PoseCon
     target_end_effector_pose_data_.received = true;
 }
 
-void DobotRosWrapper::toolStateCallback(const std_msgs::UInt8MultiArrayConstPtr& msg)
+void DobotRosWrapper::toolStateCallback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg)
 {
-    ROS_INFO("DobotRosWrapper: New tool state received !!");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: New tool state received !!");
     if(msg->data.size() > 1)
     {
         dobot_driver_->setGripperState((bool)msg->data.at(0),(bool)msg->data.at(1));
@@ -338,9 +366,9 @@ void DobotRosWrapper::toolStateCallback(const std_msgs::UInt8MultiArrayConstPtr&
     }
 }
 
-void DobotRosWrapper::safetyStateCallback(const std_msgs::UInt8ConstPtr& msg)
+void DobotRosWrapper::safetyStateCallback(const std_msgs::msg::UInt8::SharedPtr msg)
 {
-    ROS_INFO("DobotRosWrapper: New safety state received !!");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: New safety state received !!");
     switch(msg->data)
     {
         case INITIALISING:
@@ -364,25 +392,25 @@ void DobotRosWrapper::safetyStateCallback(const std_msgs::UInt8ConstPtr& msg)
     }
 }
 
-void DobotRosWrapper::linearRailStateCallback(const std_msgs::BoolConstPtr& msg)
+void DobotRosWrapper::linearRailStateCallback(const std_msgs::msg::Bool::SharedPtr msg)
 {
-    ROS_INFO("DobotRosWrapper: New linear rail state received !!");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: New linear rail state received !!");
     dobot_driver_->isRobotOnLinearRail(msg->data);
 }
 
-void DobotRosWrapper::targetRailPositionCallback(const std_msgs::Float64ConstPtr& msg)
+void DobotRosWrapper::targetRailPositionCallback(const std_msgs::msg::Float64::SharedPtr msg)
 {
-    ROS_INFO("DobotRosWrapper: New linear rail position received !!");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: New linear rail position received !!");
     double target_position = msg->data;
 
     dobot_driver_->setTargetRailPosition(target_position * 1000);
     rail_position_received_ = true;
 }
 
-void DobotRosWrapper::eMotorCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
+void DobotRosWrapper::eMotorCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
     // TODO: Convert to position control
-    ROS_INFO("DobotRosWrapper: New e Motor state received !!");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: New e Motor state received !!");
     std::vector<double> data = msg->data;
     if(msg->data.size() < 2)
     {
@@ -392,9 +420,9 @@ void DobotRosWrapper::eMotorCallback(const std_msgs::Float64MultiArrayConstPtr& 
     dobot_driver_->setEMotor(0,(bool)msg->data.at(0),(int)msg->data.at(1));
 }
 
-void DobotRosWrapper::ioStateCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
+void DobotRosWrapper::ioStateCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-    ROS_INFO("DobotRosWrapper: New IO state received !!");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: New IO state received !!");
     if(msg->data.size() < 3)
     {
         return;
@@ -404,7 +432,7 @@ void DobotRosWrapper::ioStateCallback(const std_msgs::Float64MultiArrayConstPtr&
     int multiplex = msg->data.at(1);
     std::vector<double> data;
 
-    for(int i = 2; i < msg->data.size() ; i++)
+    for(size_t i = 2; i < msg->data.size() ; i++)
     {
         data.push_back(msg->data.at(i));
     }
@@ -412,9 +440,9 @@ void DobotRosWrapper::ioStateCallback(const std_msgs::Float64MultiArrayConstPtr&
     dobot_driver_->setIOState(address, multiplex, data);
 }
 
-void DobotRosWrapper::customCommandCallback(const std_msgs::Float64MultiArrayConstPtr& msg)
+void DobotRosWrapper::customCommandCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-    ROS_INFO("DobotRosWrapper: New custom command received !!");
+    RCLCPP_INFO(this->get_logger(), "DobotRosWrapper: New custom command received !!");
     mtx_.lock();
     custom_command_ = msg->data;
 
@@ -439,40 +467,36 @@ bool DobotRosWrapper::moveToTargetEndEffectorPose()
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "dobot_magician_node");
-
-    // Set verbosity level to Info
-    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
+    rclcpp::init(argc, argv);
 
     std::string port;
-    ros::AsyncSpinner spinner(3);
     
-    if (!(ros::param::get("~port", port))) 
-    {
-        ROS_ERROR("DobotRosWrapper: port not specified");
+    // Create a parameter for port
+    auto node = std::make_shared<DobotRosWrapper>("dobot_magician_node", "");
+    
+    node->declare_parameter("port", "");
+    port = node->get_parameter("port").as_string();
+    
+    if (port.empty()) {
+        RCLCPP_ERROR(node->get_logger(), "DobotRosWrapper: port not specified");
         exit(1);
     }
-
-    ros::NodeHandle nh;
-    ros::NodeHandle pn("~");
-
-    DobotRosWrapper db_ros(nh,pn,port);
     
-    ROS_INFO("DobotRosWrapper: Initialising Wrapper. This should block the node until the dobot is ready to receive commands.");
-    db_ros.init();
+    // Create actual node with port parameter
+    auto dobot_node = std::make_shared<DobotRosWrapper>("dobot_magician_node", port);
+    
+    RCLCPP_INFO(dobot_node->get_logger(), "DobotRosWrapper: Initialising Wrapper. This should block the node until the dobot is ready to receive commands.");
+    dobot_node->init();
 
-    ROS_INFO("DobotRosWrapper: Starting Wrapper.");
-    db_ros.run();
+    RCLCPP_INFO(dobot_node->get_logger(), "DobotRosWrapper: Starting Wrapper.");
+    dobot_node->run();
 
-    spinner.start();
-    ros::Rate rate(10);
-    while(ros::ok)
-    {
-        rate.sleep();
-    }
-
-    ROS_INFO("DobotRosWrapper: Shutting down...");
-    spinner.stop();
-    ros::waitForShutdown();
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(dobot_node);
+    
+    RCLCPP_INFO(dobot_node->get_logger(), "DobotRosWrapper: Spinning node...");
+    executor.spin();
+    
+    rclcpp::shutdown();
     return 0;
 }

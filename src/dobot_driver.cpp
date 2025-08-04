@@ -127,7 +127,7 @@ void DobotDriver::driverUpdateThread()
             continue;
         }
 
-        for(int i = 0; i < current_config.position.size(); i++)
+        for(size_t i = 0; i < current_config.position.size(); i++)
         {
             
             if(abs(current_config.position.at(i) - current_target_config_.position.at(i)) >= JOINT_ERROR)

@@ -161,11 +161,15 @@ struct JointConfiguration
         return output;
     }
     
-    bool operator==(JointConfiguration &input)
+    bool operator==(JointConfiguration& joint_config)
     {
-        for(int i = 0; i < position.size(); i++)
+        if(position.size() != joint_config.position.size())
         {
-            if(position.at(i) != input.position.at(i))
+            return false;
+        }
+        for(size_t i = 0; i < position.size(); i++)
+        {
+            if(position.at(i) != joint_config.position.at(i))
             {
                 return false;
             }
@@ -174,11 +178,11 @@ struct JointConfiguration
     }
 
 
-    bool operator<(JointConfiguration &input)
+    bool operator<(JointConfiguration& joint_config)
     {
-        for(int i = 0; i < position.size(); i++)
+        for(size_t i = 0; i < position.size(); i++)
         {
-            if(position.at(i) >= input.position.at(i))
+            if(position.at(i) >= joint_config.position.at(i))
             {
                 return false;
             }
@@ -186,11 +190,11 @@ struct JointConfiguration
         return true;
     }
 
-    bool operator<=(JointConfiguration &input)
+    bool operator<=(JointConfiguration& joint_config)
     {
-        for(int i = 0; i < position.size(); i++)
+        for(size_t i = 0; i < position.size(); i++)
         {
-            if(position.at(i) > input.position.at(i))
+            if(position.at(i) > joint_config.position.at(i))
             {
                 return false;
             }
@@ -198,11 +202,11 @@ struct JointConfiguration
         return true;
     }
 
-    bool operator>(JointConfiguration &input)
+    bool operator>(JointConfiguration& joint_config)
     {
-        for(int i = 0; i < position.size(); i++)
+        for(size_t i = 0; i < position.size(); i++)
         {
-            if(position.at(i) <= input.position.at(i))
+            if(position.at(i) <= joint_config.position.at(i))
             {
                 return false;
             }
@@ -210,11 +214,11 @@ struct JointConfiguration
         return true;
     }
 
-    bool operator>=(JointConfiguration &input)
+    bool operator>=(JointConfiguration& joint_config)
     {
-        for(int i = 0; i < position.size(); i++)
+        for(size_t i = 0; i < position.size(); i++)
         {
-            if(position.at(i) < input.position.at(i))
+            if(position.at(i) < joint_config.position.at(i))
             {
                 return false;
             }

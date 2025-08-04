@@ -230,7 +230,7 @@ void DobotController::setTargetJointVelocity(JointConfiguration joint_vel_config
     direction_.clear();
 
     std::vector<float> input_params;
-    for(int i = 0; i < joint_vel_config.velocity.size()*2; i++)
+    for(size_t i = 0; i < joint_vel_config.velocity.size()*2; i++)
     {
         if(i < joint_vel_config.velocity.size())
         {
@@ -260,9 +260,9 @@ bool DobotController::moveWithTargetVelocity()
         return false;
     }
 
-    int check = 0;
+    size_t check = 0; 
     bool result = false;
-    for(int i = 0; i < direction_.size();i++)
+    for(size_t i = 0; i < direction_.size();i++)
     {
         if(direction_.at(i) > 0)
         {
