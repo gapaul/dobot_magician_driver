@@ -61,7 +61,7 @@ def make_pose_msg(xyz, rpy):
 
 
 class DobotClient:
-    def __init__(self, host='192.168.27.1', port=9090):
+    def __init__(self, host='10.42.0.1', port=9090):
         self.ros = roslibpy.Ros(host=host, port=port)
         self._joint_state_lock = threading.Lock()
         self._joint_state_event = threading.Event()
@@ -166,7 +166,7 @@ class DobotClient:
 
 
 def demo_sequence():
-    bot = DobotClient(host='192.168.27.1', port=9090)
+    bot = DobotClient(host='10.42.0.1', port=9090)
     bot.connect()
 
     try:
